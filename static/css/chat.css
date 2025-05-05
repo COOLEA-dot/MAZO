@@ -1,0 +1,465 @@
+/* Contenedor del chat */
+.chat-container {
+    width: 100%;
+    max-width: 500px; /* Reducir el ancho del chat */
+    margin: 0 auto;
+    padding: 0 20px;
+    background-color: transparent;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    margin-top: 5px; /* Ajustar el chat hacia arriba */
+    position: relative; /* Permitir el ajuste con respecto a otros elementos */
+}
+
+/* Caja del chat */
+#chat-box {
+    width: 90%;
+    height: 340px; /* Reducir la altura del chat */
+    padding: 10px;
+    overflow-y: auto;
+    background-color: transparent;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    border-radius: 8px;
+    margin-top: 0;
+    scrollbar-width: none;
+}
+
+#chat-box::-webkit-scrollbar {
+    display: none;
+}
+
+/* Mensajes del usuario actual */
+.my-message {
+    align-self: flex-end;
+    background-color: #007bff;
+    color: white;
+    text-align: left;
+    border-radius: 10px;
+    padding: 5px 0px 0px;  /* Ajuste de padding para un fondo más pequeño */
+    max-width: 40%;
+    display: 0px;  /* Ajustar el tamaño del fondo al contenido */
+    position: relative;
+    border: none;  /* Eliminar el borde para evitar la línea blanca */
+    margin-bottom: 10px;  /* Añadir margen inferior entre mensajes */
+}
+
+/* Mensajes del otro usuario */
+.other-message {
+    align-self: flex-start;
+    background-color: #e0e0e0;
+    color: black;
+    text-align: left;
+    border-radius: 10px;
+    padding: 0px 0px;  /* Ajuste de padding para un fondo más pequeño */
+    max-width: 40%;
+    display: 0px;  /* Ajustar el tamaño del fondo al contenido */
+    position: relative;
+    border: none;  /* Eliminar el borde para evitar la línea blanca */
+    margin-bottom: 10px;  /* Añadir margen inferior entre mensajes */
+}
+
+/* Mensajes (contenedor) */
+.message-content {
+    position: relative;
+    display: flex;
+    max-width: 100%;
+    padding: 0px 0px;
+    margin-bottom: 10px;  /* Ajustar margen entre mensajes */
+    border-radius: 8px;
+    font-size: 14px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    line-height: 1.5;
+    border: none;  /* Eliminar borde */
+}
+
+/* Tres puntos (opciones) */
+.message-options {
+    position: absolute;
+    top: 50%;
+    left: -25px; /* Coloca los tres puntos a la izquierda del mensaje */
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    color: #333;
+    z-index: 10;
+}
+
+.options-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    padding: 5px;
+    border-radius: 5px;
+    z-index: 100;
+}
+
+.options-menu.active {
+    display: block;
+}
+
+/* Opciones de edición y borrado */
+.options-menu button {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.options-menu button:hover {
+    background-color: #f1f1f1;
+}
+
+/* Encabezado del chat */
+.chat-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    padding: 5px 0;
+    font-weight: bold;  /* Cambiado a negrita */
+    color: #333;
+    margin-top: -15px;
+    text-decoration: none;
+}
+
+/* Avatar del chat */
+.chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 12px;
+}
+
+.chat-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Información del usuario */
+.chat-info h3 {
+    font-size: 18px;
+    font-weight: bold;  /* Poner en negrita */
+    color: #333;
+    margin: 0;
+    text-decoration: none;
+}
+
+/* Enlace al perfil */
+.chat-profile-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+}
+
+.chat-profile-link:hover h3 {
+    color: #007bff;
+}
+
+.chat-profile-link:hover img {
+    opacity: 0.8;
+}
+
+/* Input y botón */
+#chat-input {
+    display: flex;
+    margin-top: 10px;
+    align-items: center;
+    padding: 0 10px;
+    box-sizing: border-box;
+    justify-content: center;
+}
+
+/* Campo de entrada del mensaje */
+#message {
+    width: 50%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-right: 10px;
+    height: 50px;
+    resize: none;
+    overflow-y: hidden;
+}
+
+/* Botón de enviar */
+#send-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+#send-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Asegurar que el menú de opciones esté oculto por defecto */
+.options-menu {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 5px;
+    z-index: 1000;
+}
+
+/* Mostrar el menú cuando tenga la clase active */
+.options-menu.active {
+    display: block;
+}
+
+/* Ajustar los tres puntos para que sean más visibles */
+.options-icon {
+    cursor: pointer;
+    font-size: 18px;
+    padding: 5px;
+}
+
+/*Miniaturas de archivos (imágenes, videos, documentos) */
+.chat-thumbnail {
+    width: 100px; /* Tamaño uniforme */
+    height: auto;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: transform 0.2s;
+}
+
+.chat-thumbnail:hover {
+    transform: scale(1.1);
+}
+
+/* Contenedor de archivos en el chat */
+.file-thumbnail {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    background: transparent; /* Eliminar el fondo blanco */
+    border-radius: 5px;
+    margin: 5px 0;
+    width: 150px;
+    text-align: center;
+    justify-content: center;
+    flex-direction: column;
+    cursor: pointer;
+    transition: background 0.3s;
+    position: relative; /* Asegura que el botón de descarga esté posicionado dentro del contenedor */
+}
+
+/* Hover del contenedor de archivo */
+.file-thumbnail:hover {
+    background: #e0e0e0;
+}
+
+/* Iconos de archivos */
+.file-icon {
+    width: 150%; /* El icono ocupa todo el contenedor */
+    height: 150%; /* El icono ocupa todo el contenedor */
+    object-fit: contain; /* Ajusta el icono dentro del contenedor */
+    margin-bottom: 5px;
+    z-index: 0; /* Asegura que el icono esté por debajo del botón de descarga */
+    cursor: pointer;
+}
+
+/* Texto del nombre de archivo */
+.file-name {
+    font-size: 12px;
+    color: #333;
+    word-wrap: break-word;
+    max-width: 100%;
+}
+
+/* Estilos para cada tipo de archivo */
+.file-icon.pdf { color: red; }
+.file-icon.word { color: blue; }
+.file-icon.excel { color: green; }
+.file-icon.ppt { color: orange; }
+
+/* Botón de descarga */
+.download-link {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1; /* Asegura que el botón esté por encima del icono */
+}
+
+.download-link a {
+    color: #fff;
+    background-color: #007bff;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.download-link a:hover {
+    background-color: #0056b3;
+}
+
+/* Estilos del modal de imagen y PDF */
+#image-modal, #pdf-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Contenido del modal */
+.modal-content {
+    width: 90%;
+    height: 80%;
+    object-fit: contain;
+    object-position: center;
+    margin: 0;
+    background-color: rgba(0, 0, 0, 0.05);
+    position: relative;
+    top: 10%;
+}
+
+/* Estilo para las miniaturas de video */
+.video-thumbnail {
+    position: relative;
+    display: inline-block;
+    width: 200px; /* Tamaño ajustable */
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.video-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+
+.video-thumbnail:hover img {
+    opacity: 0.7;
+}
+
+/* Icono de Play en la miniatura */
+.video-thumbnail .play-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 40px;
+    color: white;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    padding: 10px;
+    transition: 0.3s;
+}
+
+.video-thumbnail:hover .play-icon {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+/* Estilos del modal de video */
+#video-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    align-items: center;
+    justify-content: center;
+}
+
+/* Reducir el tamaño del modal */
+#video-modal .modal-content {
+    max-width: 100%; /* Antes 90%, ahora 70% */
+    max-height: 100%; /* Antes 90%, ahora 70% */
+    border-radius: 10px;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Ajustar tamaño del video dentro del modal */
+#video-modal video {
+    max-width: auto;
+    max-height: 90%; /* Antes ocupaba toda la pantalla, ahora máximo 60% de la altura */
+    border-radius: 8px;
+}
+
+#video-modal .download-link {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+#video-modal .download-link a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+#video-modal .download-link a:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+
+#file-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.file-preview {
+    background: #f0f0f0;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+}
+
+.file-preview span {
+    margin-right: 6px;
+}
+
+.file-preview .remove-file {
+    color: red;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.edited-tag {
+    font-size: 12px;
+    color: gray;
+    margin-left: 5px;
+}

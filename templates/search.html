@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Búsqueda{% endblock %}
+
+{% block content %}
+    <h1>Buscar</h1>
+
+    <form action="{{ url_for('search') }}" method="GET" id="search-form">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
+        <input type="text" name="q" id="search-input" placeholder="Buscar videos, perfiles o profesiones..." value="{{ query }}" autocomplete="off">
+        <input type="text" name="location" id="location-input" placeholder="Ubicación (opcional)" value="{{ request.args.get('location', '') }}">
+        <button type="submit">Buscar</button>
+        <div id="suggestions" class="suggestions-box"></div>
+    </form>
+
+    <h2>Resultados de la Búsqueda: "{{ query }}"</h2>
+
+    <!-- Mostrar los usuarios primero -->
+    <h3>Perfiles encontrados</h3>
+    <div class="users">
+        {% for user in users %}
+            <div class="user">
+                <a href="{{ url_for('profile', username=user.username) }}">
+                    <img src="{{ url_for('static', filename='profile_pics/' + (user.profile_picture if user.profile_picture else 'default.jpg')) }}" alt="Perfil">
+                    <strong>{{ user.name }}</strong>
+                </a>
+                <p>Profesión: {{ user.profession }}</p>
+                <p>Empresa: {{ user.company }}</p>
+                <p>Ubicación: {{ user.location }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Luego los videos en cuadrícula -->
+    <h3>Videos encontrados</h3>
+    <div class="video-grid">
+        {% for video in videos %}
+            <div class="video">
+                <h3>{{ video.title }}</h3>
+                <video width="100%" height="auto" autoplay muted controls>
+                    <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <p>Subido por: <a href="{{ url_for('profile', username=video.user.username) }}">{{ video.user.username }}</a></p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script src="{{ url_for('static', filename='js/search.js') }}" defer></script>
+{% endblock %}

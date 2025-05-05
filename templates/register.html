@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Registro - MAZO</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        .location-wrapper {
+            position: relative;
+        }
+
+        #suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-top: none;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 13px;
+            display: none; /* oculto por defecto */
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #suggestions div {
+            padding: 6px 10px;
+            cursor: pointer;
+        }
+
+        #suggestions div:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Registro</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="profile-pic-preview-wrapper" style="text-align: center; margin-bottom: 20px;">
+        <label for="profile_pic" style="cursor: pointer;">
+            <img id="profilePreview"
+                 src="{{ url_for('static', filename=user.profile_pic if user and user.profile_pic else 'profile_pics/default.jpg') }}"
+                 alt="Foto de perfil"
+                 class="profile-pic-preview"
+                 style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 2px solid #ccc;">
+        </label>
+        <input type="file" id="profile_pic" name="profile_pic" accept="image/*" style="display: none;">
+        <p class="small-note" style="font-size: 12px; color: #666;">Haz clic para subir una foto de perfil</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="register-form" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <label for="name">Nombre Completo:</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="username">Nombre de Usuario:</label>
+        <input type="text" id="username" name="username" required>
+
+        <label for="phone">Teléfono:</label>
+        <input type="tel" id="phone" name="phone" required placeholder="Ej: +34 612 345 678">
+
+
+        <label for="email">Correo Electrónico:</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="company">Empresa (Opcional):</label>
+        <input type="text" id="company" name="company">
+
+        <label for="profession">Profesión (Opcional):</label>
+        <input type="text" id="profession" name="profession">
+
+        <label for="description">Sobre ti (Opcional):</label>
+        <textarea id="description" name="description" maxlength="500" rows="4" placeholder="Cuéntanos algo sobre ti..." style="resize: none; width: 100%; min-height: 100px;"></textarea>
+
+        <label for="location">Ubicación (Opcional):</label>
+        <div class="location-wrapper">
+            <input type="text" id="location" name="location" placeholder="Escribe o selecciona en el mapa">
+            <div id="suggestions"></div>
+        </div>
+
+        <div id="map" style="height: 300px; margin-top: 10px; border: 1px solid #ccc; border-radius: 8px;"></div>
+
+        <button type="button" id="use-my-location" style="margin: 10px 0;">📍 Usar mi ubicación actual</button>
+
+        <label for="password">Contraseña:</label>
+        <input type="password" id="password" name="password" required minlength="8">
+
+        <label for="confirm_password">Repite la Contraseña:</label>
+        <input type="password" id="confirm_password" name="confirm_password" required>
+
+        <button type="submit" style="margin-top: 15px;">Registrarse</button>
+    </form>
+
+    <p>¿Ya tienes una cuenta? <a href="/login">Inicia sesión aquí</a></p>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/register.js') }}"></script>
+</body>
+</html>

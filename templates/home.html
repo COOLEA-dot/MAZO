@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Página Principal{% endblock %}
+
+{% block content %}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+<script src="{{ url_for('static', filename='js/likes.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/comments.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/navigation.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/home.js') }}" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/share.js') }}" defer></script>
+
+<main>
+    <div class="video-container">
+        {% for video in videos %}
+        <div class="video-item {% if loop.index0 != 0 %}hidden{% endif %}" data-index="{{ loop.index0 }}">
+
+            <div class="video-comments-wrapper" style="display: flex; align-items: flex-start;">
+                <div class="video-center" style="flex: 1 1 65%; min-width: 0; display: flex; justify-content: center;">
+                    <video class="video-element" src="{{ url_for('uploaded_file', filename=video.video_url) }}" controls autoplay muted></video>
+                </div>
+
+                <div class="comments-panel hidden" id="comments-panel-{{ video.id }}" data-video-id="{{ video.id }}" style="flex: 1 1 35%; height: calc(100vh - 100px); max-height: calc(100vh - 100px); overflow-y: auto; background: #f8f9fa; padding: 10px; border-left: 1px solid #ccc; position: sticky; top: 60px;">
+                    <h3 style="margin-top: 10px; margin-bottom: 12px;">Comentarios</h3>
+                    <div class="comments-list" id="comments-list-{{ video.id }}">
+                        <!-- Comentarios cargados por JS -->
+                    </div>
+                    <form class="add-comment-form" data-video-id="{{ video.id }}" style="display: flex; gap: 8px; margin-top: 10px; align-items: center; padding-left: 10px;">
+                        <input type="hidden" name="parent_id" value="">
+                        <input type="text" name="comment" placeholder="Escribe un comentario..." required
+                            style="flex: 1; padding: 10px 10px; border: 1px solid #ccc; border-radius: 20px;">
+                        <button type="submit"
+                            style="width: 30px; height: 30px; border-radius: 50%; background: #007bff; color: white; border: none; font-size: 16px; display: flex; align-items: center; justify-content: center;">
+                            ➤
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="video-left">
+                <h3>{{ video.title }}</h3>
+                <p>{{ video.description }}</p>
+                <div class="hashtags">
+                    {% for tag in video.hashtags.split(',') %}
+                    <span>#{{ tag.strip() }}</span>
+                    {% endfor %}
+                </div>
+                <div class="profile-info">
+                    {% if video.user %}
+                        <a href="{{ url_for('profile', username=video.user.username) }}">
+                            <img src="{{ url_for('static', filename='profile_pics/' + (video.user.profile_picture if video.user.profile_picture else 'default.jpg')) }}" alt="Perfil" class="profile-pic">
+                        </a>
+                        <a href="{{ url_for('profile', username=video.user.username) }}">
+                            <strong>{{ video.user.company if video.user.company else video.user.name }}</strong>
+                        </a>
+                    {% else %}
+                        <span>Usuario desconocido</span>
+                    {% endif %}
+                </div>
+                <div class="video-actions">
+                    <button class="like-button {% if current_user in video.liked_by %}liked{% endif %}" data-video-id="{{ video.id }}">
+                        ❤️ <span class="like-count">{{ video.liked_by|length }}</span>
+                    </button>
+                    <button class="share-button" data-video-id="{{ video.id }}">📤</button>
+                    <button class="comment-button" data-video-id="{{ video.id }}">💬 <span class="comment-count">{{ video.comments|length }}</span></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="share-modal hidden" id="share-modal-{{ video.id }}">
+            <div class="modal-content">
+                <span class="close-share-modal" data-video-id="{{ video.id }}">&times;</span>
+                <h3>Compartir este video</h3>
+                <ul>
+                    <li><a href="https://wa.me/?text={{ url_for('video', video_id=video.id, _external=True) }}" target="_blank">Compartir en WhatsApp</a></li>
+                    <li><a href="https://www.instagram.com/sharer.php?u={{ url_for('video', video_id=video.id, _external=True) }}" target="_blank">Compartir en Instagram</a></li>
+                    <li><a href="mailto:?subject=Video interesante&body={{ url_for('video', video_id=video.id, _external=True) }}" target="_blank">Compartir por Gmail</a></li>
+                    <li><a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('video', video_id=video.id, _external=True) }}" target="_blank">Compartir en Facebook</a></li>
+                </ul>
+
+                {% if chats %}
+                <h4>Compartir con usuarios</h4>
+                <div class="internal-user-list">
+                    {% for chat in chats %}
+                    <form method="POST" onsubmit="event.preventDefault(); shareInChatDirect('{{ chat.username }}', '{{ video.id }}');">
+                        <div class="chat-user-item">
+                            <img src="{{ url_for('static', filename='profile_pics/' + chat.profile_pic) }}" alt="{{ chat.username }}" class="chat-user-pic">
+                            <span>{{ chat.username }}</span>
+                            <button type="submit" class="send-share-btn">Enviar</button>
+                        </div>
+                    </form>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="video-navigation">
+        <button id="prev-video">⬆</button>
+        <button id="next-video">⬇</button>
+    </div>
+</main>
+{% endblock %}

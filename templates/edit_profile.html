@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Perfil{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/edit_profile.css') }}">
+
+<div class="edit-profile-container">
+    <h2>Editar Perfil</h2>
+
+    <form action="{{ url_for('edit_profile') }}" method="POST" enctype="multipart/form-data" class="edit-profile-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="profile-picture-preview">
+            <img id="profile-preview" 
+                 src="{{ url_for('static', filename=user.profile_pic if user.profile_pic else 'profile_pics/default.jpg') }}" 
+                 alt="Foto actual" class="current-profile-pic">
+            <input type="file" id="profile_pic" name="profile_pic" accept="image/*">
+        </div>
+
+        <div>
+            <label for="name">Nombre:</label>
+            <input type="text" id="name" name="name" value="{{ user.name | default('', true) }}" required>
+        </div>
+
+        <div>
+            <label for="company">Empresa:</label>
+            <input type="text" id="company" name="company" value="{{ user.company | default('', true) }}">
+        </div>
+
+        <div>
+            <label for="profession">Profesión:</label>
+            <input type="text" id="profession" name="profession" value="{{ user.profession | default('', true) }}">
+        </div>
+
+        <div>
+            <label for="description">Descripción:</label>
+            <textarea id="description" name="description" maxlength="500" rows="4" style="resize: none; width: 100%;">{{ user.description | default('', true) }}</textarea>
+        </div>
+
+        <div>
+            <label for="location">Ubicación:</label>
+            <input type="text" id="location" name="location" value="{{ user.location | default('', true) }}">
+        </div>
+
+        <div>
+            <label for="username">Nombre de usuario:</label>
+            <input type="text" id="username" name="username" value="{{ user.username | default('', true) }}" disabled>
+        </div>
+
+        <div>
+            <label for="phone">Teléfono:</label>
+            <input type="text" id="phone" name="phone" value="{{ user.phone | default('', true) }}" disabled style="width: 100%;">
+        </div>
+
+        <div>
+            <label for="email">Correo electrónico:</label>
+            <input type="email" id="email" name="email" value="{{ user.email | default('', true) }}">
+        </div>
+
+        <button type="submit" class="save-profile-btn">Guardar cambios</button>
+        <a href="{{ url_for('profile', username=user.username) }}" class="cancel-btn">Cancelar</a>
+    </form>
+</div>
+
+<!-- 👇 Script para mostrar la previsualización de la imagen -->
+<script>
+    document.getElementById('profile_pic').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('profile-preview');
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                preview.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+
+{% endblock %}
+

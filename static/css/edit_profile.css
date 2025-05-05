@@ -1,0 +1,78 @@
+/* Estilos para la página de edición de perfil */
+
+.edit-profile-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.edit-profile-container h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.edit-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.edit-profile-form label {
+  font-weight: bold;
+}
+
+.edit-profile-form input[type="text"],
+.edit-profile-form input[type="email"],
+.edit-profile-form input[type="file"] {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+}
+
+.edit-profile-form button.save-profile-btn {
+  background-color: #3897f0;
+  color: white;
+  border: none;
+  padding: 0.7rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.edit-profile-form button.save-profile-btn:hover {
+  background-color: #2878cc;
+}
+
+.edit-profile-form .cancel-btn {
+  text-align: center;
+  margin-top: -0.5rem;
+  display: inline-block;
+  color: #999;
+  font-size: 0.9rem;
+  text-decoration: underline;
+}
+
+.profile-picture-preview {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-picture-preview img.current-profile-pic {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ccc;
+}
+
+.profile-picture-preview input[type="file"] {
+  width: auto;
+}
+
+  
