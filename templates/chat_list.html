@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de chats{% endblock %}
+
+{% block content %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat_list.css') }}">
+
+    <!-- Cargar Socket.IO antes del script de mensajes -->
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/new_messages.js') }}"></script>
+
+    <h2>Tus Chats</h2>
+
+    <div class="chat-list">
+        {% for chat in chats %}
+            <a href="{{ url_for('chat_with_user', recipient_username=chat.username) }}" 
+               class="chat-item {% if chat.has_unread %}unread{% endif %}" 
+               data-username="{{ chat.username }}">
+               
+                <div class="chat-avatar">
+                    <img src="{{ url_for('static', filename='profile_pics/' + chat.profile_pic) }}" 
+                         alt="{{ chat.username }}">
+                </div>
+                
+                <div class="chat-info">
+                    <h3>{{ chat.username }}</h3>
+                    
+                    {% if chat.has_unread %}
+                        <p class="new-message">📩 Mensaje nuevo</p>
+                    {% else %}
+                        {% if chat.sent_by_user %}
+                            <p class="sent-message"><strong>Enviado</strong></p>
+                        {% else %}
+                            <p>{{ chat.last_message }}</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <!-- Badge para mensajes no leídos -->
+                {% if chat.has_unread %}
+                    <span class="unread-badge">¡Nuevo!</span>
+                {% endif %}
+            </a>
+        {% else %}
+            <p class="no-chats">No tienes chats previos.</p>
+        {% endfor %}
+    </div>
+{% endblock %}
+
+
+

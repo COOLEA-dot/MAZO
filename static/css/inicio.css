@@ -1,0 +1,14 @@
+body {
+    font-family:sans-serif, Arial, Helvetica;
+    text-align: center;
+    margin-top: 100px;
+    background-color: #000000;
+}
+img {
+    width: 200px;
+    height: auto;
+}
+p {
+    font-size: 30px;
+    color: yellow;
+}

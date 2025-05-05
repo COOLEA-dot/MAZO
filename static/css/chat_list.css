@@ -1,0 +1,86 @@
+.chat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.chat-item {
+    display: flex;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #333;
+    position: relative; /* Para el badge */
+    transition: background 0.3s;
+}
+
+.chat-item:hover {
+    background: #eaeaea;
+}
+
+.chat-avatar img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+}
+
+.chat-info {
+    flex-grow: 1;
+}
+
+.chat-info h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.chat-info p {
+    margin: 0;
+    font-size: 14px;
+    color: #777;
+}
+
+.no-chats {
+    text-align: center;
+    font-size: 16px;
+    color: #777;
+}
+
+/* Estilo del badge de mensaje no leído */
+.unread-badge {
+    background-color: #ff5722;  /* Color naranja fuerte */
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 15px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    display: none; /* Ocultar por defecto */
+}
+
+/* Mostrar el badge cuando hay mensajes sin leer */
+.chat-item.unread .unread-badge {
+    display: block;
+}
+
+/* Estilo para "Mensaje nuevo" */
+.new-message {
+    color: red;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* Estilo para "Enviado" */
+.sent-message {
+    font-weight: bold;
+    color: #007bff;  /* Azul */
+}
+

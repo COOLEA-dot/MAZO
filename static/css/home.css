@@ -1,0 +1,576 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center; /* Centra todo horizontalmente */
+    align-items: center; /* Centra todo verticalmente */
+}
+
+main {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    position: relative;
+}
+
+.video-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    justify-content: center; /* Centra el video */
+    align-items: center; /* Centra el video */
+}
+
+.video-item {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: auto;
+    height: 100%;
+}
+
+.video-left {
+    position: fixed;
+    top: 120px; /* Aumenta el valor para bajar la información */
+    left: 150px;
+    width: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-right: 15px;
+    height: auto;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 1;
+}
+
+.video-center {
+    display: flex;
+    justify-content: center; /* Centra el video */
+    align-items: center;
+    flex-grow: 1;
+    margin-top: 30px; /* Ajusta la separación con la barra superior */
+    margin-right: 0px;
+
+}
+
+/* Ajuste del video */
+video {
+    max-width: 800px; /* Limita el ancho máximo del video */
+    max-height: 80vh; /* Ajusta la altura máxima del video */
+    border-radius: 8px;
+}
+
+h3 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 12px;
+}
+
+.hashtags {
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.hashtags span {
+    background-color: #ddd;
+    border-radius: 4px;
+    padding: 2px 5px;
+    margin-right: 5px;
+    font-size: 12px;
+    color: #444;
+}
+
+.profile-info {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.profile-pic {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 8px;
+}
+
+.video-actions {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+}
+
+.video-actions button {
+    background-color: #f1f1f1;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.video-actions button:hover {
+    background-color: #ddd;
+}
+
+.video-comments-wrapper {
+    position: relative;
+}
+
+/* Video ocupa el 70% del ancho */
+.video-center {
+    flex: 1 1 70%;
+}
+
+.comments-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 430px;
+    height: 100%;
+    background: #f8f9fa;
+    border-left: 1px solid #ccc;
+    z-index: 5;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: -2px 0 6px rgba(0,0,0,0.1);
+    margin-left: 0px; 
+}
+
+.comments-panel h3 {
+    background-color: #f1f3f5;
+    padding: 15px 20px;
+    margin: 0;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+.comments-panel h3::before {
+    content: "💬";
+    font-size: 22px;
+}
+
+.comments-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px 20px;
+    background-color: #fff;
+}
+
+.comment-item {
+    margin-bottom: 12px;
+    font-size: 14px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 6px;
+}
+
+.add-comment-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    background-color: #f1f3f5;
+    border-top: 1px solid #ddd;
+}
+
+.add-comment-form input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    font-size: 14px;
+    outline: none;
+}
+
+.add-comment-form button {
+    width: 40px;
+    height: 40px;
+    background-color: #007bff;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.3s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.add-comment-form button:hover {
+    background-color: #0056b3;
+}
+
+.video-comments-wrapper {
+    position: relative;
+}
+
+.hidden {
+    display: none;
+}
+
+.comment-content-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    position: relative; /* Asegura que el botón ⋯ no se desplace */
+}
+
+.comment-profile-link {
+    flex-shrink: 0;
+}
+
+.comment-profile-pic {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.comment-body {
+    flex-grow: 1;
+}
+
+.comment-username {
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+    display: block;
+}
+
+.comment-text {
+    margin-top: 6px;
+    text-align: left;
+}
+
+.dots-button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #333;
+    padding: 0 6px;
+    line-height: 1;
+    height: 30px;
+    width: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background 0.2s ease;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.dots-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 50%;
+}
+
+.comment-options {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.options-menu {
+    position: absolute;
+    top: 30px;
+    right: 0;
+    background: white;
+    border: 1px solid #333;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    padding: 5px 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Botón para mostrar/ocultar respuestas */
+.toggle-replies-btn {
+    background-color: transparent;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 0;
+    text-align: left;
+    margin-top: 5px;
+}
+
+.toggle-replies-btn:hover {
+    text-decoration: underline;
+}
+
+/* Contenedor de respuestas */
+.replies-container {
+    margin-top: 8px;
+    padding-left: 15px;
+    border-left: 2px solid #e0e0e0;
+}
+
+/* Estilo individual de cada respuesta */
+.replies-container .reply-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background-color: #f1f1f1;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* Imagen de perfil en respuesta */
+.replies-container .reply-item .comment-profile-pic {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+}
+
+/* Contenedor del cuerpo del comentario */
+.replies-container .reply-item .comment-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.replies-container .reply-item .comment-username {
+    font-weight: bold;
+    margin-bottom: 3px;
+    font-size: 14px;
+}
+
+.replies-container .reply-item .comment-text {
+    font-size: 14px;
+}
+
+/* Opciones en respuestas */
+.replies-container .reply-item .comment-options {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.replies-container .reply-item .dots-button {
+    font-size: 16px;
+}
+
+.replies-container .reply-item .options-menu {
+    top: 28px;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.replies-container .reply-item .options-menu.hidden {
+    display: none;
+}
+
+.replies-container .reply-item .options-menu button {
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+}
+
+.replies-container .reply-item .options-menu button:hover {
+    background-color: #f5f5f5;
+}
+
+.options-menu button:hover {
+    background-color: #f0f0f0;
+}
+
+.video-navigation {
+    position: fixed; /* Fija los botones en la pantalla */
+    top: 50%;
+    right: 10px; /* Los coloca al extremo derecho de la pantalla */
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+}
+
+
+.video-navigation button {
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    padding: 15px;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.video-navigation button:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.video-navigation button:focus {
+    outline: none;
+}
+
+/* ✅ Mostrar y ocultar */
+.hidden {
+    display: none !important;
+}
+
+/* ✅ Estilos del modal */
+.share-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.share-modal .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.share-modal ul {
+    list-style: none;
+    padding: 0;
+}
+
+.share-modal ul li {
+    margin: 10px 0;
+}
+
+.share-modal a {
+    text-decoration: none;
+    color: #007bff;
+    font-size: 16px;
+}
+
+.close-share-modal {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #333;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+/* Contenedor horizontal tipo carrusel */
+.internal-user-list {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 10px 0;
+}
+
+/* Cada usuario estilo tarjeta */
+.chat-user-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f9f9f9;
+    padding: 10px;
+    min-width: 100px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+    text-align: center;
+}
+
+/* Foto redonda */
+.chat-user-pic {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 8px;
+    border: 2px solid #ccc;
+}
+
+/* Nombre debajo */
+.chat-user-item span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+/* Botón de enviar debajo */
+.send-share-btn {
+    background-color: #3897f0;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.send-share-btn:hover {
+    background-color: #2878cc;
+}
+.flash-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #2ecc71;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 10000;
+    font-weight: bold;
+}
+.flash-message.show {
+    opacity: 1;
+    transform: translateY(0);
+}

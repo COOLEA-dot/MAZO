@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Chat con {{ recipient.username }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+
+<h2 class="chat-header">
+    <a href="{{ url_for('profile', username=recipient.username) }}" class="chat-profile-link">
+        <div class="chat-avatar">
+            <img src="{{ url_for('static', filename='profile_pics/' + (recipient.profile_pic if recipient.profile_pic else 'default.jpg')) }}" alt="{{ recipient.username }}">
+        </div>
+        <div class="chat-info">
+            <h3>{{ recipient.company if recipient.company else recipient.username }}</h3>
+        </div>
+    </a>
+</h2>
+
+<div id="chat-box" 
+     data-username="{{ username }}" 
+     data-recipient="{{ recipient.username }}" 
+     data-room="chat_{{ [username, recipient.username] | sort | join('_') }}">
+
+    {% for message in messages %}
+        <div class="chat-message {% if message.sender.username == username %}my-message{% else %}other-message{% endif %}" 
+             data-message-id="{{ message.id }}">
+
+            <div class="message-content">
+                {% if message.file_url %}
+                    {% set file_url = '/' + message.file_url.lstrip('/') %}
+                    {% set file_extension = file_url.split('.')[-1].lower() %}
+
+                    {% if file_extension in ['mp4', 'webm', 'mov'] %}
+                        <div class="video-thumbnail" onclick="openVideoModal('{{ file_url }}')">
+                            {% if message.thumbnail_url %}
+                                <img src="{{ url_for('static', filename='chat_uploads/thumbnails/' + message.thumbnail_url.split('/')[-1]) }}" class="chat-thumbnail" alt="Miniatura de video">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='chat_uploads/thumbnails/default-thumbnail.jpg') }}" class="chat-thumbnail" alt="Miniatura de video">
+                            {% endif %}
+                            <i class="fa fa-play play-icon"></i>
+                        </div>
+
+                    {% elif file_extension in ['jpg', 'jpeg', 'png', 'gif'] %}
+                        <img src="{{ file_url }}" class="chat-thumbnail" alt="Imagen enviada" onclick="openImageModal('{{ file_url }}')">
+
+                    {% elif file_extension == 'pdf' %}
+                        <div class="file-thumbnail" onclick="window.location.href='{{ file_url }}'">
+                            <i class="fas fa-file-pdf file-icon pdf"></i>
+                            <div class="file-name">{{ message.file_url.split('/')[-1] }}</div>
+                        </div>
+
+                    {% elif file_extension in ['docx', 'pptx', 'xls', 'xlsx'] %}
+                        <div class="file-thumbnail" onclick="window.location.href='{{ file_url }}'">
+                            {% if file_extension == 'docx' %}
+                                <i class="fas fa-file-word file-icon word"></i>
+                            {% elif file_extension in ['xls', 'xlsx'] %}
+                                <i class="fas fa-file-excel file-icon excel"></i>
+                            {% elif file_extension == 'pptx' %}
+                                <i class="fas fa-file-powerpoint file-icon ppt"></i>
+                            {% else %}
+                                <i class="fas fa-file-alt file-icon"></i>
+                            {% endif %}
+                            <div class="file-name">{{ message.file_url.split('/')[-1] }}</div>
+                        </div>
+
+                    {% else %}
+                        <i class="fas fa-file file-icon"></i> 
+                        <a href="{{ file_url }}" target="_blank">Descargar archivo</a>
+                    {% endif %}
+                {% else %}
+                    <p class="message-text"><strong>{{ message.sender.username }}:</strong> {{ message.content }}</p>
+                {% endif %}
+
+                {% if message.sender.username == username %}
+                    <div class="message-options">
+                        <span class="options-icon">⋮</span>
+                        <div class="options-menu">
+                            <button class="edit-message">Editar</button>
+                            <button class="delete-message">Borrar</button>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Formulario para enviar mensajes -->
+<form id="message-form" enctype="multipart/form-data">
+    <div id="chat-input">
+        <label for="file-input" class="file-label"><i class="fas fa-paperclip"></i></label>
+        <input type="file" id="file-input" multiple accept="image/*,video/*,.pdf,.docx,.pptx,.xls,.xlsx,.avi,.mpg,.mov,.webm" style="display: none;">
+
+        <!-- Vista previa visual de archivos -->
+        <div id="file-preview-container"></div>
+
+        <textarea id="message" placeholder="Escribe un mensaje..." rows="2"></textarea>
+        <button id="send-btn" type="submit">Enviar</button>
+    </div>
+    <input type="hidden" id="csrf-token" value="{{ csrf_token() }}">
+</form>
+
+<!-- Modal para visualizar imágenes -->
+<div id="image-modal" class="modal" onclick="closeImageModal()">
+    <div class="download-link">
+        <a href="#" id="download-link" download>Descargar</a>
+    </div>
+    <img class="modal-content" id="modal-image">
+</div>
+
+<!-- Modal para reproducir videos -->
+<div id="video-modal" class="modal">
+    <div class="modal-content">
+        <video controls id="modal-video">
+            Tu navegador no soporta videos.
+        </video>
+        <div class="download-link">
+            <a href="#" id="video-download-link" download>Descargar</a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

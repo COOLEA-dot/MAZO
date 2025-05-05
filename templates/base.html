@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}Aplicación{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/logout_modal.css') }}"> <!-- CSS para el modal -->
+</head>
+<body>
+    <!-- Barra de tareas -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <a href="{{ url_for('home') }}">MAZO</a>
+        </div>
+        <ul class="navbar-links">
+            <li><a href="{{ url_for('home') }}">Inicio</a></li>
+            {% if g.user %}
+                <li><a href="{{ url_for('profile', username=g.user.username) }}">Perfil</a></li>
+                <li><a href="{{ url_for('chats') }}">Chats</a></li>
+                <!-- Enlace de cierre de sesión con data-logout-url -->
+                <li><a href="#" id="logout-link" data-logout-url="{{ url_for('logout') }}">Cerrar sesión</a></li>
+            {% else %}
+                <li><a href="{{ url_for('login') }}">Iniciar sesión</a></li>
+            {% endif %}
+        </ul>
+        <form class="navbar-search" action="{{ url_for('search') }}" method="GET">
+            <input type="text" name="q" placeholder="Buscar..." />
+            <button type="submit">Buscar</button>
+        </form>
+    </nav>
+
+    <!-- Modal de confirmación -->
+    <div id="logout-modal" class="modal">
+        <div class="modal-content">
+            <p>¿Seguro que quieres cerrar sesión?</p>
+            <div class="modal-buttons">
+                <button id="confirm-logout">Sí</button>
+                <button id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido de la página -->
+    <div class="container">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/logout_modal.js') }}"></script> <!-- JS para el modal -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

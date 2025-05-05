@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Subir Video{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
+
+<h1>Sube tu Video</h1>
+
+<form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+    <!-- CSRF Token -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label for="title">Título del Video:</label>
+    <input type="text" name="title" id="title" required>
+
+    <label for="description">Descripción:</label>
+    <textarea name="description" id="description" rows="3"></textarea>
+
+    <label for="hashtags">Hashtags (separados por comas):</label>
+    <input type="text" name="hashtags" id="hashtags" placeholder="#ejemplo, #video">
+
+    <label for="video_file">Selecciona un video:</label>
+    <input type="file" name="video_file" id="video_file" accept="video/*" required>
+
+    <button type="submit" id="compressButton">Subir Video</button>
+</form>
+
+<br>
+<!-- Corrección: Se agrega el username en la URL -->
+<a href="{{ url_for('profile', username=g.user.username) }}">Volver al perfil</a>
+
+<!-- Área de progreso -->
+<div id="progress" style="display:none;">Procesando video, espera por favor...</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Evento para el envío del formulario
+document.getElementById('compressButton').addEventListener('click', async (e) => {
+    e.preventDefault(); // Prevenir el envío del formulario por defecto
+
+    const fileInput = document.getElementById('video_file');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert('Selecciona un video primero');
+        return;
+    }
+
+    // Mostrar progreso
+    document.getElementById('progress').style.display = 'block';
+
+    // Crear un objeto FormData con los datos del formulario
+    const formData = new FormData(document.getElementById('uploadForm'));
+
+    // Enviar el archivo al servidor
+    fetch('{{ url_for("upload") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('¡Video subido exitosamente!');
+            document.getElementById('uploadForm').reset(); // Limpiar formulario
+        } else {
+            alert('Error al subir el video.');
+        }
+    })
+    .catch(error => console.error('Error:', error))
+    .finally(() => {
+        document.getElementById('progress').style.display = 'none'; // Ocultar progreso
+    });
+});
+</script>
+{% endblock %}
