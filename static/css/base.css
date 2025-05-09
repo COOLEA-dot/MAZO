@@ -91,3 +91,96 @@ body {
     margin-top: 5px; /* Deja espacio para la barra de tareas fija */
     padding: 20px;
 }
+
+@media screen and (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+        padding: 10px;
+    }
+
+    .navbar-brand a {
+        font-size: 20px;
+    }
+
+    .navbar-links {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .navbar-links li {
+        margin: 5px 0;
+    }
+
+    .navbar-search {
+        align-items: flex-start;
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .navbar-search input {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .navbar-search button {
+        width: 100%;
+        margin-right: 0;
+    }
+}
+.link-text {
+    margin-left: 6px;
+}
+@media (max-width: 600px) {
+    .navbar {
+        flex-direction: column;
+        align-items: stretch;
+        height: auto;
+        padding: 0;
+    }
+
+    .navbar-brand {
+        display: none;
+    }
+
+    .navbar-links {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        width: 100%;
+        background-color: black;
+    }
+
+    .navbar-links li {
+        flex: 1;
+        text-align: center;
+    }
+
+    .navbar-links a {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px 0;
+        font-size: 20px;
+        color: white;
+    }
+
+    .link-text {
+        display: none;
+    }
+
+    .navbar-search {
+        display: none;
+    }
+
+    /* ✅ NUEVO: Forzamos .container a ocupar toda la pantalla en móvil */
+    .container {
+        height: 100vh;
+        width: 100vw;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+}

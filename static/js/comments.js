@@ -4,7 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadComments(videoId) {
         const panel = document.querySelector(`.comments-panel[data-video-id="${videoId}"]`);
-        const commentList = document.getElementById(`comments-list-${videoId}`);
+        const commentList = window.innerWidth <= 600
+            ? document.getElementById(`comments-list-mobile-${videoId}`)
+            : document.getElementById(`comments-list-${videoId}`);
         if (!panel || !commentList) return;
 
         commentList.innerHTML = '';
@@ -69,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!comment.is_deleted) {
                     commentItem.addEventListener('click', () => {
-                        const form = document.querySelector(`.add-comment-form[data-video-id="${videoId}"]`);
+                        const form = document.querySelector(`.add-comment-form[data-video-id="${videoId}"]`) || document.querySelector(`.add-comment-form-mobile[data-video-id="${videoId}"]`);
                         const input = form.querySelector('input[name="comment"]');
                         const parentInput = form.querySelector('input[name="parent_id"]');
                         input.placeholder = `Añade una respuesta para @${comment.username}`;
@@ -104,11 +106,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.comment-button').forEach(button => {
         button.addEventListener('click', async () => {
             const videoId = button.dataset.videoId;
-            const panel = document.querySelector(`.comments-panel[data-video-id="${videoId}"]`);
-            if (panel) {
-                panel.classList.toggle('hidden');
-                if (!panel.classList.contains('hidden')) {
+            const desktopPanel = document.querySelector(`.comments-panel[data-video-id="${videoId}"]`);
+            const mobilePanel = document.getElementById(`mobile-comments-${videoId}`);
+
+            if (window.innerWidth <= 600) {
+                if (mobilePanel) {
+                    mobilePanel.classList.remove("hidden");
+                    mobilePanel.classList.add("show");
                     await loadComments(videoId);
+                }
+            } else {
+                if (desktopPanel) {
+                    desktopPanel.classList.toggle("hidden");
+                    if (!desktopPanel.classList.contains("hidden")) {
+                        await loadComments(videoId);
+                    }
                 }
             }
         });
@@ -124,12 +136,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    document.querySelectorAll('.add-comment-form').forEach(form => {
+    document.querySelectorAll('.add-comment-form, .add-comment-form-mobile').forEach(form => {
         form.addEventListener('submit', async e => {
             e.preventDefault();
             const videoId = form.dataset.videoId;
             const input = form.querySelector('input[name="comment"]');
-            const parentId = form.querySelector('input[name="parent_id"]').value;
+            const parentId = form.querySelector('input[name="parent_id"]')?.value || "";
             const commentText = input.value.trim();
             if (!commentText) return;
 
@@ -148,7 +160,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.success) {
                     input.value = '';
                     input.placeholder = 'Escribe un comentario...';
-                    form.querySelector('input[name="parent_id"]').value = '';
+                    if (form.querySelector('input[name="parent_id"]')) {
+                        form.querySelector('input[name="parent_id"]').value = '';
+                    }
                     await loadComments(videoId);
                 } else {
                     console.error('Error al enviar comentario:', result.message);
@@ -169,7 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Resetear formulario de respuesta
         const clickedInside = e.target.closest('.comment-item') || e.target.closest('.add-comment-form');
         if (!clickedInside) {
             document.querySelectorAll('.add-comment-form').forEach(form => {
@@ -196,15 +209,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const result = await response.json();
                 if (result.success) {
-                    const panel = deleteButton.closest('.comments-panel');
-                    const videoId = panel.dataset.videoId;
-                    await loadComments(videoId);
+                    const videoId = deleteButton.closest('[data-video-id]')?.dataset.videoId;
+                    if (videoId) await loadComments(videoId);
                 } else {
                     console.error('Error al eliminar comentario:', result.message);
                 }
             } catch (err) {
                 console.error('Error al eliminar comentario:', err);
             }
+        }
+    });
+});
+document.querySelectorAll('.close-comments').forEach(button => {
+    button.addEventListener('click', function () {
+        const videoId = this.dataset.videoId;
+        const mobilePanel = document.getElementById(`mobile-comments-${videoId}`);
+        if (mobilePanel) {
+            mobilePanel.classList.remove('show');
         }
     });
 });

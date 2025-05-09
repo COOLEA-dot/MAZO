@@ -80,12 +80,54 @@ button:hover {
 
 /* Responsividad */
 @media (max-width: 600px) {
-    .container {
-        margin: 20px;
-        padding: 15px;
+    form#uploadForm {
+        width: 100%;
+        padding: 10px 16px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start; /* Alinea los elementos a la izquierda */
     }
 
-    button {
+    form#uploadForm label {
         font-size: 14px;
+        margin-bottom: 4px;
+        width: 100%;
+        text-align: left;
+    }
+
+    form#uploadForm input[type="text"],
+    form#uploadForm textarea,
+    form#uploadForm input[type="file"],
+    form#uploadForm button {
+        width: 90%;
+        font-size: 14px;
+        margin-bottom: 12px;
+        box-sizing: border-box;
+    }
+
+    form#uploadForm textarea {
+        resize: vertical;
+    }
+
+    form#uploadForm button {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 18px;
+        text-align: left; /* Título alineado a la izquierda */
+        margin-left: 16px;
+    }
+
+    #progress {
+        font-size: 14px;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    /* Asegura que no afecta a la barra de navegación ni al layout general */
+    body, html {
+        overflow-x: hidden;
     }
 }

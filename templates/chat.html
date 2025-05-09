@@ -9,12 +9,12 @@
 <h2 class="chat-header">
     <a href="{{ url_for('profile', username=recipient.username) }}" class="chat-profile-link">
         <div class="chat-avatar">
-            <img src="{{ url_for('static', filename='profile_pics/' + (recipient.profile_pic if recipient.profile_pic else 'default.jpg')) }}" alt="{{ recipient.username }}">
+            <img src="{{ url_for('static', filename=(recipient.profile_pic if recipient.profile_pic else 'profile_pics/default.jpg')) }}" alt="{{ recipient.username }}">
         </div>
         <div class="chat-info">
             <h3>{{ recipient.company if recipient.company else recipient.username }}</h3>
         </div>
-    </a>
+    </a>    
 </h2>
 
 <div id="chat-box" 
@@ -69,7 +69,7 @@
                         <a href="{{ file_url }}" target="_blank">Descargar archivo</a>
                     {% endif %}
                 {% else %}
-                    <p class="message-text"><strong>{{ message.sender.username }}:</strong> {{ message.content }}</p>
+                    <p class="message-text">{{ message.content }}</p>
                 {% endif %}
 
                 {% if message.sender.username == username %}
@@ -96,7 +96,7 @@
         <div id="file-preview-container"></div>
 
         <textarea id="message" placeholder="Escribe un mensaje..." rows="2"></textarea>
-        <button id="send-btn" type="submit">Enviar</button>
+        <button id="send-btn" type="submit"></button>      
     </div>
     <input type="hidden" id="csrf-token" value="{{ csrf_token() }}">
 </form>

@@ -70,11 +70,6 @@ video {
     }
 }
 
-@media (max-width: 600px) {
-    .video-grid {
-        grid-template-columns: 1fr;  /* 1 columna en pantallas muy pequeñas */
-    }
-}
 
 /* 🔵 Botón "Enviar Mensaje" */
 .btn-send-message {
@@ -610,4 +605,107 @@ video {
 
 .btn-unfollow:hover {
     background-color: #c82333;
+}
+
+@media (max-width: 600px) {
+    .profile-container {
+        padding: 10px;
+    }
+
+    .profile-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 10px;
+    }
+
+    .profile-pic {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #ccc;
+    }
+
+    .profile-details p {
+        margin: 4px 0;
+        font-size: 14px;
+    }
+
+    /* Oculta todos los <strong> excepto la línea de ubicación */
+    .profile-details p strong {
+        display: none;
+    }
+
+    .profile-details .location-line strong {
+        display: inline;
+        margin-right: 4px;
+    }
+
+    .follow-container {
+        text-align: center;
+    }
+
+    .follow-stats span {
+        display: block;
+        font-size: 14px;
+    }
+
+    .btn-follow,
+    .btn-unfollow,
+    .btn-send-message,
+    .btn-edit-profile {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+
+    .message-button,
+    .reviews-button,
+    .edit-profile-button {
+        margin-top: 8px;
+    }
+
+    .video-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* 3 columnas por fila */
+        gap: 8px;
+        padding: 10px 0;
+    }
+
+    .video-grid video {
+        width: 100%;
+        height: auto;
+        border-radius: 6px;
+    }
+
+    .video {
+        position: relative;
+    }
+
+    .delete-video-btn {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .upload-video-link {
+        font-size: 14px;
+        display: block;
+        text-align: center;
+        margin: 15px 0;
+    }
+
+    .average-rating {
+        font-size: 16px;
+        font-weight: bold;
+    }
 }
