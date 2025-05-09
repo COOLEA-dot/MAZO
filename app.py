@@ -637,7 +637,7 @@ def get_user_chats(user_id):
 
         chat_data.append({
             'username': other_user.username,
-            'profile_pic': other_user.profile_pic or 'default.jpg',
+            'profile_pic': other_user.profile_pic.split('/')[-1] if other_user.profile_pic else 'default.jpg',
             'last_message': last_message.content if last_message else "No hay mensajes",
             'sent_by_user': sent_by_user,
             'has_unread': has_unread  

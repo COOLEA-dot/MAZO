@@ -51,8 +51,9 @@
             {% endif %}
         
             {% if user.location %}
-                <p><strong>📍:</strong> {{ user.location }}</p>
+                <p class="location-line"><strong>📍</strong> {{ user.location }}</p>
             {% endif %}
+
         </div>
         
         <!-- 🔵 Botón de mensaje -->
@@ -189,5 +190,19 @@
 
     <h3><a href="{{ url_for('upload') }}" class="upload-video-link">Subir un nuevo video</a></h3>
 </div>
-
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.delete-video-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const videoElement = this.closest('.video').querySelector('video');
+                if (videoElement) {
+                    videoElement.pause();
+                    videoElement.src = '';
+                    videoElement.load();
+                }
+            });
+        });
+    });
+    </script>
+     
 {% endblock %}

@@ -222,7 +222,7 @@ function displayMessage(data) {
                 <a href="${fileUrl}" target="_blank">Descargar archivo</a>`;
         }
     } else if (data.message) {
-        mediaContent = `<p class="message-text"><strong>${data.username}:</strong> ${data.message}</p>`;
+        mediaContent = `<p class="message-text">${data.message}</p>`;
     }
 
     const messageOptions = isMyMessage ? `
