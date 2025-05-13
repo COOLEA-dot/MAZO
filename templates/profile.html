@@ -173,16 +173,19 @@
                     <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
                     Tu navegador no soporta el video.
                 </video>
-                
+
+            {% if current_user.id == user.id %}
                 <form action="{{ url_for('delete_video', video_id=video.id) }}" method="POST">
                     {{ form.hidden_tag() }}
                     <button type="submit" class="delete-video-btn">Eliminar</button>
                 </form>
+            {% endif %}
             </div>
         {% endfor %}
     </div>
-
+{% if current_user.id == user.id %}
     <h3><a href="{{ url_for('upload') }}" class="upload-video-link">Subir un nuevo video</a></h3>
+    {% endif %}
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
