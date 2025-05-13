@@ -9,6 +9,12 @@
 <div class="profile-container">
     <!-- 🔹 Información del usuario -->
     <div class="profile-header">
+        {% if current_user.id != user.id %}
+            <div class="action-buttons">
+                <a href="{{ url_for('send_message', recipient_id=user.id) }}" class="btn-send-message" title="Enviar Mensaje">✉️</a>
+                <a href="javascript:void(0)" class="btn-reviews" title="Ver Opiniones">⭐</a>
+            </div>
+        {% endif %}
         <img src="{{ url_for('static', filename=user.profile_pic if user.profile_pic else 'profile_pics/default.jpg') }}" 
              alt="Foto de perfil" class="profile-pic">
 
@@ -54,18 +60,6 @@
                 <p class="location-line"><strong>📍</strong> {{ user.location }}</p>
             {% endif %}
 
-        </div>
-        
-        <!-- 🔵 Botón de mensaje -->
-        {% if current_user.id != user.id %}
-            <div class="message-button">
-                <a href="{{ url_for('send_message', recipient_id=user.id) }}" class="btn-send-message" title="Enviar Mensaje">✉️</a>
-            </div>
-        {% endif %}
-
-        <!-- 🔵 Botón para ver opiniones -->
-        <div class="reviews-button">
-            <a href="javascript:void(0)" class="btn-reviews" title="Ver Opiniones">⭐</a>
         </div>
 
         {% if average_rating is not none %}

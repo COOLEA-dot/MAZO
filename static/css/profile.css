@@ -504,17 +504,8 @@ video {
     margin-top: 5px;
 }
 
-/* Ajuste en pantallas pequeñas */
-@media (max-width: 500px) {
-    .review-footer {
-        flex-direction: column;
-        align-items: flex-start;
-    }
 
-    .response-form {
-        margin-top: 5px;
-    }
-}
+
 
 /* Oculta la scrollbar en navegadores basados en WebKit */
 .reviews-section::-webkit-scrollbar {
@@ -708,4 +699,58 @@ video {
         font-size: 16px;
         font-weight: bold;
     }
+
+    .profile-header {
+        position: relative;
+    }
+    
+    /* El contenedor no necesita display flex ya */
+    .action-buttons {
+        position: relative;
+    }
+
+    /* Opiniones a la izquierda */
+    .btn-reviews {
+        position: absolute;
+        top: 10px;
+        right: 100px;
+        background-color: #28a745;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        text-decoration: none;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .btn-reviews:hover {
+        background-color: #218838;
+    }
+
+    .btn-send-message {
+        position: absolute;
+        top: 10px;
+        left: 100px; /* o left: 100px si prefieres */
+        width: 42px;
+        height: 42px;
+        background-color: #007bff;
+        color: white;
+        border-radius: 50%;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        line-height: 1; /* importante para evitar estiramiento vertical */
+        padding: 0;
+    }
+    .btn-send-message:hover {
+        background-color: #0056b3;
+    } 
 }
