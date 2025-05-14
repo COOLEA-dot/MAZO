@@ -37,6 +37,11 @@
                     </a>
                 </li>
                 <li>
+                    <button id="mobile-search-toggle" class="mobile-search-icon">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </li>
+                <li>
                     <a href="#" id="logout-link" data-logout-url="{{ url_for('logout') }}">
                         <i class="fas fa-sign-out-alt"></i>
                         <span class="link-text">Salir</span>
@@ -52,7 +57,14 @@
             {% endif %}
         </ul>
 
+        <!-- Formulario de búsqueda visible solo en escritorio -->
         <form class="navbar-search" action="{{ url_for('search') }}" method="GET">
+            <input type="text" name="q" placeholder="Buscar..." />
+            <button type="submit"><i class="fas fa-search"></i></button>
+        </form>
+
+        <!-- Formulario de búsqueda móvil (se muestra al hacer clic en el icono) -->
+        <form id="mobile-search-form" class="mobile-search-form" action="{{ url_for('search') }}" method="GET" style="display: none;">
             <input type="text" name="q" placeholder="Buscar..." />
             <button type="submit"><i class="fas fa-search"></i></button>
         </form>
@@ -76,6 +88,19 @@
 
     <!-- Scripts -->
     <script src="{{ url_for('static', filename='js/logout_modal.js') }}"></script>
+    <script>
+        // Mostrar/ocultar buscador móvil
+        document.addEventListener("DOMContentLoaded", () => {
+            const toggleBtn = document.getElementById("mobile-search-toggle");
+            const form = document.getElementById("mobile-search-form");
+
+            if (toggleBtn && form) {
+                toggleBtn.addEventListener("click", () => {
+                    form.style.display = form.style.display === "flex" ? "none" : "flex";
+                });
+            }
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

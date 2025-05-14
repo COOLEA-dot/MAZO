@@ -14,23 +14,6 @@ main {
     margin: 0;
 }
 
-.video-container {
-    display: flex;
-    width: 100%;
-    height: 100%;
-    position: relative;
-    justify-content: center; /* Centra el video */
-    align-items: center; /* Centra el video */
-}
-
-.video-item {
-    display: flex;
-    justify-content: flex-start;
-    align-items: flex-start;
-    width: auto;
-    height: 100%;
-}
-
 .video-left {
     position: fixed;
     top: 120px; /* Aumenta el valor para bajar la información */
@@ -564,13 +547,39 @@ p {
     transform: translateY(0);
 }
 
-/* Video ocupa todo el ancho */
-.video-element {
+.video-container {
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.video-item {
+    position: absolute;
     width: 100%;
-    height: auto;
-    max-height: 60vh;
-    display: block;
-    border-radius: 0;
+    height: 100%;
+    top: 0;
+    left: 0;
+    transition: transform 0.4s ease, opacity 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.video-item.active {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 2;
+}
+
+.video-item.prev {
+    transform: translateY(-100%);
+    z-index: 1;
+}
+
+.video-item.next {
+    transform: translateY(100%);
+    z-index: 1;
 }
 
 @media (max-width: 600px) {
