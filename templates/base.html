@@ -37,12 +37,7 @@
                     </a>
                 </li>
                 <li>
-                    <button id="mobile-search-toggle" class="mobile-search-icon">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </li>
-                <li>
-                    <a href="#" id="logout-link" data-logout-url="{{ url_for('logout') }}">
+                    <a href="{{ url_for('logout') }}" onclick="openLogoutModal(event)">
                         <i class="fas fa-sign-out-alt"></i>
                         <span class="link-text">Salir</span>
                     </a>
@@ -51,56 +46,75 @@
                 <li>
                     <a href="{{ url_for('login') }}">
                         <i class="fas fa-sign-in-alt"></i>
-                        <span class="link-text">Login</span>
+                        <span class="link-text">Entrar</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('register') }}">
+                        <i class="fas fa-user-plus"></i>
+                        <span class="link-text">Registrarse</span>
                     </a>
                 </li>
             {% endif %}
+            <li class="mobile-only">
+                <button class="mobile-search-icon" onclick="toggleMobileSearch()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </li>
         </ul>
 
-        <!-- Formulario de búsqueda visible solo en escritorio -->
-        <form class="navbar-search" action="{{ url_for('search') }}" method="GET">
-            <input type="text" name="q" placeholder="Buscar..." />
-            <button type="submit"><i class="fas fa-search"></i></button>
-        </form>
-
-        <!-- Formulario de búsqueda móvil (se muestra al hacer clic en el icono) -->
-        <form id="mobile-search-form" class="mobile-search-form" action="{{ url_for('search') }}" method="GET" style="display: none;">
-            <input type="text" name="q" placeholder="Buscar..." />
-            <button type="submit"><i class="fas fa-search"></i></button>
-        </form>
+        <!-- Buscador escritorio -->
+        <div class="navbar-search desktop-only">
+            <form method="GET" action="{{ url_for('search') }}">
+                <input type="text" name="q" placeholder="Buscar...">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
+        </div>
     </nav>
 
-    <!-- Modal de confirmación -->
-    <div id="logout-modal" class="modal">
+    <!-- Buscador móvil desplegable -->
+    <div class="mobile-search-form mobile-only" id="mobileSearchForm">
+        <form method="GET" action="{{ url_for('search') }}">
+            <input type="text" name="q" placeholder="Buscar...">
+            <button type="submit"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
+
+    <!-- Contenido de la página -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Modal para cerrar sesión -->
+    <div id="logoutModal" class="modal">
         <div class="modal-content">
-            <p>¿Seguro que quieres cerrar sesión?</p>
+            <p>¿Estás seguro de que quieres cerrar sesión?</p>
             <div class="modal-buttons">
-                <button id="confirm-logout">Sí</button>
-                <button id="cancel-logout">No</button>
+                <button onclick="confirmLogout()">Sí</button>
+                <button onclick="closeLogoutModal()">No</button>
             </div>
         </div>
     </div>
 
-    <!-- Contenido de la página -->
-    <div class="container">
-        {% block content %}{% endblock %}
-    </div>
-
     <!-- Scripts -->
-    <script src="{{ url_for('static', filename='js/logout_modal.js') }}"></script>
     <script>
-        // Mostrar/ocultar buscador móvil
-        document.addEventListener("DOMContentLoaded", () => {
-            const toggleBtn = document.getElementById("mobile-search-toggle");
-            const form = document.getElementById("mobile-search-form");
+        function toggleMobileSearch() {
+            const form = document.getElementById('mobileSearchForm');
+            form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
+        }
 
-            if (toggleBtn && form) {
-                toggleBtn.addEventListener("click", () => {
-                    form.style.display = form.style.display === "flex" ? "none" : "flex";
-                });
-            }
-        });
+        function openLogoutModal(event) {
+            event.preventDefault();
+            document.getElementById('logoutModal').style.display = 'block';
+        }
+
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').style.display = 'none';
+        }
+
+        function confirmLogout() {
+            window.location.href = "{{ url_for('logout') }}";
+        }
     </script>
-    {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -92,43 +92,15 @@ body {
     padding: 20px;
 }
 
-@media screen and (max-width: 768px) {
-    .navbar {
-        flex-direction: column;
-        align-items: flex-start;
-        height: 50px;
-        padding: 10px;
-    }
-
-    .navbar-brand a {
-        font-size: 20px;
-    }
-
-    .navbar-links {
-        width: 100%;
-        margin-top: 10px;
-    }
-
-    .navbar-links li {
-        margin: 5px 0;
-    }
-
-    .navbar-search {
-        align-items: flex-start;
-        margin-left: 0;
-        width: 100%;
-    }
-
-    .navbar-search input {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-
-    .navbar-search button {
-        width: 100%;
-        margin-right: 0;
-    }
+/* Buscadores: visibilidad según dispositivo */
+.desktop-only {
+    display: block;
 }
+
+.mobile-only {
+    display: none;
+}
+
 .link-text {
     margin-left: 6px;
 }
@@ -156,6 +128,14 @@ body {
     .navbar-links li {
         flex: 1;
         text-align: center;
+    }
+
+    .mobile-only {
+        display: block;
+    }
+
+    .desktop-only {
+        display: none;
     }
 
     .navbar-links a,
