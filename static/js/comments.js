@@ -106,9 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.comment-button').forEach(button => {
         button.addEventListener('click', async () => {
             const videoId = button.dataset.videoId;
-            const desktopPanel = document.querySelector(`.comments-panel[data-video-id="${videoId}"]`);
             const mobilePanel = document.getElementById(`mobile-comments-${videoId}`);
-
+            const desktopWrapper = document.getElementById(`wrapper-${videoId}`);
+            const desktopPanel = document.getElementById(`comments-panel-${videoId}`);
+    
             if (window.innerWidth <= 600) {
                 if (mobilePanel) {
                     mobilePanel.classList.remove("hidden");
@@ -116,16 +117,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     await loadComments(videoId);
                 }
             } else {
-                if (desktopPanel) {
-                    desktopPanel.classList.toggle("hidden");
-                    if (!desktopPanel.classList.contains("hidden")) {
+                if (desktopWrapper && desktopPanel) {
+                    const isHidden = desktopWrapper.classList.contains("hidden");
+                    document.querySelectorAll('.video-comments-wrapper').forEach(w => w.classList.add('hidden'));
+                    if (isHidden) {
+                        desktopWrapper.classList.remove("hidden");
                         await loadComments(videoId);
                     }
                 }
             }
         });
     });
-
+    
     const firstVisibleVideo = document.querySelector('.video-item:not(.hidden)');
     if (firstVisibleVideo) {
         const firstVideoId = firstVisibleVideo.querySelector('.comment-button')?.dataset.videoId;
