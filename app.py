@@ -32,7 +32,7 @@ app.config["WTF_CSRF_ENABLED"] = True
 app.config['WTF_CSRF_TIME_LIMIT'] = None  # Token CSRF nunca expira (solo para desarrollo)
 g
 #Configuramos la base de datos 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///mazo.db" 
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///mazo.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
