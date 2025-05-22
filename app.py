@@ -140,7 +140,7 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(300), nullable=False)
     profile_pic = db.Column(db.String(100), nullable=True)
     name = db.Column(db.String(100))
     phone = db.Column(db.String(20), nullable=True)
@@ -1405,10 +1405,9 @@ def logout():
     flash("Has cerrado sesión exitosamente", "success")
     return redirect(url_for("login"))
 
-with app.app_context():
-    db.create_all()
-
 if __name__ == '__main__':
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
+    with app.app_context():
+        db.create_all()   # Y las vuelve a crear con los nuevos tamaños
 
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
 
