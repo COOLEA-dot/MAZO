@@ -1405,8 +1405,10 @@ def logout():
     flash("Has cerrado sesión exitosamente", "success")
     return redirect(url_for("login"))
 
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
+
 
