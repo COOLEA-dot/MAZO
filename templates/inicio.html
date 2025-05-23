@@ -3,12 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3;url=/login" />
-    <title>MAZO</title>
+    <title>MAZO - Encuentra profesionales</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/inicio.css') }}">
 </head>
 <body>
-    <img src="/static/profile_pics/logo.png" alt="MAZO Logo">
-    <p>MAZO- encuentra aquí tus profesionales</p>
+    <header>
+        <img src="/static/profile_pics/logo.png" alt="MAZO Logo" class="logo">
+        <h1>MAZO</h1>
+        <p>Encuentra aquí a tus profesionales de confianza</p>
+        <a href="{{ url_for('home') }}" class="btn-principal">Empezar sin registro</a>
+        <a href="{{ url_for('login') }}" class="btn-secundario">Iniciar sesión</a>
+    </header>
+
+    <section class="features">
+        <h2>¿Por qué usar MAZO?</h2>
+        <ul>
+            <li>📹 Perfiles con video</li>
+            <li>📍 Búsqueda por profesión y ubicación</li>
+            <li>💬 Chat en tiempo real</li>
+            <li>⭐ Opiniones y valoraciones</li>
+        </ul>
+    </section>
+
+    <section class="demo">
+        <h2>Descubre cómo funciona</h2>
+        <img src="/static/demo.png" alt="Captura de pantalla">
+    </section>
+
+    <footer>
+        <p>&copy; 2025 MAZO · Todos los derechos reservados</p>
+    </footer>
 </body>
 </html>

@@ -220,6 +220,8 @@ def unauthorized():
 
 @app.route('/')
 def inicio():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))  # o tu ruta principal de videos
     return render_template('inicio.html')
 
 class RegisterForm(FlaskForm):
