@@ -544,19 +544,14 @@ def search():
         users = User.query.filter(
             (User.name.ilike(f"%{query}%")) |
             (User.company.ilike(f"%{query}%")) |
-            (User.profession.ilike(f"%{query}%"))
-        )
+            (User.profession.ilike(f"%{query}%")) |
+            (User.location.ilike(f"%{query}%"))
+        ).all()
+
         for video in videos:
             print(f"Video ID: {video.id}, URL: {video.video_url}")  
 
         flash(f"Resultados para: '{query}'", "info")
-        #Filtrar por ubicación
-        if location:
-            users = users.filter(User.location.ilike(f"%{location}%"))
-
-        users = users.all()
-        flash(f"Resultados para: '{query}'", "info")
-
     else:
         videos, users = [], []
     return render_template('search.html', videos=videos, users=users, query=query)

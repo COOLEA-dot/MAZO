@@ -1,3 +1,4 @@
+/* Caja de sugerencias */
 .suggestions-box {
     position: absolute;
     background: white;
@@ -17,41 +18,62 @@
     background: #f0f0f0;
 }
 
-/* Estilo para las imágenes de los perfiles en la sección de búsqueda */
-.user img {
-    width: 80px;  /* Ajusta el tamaño de la imagen de perfil */
-    height: 80px; /* Asegura que la imagen tenga la misma altura y anchura */
-    border-radius: 50%; /* Hace que la imagen sea redonda */
-    object-fit: cover; /* Asegura que la imagen se ajuste bien sin distorsionarse */
-    margin-right: 10px; /* Espacio entre la imagen y el nombre del usuario */
+/* Contenedor de cada usuario con estilo más profesional */
+.user-card {
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    transition: background-color 0.2s ease;
 }
 
-/* Estilo para el contenedor de cada usuario */
-.user {
-    display: flex; 
-    flex-direction: column; /* Cambia de fila a columna para apilar la información */
-    padding: 10px;
-    border-bottom: 1px solid #ddd; /* Separador entre perfiles */
+.user-card:hover {
+    background-color: #eef2f5;
 }
 
-/* Contenedor de la información adicional de cada usuario */
+.user-card img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 15px;
+    border: 2px solid #ccc;
+}
+
 .user-info {
-    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
-/* Información del perfil con estilo actualizado */
-.user p {
-    font-size: 14px;  /* Mantiene el tamaño de texto consistente */
-    color: #000;      /* Cambié el color para ser más sutil */
-    margin: 5px 0;
-    font-family: 'Arial', sans-serif; /* Usa una fuente estándar */
-    font-weight: bold; /* Pone el texto en negrita */
+.user-info strong {
+    font-size: 16px;
+    margin-bottom: 4px;
 }
 
-/* Estilos para los videos */
+.user-info p {
+    font-size: 14px;
+    color: #444;
+    margin: 2px 0;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Estilo original para los .user, ahora no se usa pero se deja como referencia */
+.user {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Estilo para los videos */
 .video {
     width: 100%;
-    aspect-ratio: 9 / 16; /* Proporción estilo TikTok */
+    aspect-ratio: 9 / 16;
     overflow: hidden;
     border-radius: 8px;
     position: relative;
@@ -77,30 +99,30 @@
     border-radius: 8px;
 }
 
-/* Cuadrícula de videos: 4 en 4 */
+/* Cuadrícula de videos */
 .video-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4 columnas en pantallas grandes */
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     padding: 20px;
     justify-content: center;
 }
 
-/* Ajustes para pantallas más pequeñas */
+/* Responsive: menos columnas según tamaño */
 @media (max-width: 1024px) {
     .video-grid {
-        grid-template-columns: repeat(3, 1fr); /* 3 columnas en pantallas medianas */
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 768px) {
     .video-grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 columnas en móviles */
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 480px) {
     .video-grid {
-        grid-template-columns: repeat(1, 1fr); /* 1 video por fila en pantallas pequeñas */
+        grid-template-columns: repeat(1, 1fr);
     }
 }
