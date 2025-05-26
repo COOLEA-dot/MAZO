@@ -170,7 +170,7 @@
         {% for video in videos %}
             <div class="video">
                 <video controls>
-                    <src="{{ url_for('static', filename='uploads/videos/' + video.video_url) }}"></src>
+                    <source src="{{ video.video_url }}" type="video/mp4">
                     Tu navegador no soporta el video.
                 </video>
 

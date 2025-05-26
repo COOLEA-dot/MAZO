@@ -23,6 +23,15 @@ import uuid
 import time
 import base64
 from flask_wtf.file import FileField, FileAllowed
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+cloudinary.config(
+    cloud_name='dbqnz99nf',
+    api_key='236951855294579',
+    api_secret='ZMu36XrX8f9iZK2DhWoOdhQz0G4'
+)
 
 app = Flask(__name__)
 app.config['ENV'] = 'production'
@@ -40,6 +49,7 @@ CORS(app)
 csrf = CSRFProtect(app)
 csrf.init_app(app)
 logging.basicConfig(level=logging.DEBUG)
+
 
 # Configuraciones para el directorio de archivos
 UPLOAD_FOLDER = 'static/uploads/videos'
@@ -1162,29 +1172,6 @@ def add_security_headers(response):
     """Verifica si la extensión del archivo es válida"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def compress_video(input_path):
-    """Comprime un video si es mayor al tamaño máximo permitido y reemplaza el original"""
-    max_size_bytes = app.config['MAX_CONTENT_LENGTH']
-    file_size_bytes = os.path.getsize(input_path)
-
-    if file_size_bytes > max_size_bytes:
-        output_path = input_path.replace('.', '_compressed.')
-        try:
-            command = [
-                'ffmpeg', '-i', input_path,
-                '-vcodec', 'libx264', '-crf', '28',
-                output_path
-            ]
-            subprocess.run(command, check=True)
-
-            # Si la compresión fue exitosa, eliminamos el original y usamos el comprimido
-            os.remove(input_path)
-            return output_path
-        except subprocess.CalledProcessError as e:
-            app.logger.error(f"Error al comprimir video: {e}")
-            return input_path  # Si hay error, devolvemos el original
-    else:
-        return input_path  # Si no necesita compresión, devolvemos el original
 
 @app.route('/upload', methods=['POST', 'GET'])
 def upload():
@@ -1210,20 +1197,20 @@ def upload():
             flash('Archivo no válido.', 'error')
             return redirect(url_for('upload'))
 
-        # Crear un nombre único con UUID
-        file_extension = video_file.filename.rsplit('.', 1)[1].lower()
-        unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        try:
+            # Subir video a Cloudinary (usa upload_large para archivos grandes)
+            result = cloudinary.uploader.upload_large(
+                video_file,
+                resource_type='video',
+                folder='mazo_videos'
+            )
+        except Exception as e:
+            flash(f'Error al subir a Cloudinary: {str(e)}', 'error')
+            return redirect(url_for('upload'))
 
-        # Guardar el archivo original
-        video_file.save(file_path)
-
-        # Comprimir si es necesario
-        final_path = compress_video(file_path)
-
-        # Guardar en la base de datos
+        # Guardar la URL del video en la base de datos
         new_video = Video(
-            video_url=os.path.basename(final_path),  # Guardamos solo el nombre
+            video_url=result['secure_url'],  # URL directa del video
             title=title,
             description=description,
             hashtags=hashtags,
