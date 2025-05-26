@@ -1214,7 +1214,8 @@ def upload():
             result = cloudinary.uploader.upload(
                 video_file,
                 resource_type='video',
-                folder='mazo_videos'
+                folder='mazo_videos',
+                format='mp4'
             )
 
             print("✅ Subida exitosa. URL:", result['secure_url'])
