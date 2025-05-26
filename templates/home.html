@@ -10,6 +10,9 @@
 <script src="{{ url_for('static', filename='js/home.js') }}" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='js/share.js') }}" defer></script>
+<script src="https://unpkg.com/cloudinary-video-player@1.9.13/dist/cld-video-player.min.js"></script>
+<link href="https://unpkg.com/cloudinary-video-player@1.9.13/dist/cld-video-player.min.css" rel="stylesheet">
+
 
 <main>
     <div class="video-container">
@@ -57,7 +60,10 @@
                         loop
                         playsinline
                     ></video>
-
+                    {% set public_id = video.video_url
+                        | replace('https://res.cloudinary.com/dbqnz99nf/video/upload/', '')
+                        | replace('.mp4', '')
+                    %}
                     <script>
                         const cld = cloudinary.Cloudinary.new({ cloud_name: 'dbqnz99nf' });
                         cld.videoPlayer("cld-video-{{ video.id }}").source("mazo_videos/{{ video.video_url | replace('.mp4','') | replace('https://res.cloudinary.com/dbqnz99nf/video/upload/mazo_videos/', '') }}");
