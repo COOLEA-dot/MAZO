@@ -1208,11 +1208,15 @@ def upload():
             return redirect(url_for('upload'))
 
         try:
+            print(f"📂 Subiendo archivo: {video_file.filename} | Tipo: {video_file.mimetype}")
+
+            # Subida directa (sin usar "with")
             result = cloudinary.uploader.upload_large(
                 video_file,
                 resource_type='video',
                 folder='mazo_videos'
             )
+
             print("✅ Subida exitosa. URL:", result['secure_url'])
 
             new_video = Video(
