@@ -47,12 +47,21 @@
                         <button class="share-button" data-video-id="{{ video.id }}">📤</button>
                     </div>
                 </div>
-
                 <div class="video-display">
-                  <video class="video-element" autoplay muted loop playsinline controls>
-                        <source src="{{ video.video_url }}" type="video/mp4">
-                        Tu navegador no puede reproducir este video.
-                  </video>
+                    <video
+                        id="cld-video-{{ video.id }}"
+                        class="cld-video-player cld-fluid"
+                        controls
+                        autoplay
+                        muted
+                        loop
+                        playsinline
+                    ></video>
+
+                    <script>
+                        const cld = cloudinary.Cloudinary.new({ cloud_name: 'dbqnz99nf' });
+                        cld.videoPlayer("cld-video-{{ video.id }}").source("mazo_videos/{{ video.video_url | replace('.mp4','') | replace('https://res.cloudinary.com/dbqnz99nf/video/upload/mazo_videos/', '') }}");
+                    </script>
                 </div>
                 <div class="video-buttons mobile-buttons">
                     <button class="like-button {% if current_user in video.liked_by %}liked{% endif %}" data-video-id="{{ video.id }}">
