@@ -49,7 +49,7 @@
                 </div>
 
                 <div class="video-display">
-                    <video class="video-element" src="{{ url_for('uploaded_file', filename=video.video_url) }}" autoplay muted loop></video>
+                   <video class="video-element" src="{{ url_for('static', filename='uploads/videos/' + video.video_url) }}" autoplay muted loop></video>
                 </div>
                 <div class="video-buttons mobile-buttons">
                     <button class="like-button {% if current_user in video.liked_by %}liked{% endif %}" data-video-id="{{ video.id }}">

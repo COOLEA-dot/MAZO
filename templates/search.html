@@ -41,7 +41,7 @@
         <div class="video">
             <h3>{{ video.title }}</h3>
             <video width="100%" height="auto" autoplay muted controls>
-                <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
+                <src="{{ url_for('static', filename='uploads/videos/' + video.video_url) }}"></src>
                 Tu navegador no soporta el video.
             </video>
             <p>🎥 Subido por: <a href="{{ url_for('profile', username=video.user.username) }}">{{ video.user.username }}</a></p>
