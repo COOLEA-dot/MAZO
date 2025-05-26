@@ -49,7 +49,10 @@
                 </div>
 
                 <div class="video-display">
-                   <video class="video-element" src="{{ video.video_url }}" autoplay muted loop></video>
+                  <video class="video-element" autoplay muted loop playsinline controls>
+                        <source src="{{ video.video_url }}" type="video/mp4">
+                        Tu navegador no puede reproducir este video.
+                  </video>
                 </div>
                 <div class="video-buttons mobile-buttons">
                     <button class="like-button {% if current_user in video.liked_by %}liked{% endif %}" data-video-id="{{ video.id }}">

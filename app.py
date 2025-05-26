@@ -1221,7 +1221,7 @@ def upload():
             print("✅ Subida exitosa. URL:", result['secure_url'])
 
             new_video = Video(
-                video_url=result['secure_url'],
+                video_url = result['secure_url'].replace('/upload/', '/upload/f_auto/'),
                 title=title,
                 description=description,
                 hashtags=hashtags,
