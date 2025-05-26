@@ -1211,7 +1211,7 @@ def upload():
             print(f"📂 Subiendo archivo: {video_file.filename} | Tipo: {video_file.mimetype}")
 
             # Subida directa (sin usar "with")
-            result = cloudinary.uploader.upload_large(
+            result = cloudinary.uploader.upload(
                 video_file,
                 resource_type='video',
                 folder='mazo_videos'
