@@ -1178,50 +1178,61 @@ def upload():
     if 'user_id' not in session:
         flash('Debes iniciar sesión para subir videos.', 'error')
         return redirect(url_for('login'))
-    
+
     if request.method == 'GET':
         return render_template('upload.html')
 
     if request.method == 'POST':
+        print("➡️ Iniciando proceso de subida...")
+
         try:
             validate_csrf(request.form.get('csrf_token'))
-        except:
-            return "CSRF Token inválido", 400
+        except Exception as e:
+            print("❌ CSRF inválido:", e)
+            flash('CSRF inválido', 'error')
+            return redirect(url_for('upload'))
 
         video_file = request.files.get('video_file')
         title = request.form.get('title', '').strip()
         description = request.form.get('description', '').strip()
         hashtags = request.form.get('hashtags', '').strip()
 
-        if not video_file or not allowed_file(video_file.filename):
-            flash('Archivo no válido.', 'error')
+        if not video_file:
+            print("❌ No se recibió ningún archivo")
+            flash('Selecciona un video válido.', 'error')
+            return redirect(url_for('upload'))
+
+        if not allowed_file(video_file.filename):
+            print("❌ Tipo de archivo no permitido")
+            flash('Tipo de archivo no permitido.', 'error')
             return redirect(url_for('upload'))
 
         try:
-            # Subir video a Cloudinary (usa upload_large para archivos grandes)
             result = cloudinary.uploader.upload_large(
                 video_file,
                 resource_type='video',
                 folder='mazo_videos'
             )
-        except Exception as e:
-            flash(f'Error al subir a Cloudinary: {str(e)}', 'error')
-            return redirect(url_for('upload'))
+            print("✅ Subida exitosa. URL:", result['secure_url'])
 
-        # Guardar la URL del video en la base de datos
-        new_video = Video(
-            video_url=result['secure_url'],  # URL directa del video
-            title=title,
-            description=description,
-            hashtags=hashtags,
-            user_id=session['user_id']
-        )
-        db.session.add(new_video)
-        db.session.commit()
+            new_video = Video(
+                video_url=result['secure_url'],
+                title=title,
+                description=description,
+                hashtags=hashtags,
+                user_id=session['user_id']
+            )
+            db.session.add(new_video)
+            db.session.commit()
+            print("✅ Video guardado en la base de datos.")
+        except Exception as e:
+            print("❌ Error subiendo a Cloudinary o guardando en la base de datos:", e)
+            flash('Error al subir el video.', 'error')
+            return redirect(url_for('upload'))
 
         flash('¡Video subido con éxito!', 'success')
         return redirect(url_for('home'))
-    
+
 @app.route('/api/videos', methods=['GET'])
 def get_videos():
     videos = Video.query.all()
