@@ -59,7 +59,7 @@
                         playsinline
                         controls
                     >
-                        <source src="{{ url_for('serve_uploaded_video', filename=video.video_url) }}" type="video/mp4">
+                        <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
                         Tu navegador no puede reproducir este video.
                     </video>
                 </div>
