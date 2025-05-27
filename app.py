@@ -1163,7 +1163,8 @@ def edit_profile():
 
 @app.after_request
 def add_security_headers(response):
-    # Agregar las cabeceras necesarias para habilitar SharedArrayBuffer
+    if request.path.startswith('/static') or request.path.startswith('/uploads'):
+        return response  # No agregar cabeceras para estos archivos
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
     response.headers['Cross-Origin-Embedder-Policy'] = 'require-corp'
     return response
@@ -1172,6 +1173,10 @@ def add_security_headers(response):
     """Verifica si la extensión del archivo es válida"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+@app.route('/uploads/videos/<filename>')
+def uploaded_file(filename):
+    return send_from_directory('static/uploads/videos', filename)
 
 @app.route('/upload', methods=['POST', 'GET'])
 def upload():
@@ -1208,20 +1213,18 @@ def upload():
             return redirect(url_for('upload'))
 
         try:
-            print(f"📂 Subiendo archivo: {video_file.filename} | Tipo: {video_file.mimetype}")
+            # Crear un nombre único
+            file_extension = video_file.filename.rsplit('.', 1)[1].lower()
+            unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
+            file_path = os.path.join('static/uploads/videos', unique_filename)
 
-            # Subida directa (sin usar "with")
-            result = cloudinary.uploader.upload(
-                video_file,
-                resource_type='video',
-                folder='mazo_videos',
-                format='mp4'
-            )
+            # Guardar archivo local
+            video_file.save(file_path)
+            print(f"✅ Video guardado localmente en {file_path}")
 
-            print("✅ Subida exitosa. URL:", result['secure_url'])
-
+            # Guardar en base de datos
             new_video = Video(
-                video_url = result['secure_url'].replace('/upload/', '/upload/f_auto/'),
+                video_url=unique_filename,  # Solo el nombre del archivo
                 title=title,
                 description=description,
                 hashtags=hashtags,
@@ -1229,9 +1232,10 @@ def upload():
             )
             db.session.add(new_video)
             db.session.commit()
-            print("✅ Video guardado en la base de datos.")
+            print("✅ Video registrado en la base de datos")
+
         except Exception as e:
-            print("❌ Error subiendo a Cloudinary o guardando en la base de datos:", e)
+            print("❌ Error guardando el archivo:", e)
             flash('Error al subir el video.', 'error')
             return redirect(url_for('upload'))
 
