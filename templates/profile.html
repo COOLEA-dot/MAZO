@@ -170,7 +170,7 @@
         {% for video in videos %}
             <div class="video">
                 <video controls>
-                    <source src="{{ video.video_url }}" type="video/mp4">
+                    <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
                     Tu navegador no soporta el video.
                 </video>
 
