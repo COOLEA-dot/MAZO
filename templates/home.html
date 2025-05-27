@@ -59,7 +59,8 @@
                         playsinline
                         controls
                     >
-                        <source src="{{ video.video_url }}" type="video/mp4">
+                        {% set clean_url = video.video_url.replace('/upload/', '/upload/f_auto/') %}
+                        <source src="{{ clean_url }}">
                         Tu navegador no puede reproducir este video.
                     </video>
                 </div>
