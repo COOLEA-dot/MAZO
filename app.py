@@ -330,9 +330,6 @@ def handle_file_too_large(error):
     flash('El archivo es demasiado grande, por favor sube un archivo más pequeño', 'error')
     return redirect(url_for('upload'))
 
-@app.route('/uploads/videos/<filename>')
-def uploaded_file(filename):
-    return send_from_directory('static/uploads/videos', filename)
 
 videos = [
     {"id": 1, "likes": 0, "liked_by": []},  # 'liked_by' almacena usuarios que dieron like
