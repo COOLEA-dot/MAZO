@@ -23,6 +23,10 @@ document.addEventListener("DOMContentLoaded", () => {
         pauseOtherVideos(videos[currentIndex]);
     }
 
+    console.log("Index actual:", currentIndex);
+    console.log("Clases video-items:", [...videoItems].map(item => item.className));
+
+
     function playVideo(video) {
         if (video && video.paused) {
             video.play().catch(err => console.error("No se pudo reproducir:", err));
