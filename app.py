@@ -1146,11 +1146,17 @@ def edit_profile():
         name = request.form.get("name", "").strip()
         company = request.form.get("company", "").strip() or None
         profession = request.form.get("profession", "").strip() or None
+        description = request.form.get("description", "").strip() or None
+        location = request.form.get("location", "").strip() or None
         profile_pic = request.files.get("profile_pic")
+        email = request.form.get("email", "").strip()
 
         current_user.name = name
         current_user.company = company
         current_user.profession = profession
+        current_user.description = description
+        current_user.location = location
+        current_user.email = email
 
         if profile_pic and profile_pic.filename != "":
             filename = secure_filename(profile_pic.filename)
@@ -1161,9 +1167,9 @@ def edit_profile():
         db.session.commit()
         flash("Perfil actualizado con éxito.", "success")
         return redirect(url_for("profile", username=current_user.username))
-    
-    # 👇 Esto se ejecuta si se accede por GET (mostrar el formulario)
+
     return render_template("edit_profile.html", user=current_user)
+
 
 @app.after_request
 def add_security_headers(response):
