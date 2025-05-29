@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const videos = document.querySelectorAll(".video-element");
     let currentIndex = 0;
     let startY = 0;
+    console.log("✅ home.js cargado");
+
 
     function updateClasses() {
         videoItems.forEach((item, index) => {
