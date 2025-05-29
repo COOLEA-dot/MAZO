@@ -523,14 +523,16 @@ def home():
         if user:
             chats = get_user_chats(user.id)
 
-    # Obtener video introductorio y otros videos
+    # Obtener video introductorio y evitar duplicado en otros videos
     intro_video = Video.query.filter_by(is_intro=True).first()
-    other_videos = Video.query.filter(Video.is_intro == False).order_by(Video.id.desc()).all()
     
-    videos = [intro_video] + other_videos if intro_video else other_videos
+    if intro_video:
+        other_videos = Video.query.filter(Video.id != intro_video.id).order_by(Video.id.desc()).all()
+        videos = [intro_video] + other_videos
+    else:
+        videos = Video.query.order_by(Video.id.desc()).all()
 
     return render_template('home.html', user=user, videos=videos, chats=chats if user else [])
-
 
 @app.route('/video/<int:video_id>')
 def video(video_id):
