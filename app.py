@@ -515,21 +515,22 @@ def get_replies(comment_id):
 def home():
     user = None
     chats = []
-    
+
     if 'user_id' in session:
         user = User.query.get(session['user_id'])
 
         # ⚠️ Validar que user exista
         if user:
-            videos = Video.query.options(db.joinedload(Video.comments)).order_by(Video.id.desc()).all()
             chats = get_user_chats(user.id)
-            return render_template('home.html', user=user, videos=videos, chats=chats)
-    # Si no está logueado o el user no existe, cargar sin chats
-    intro_video = Video.query.filter_by(is_intro=True).first()
-    other_videos = Video.query.filter_by(is_intro=False).order_by(Video.id.desc()).all()
 
+    # Obtener video introductorio y otros videos
+    intro_video = Video.query.filter_by(is_intro=True).first()
+    other_videos = Video.query.filter(Video.is_intro == False).order_by(Video.id.desc()).all()
+    
     videos = [intro_video] + other_videos if intro_video else other_videos
-    return render_template('home.html', videos=videos)
+
+    return render_template('home.html', user=user, videos=videos, chats=chats if user else [])
+
 
 @app.route('/video/<int:video_id>')
 def video(video_id):
