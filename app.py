@@ -115,6 +115,8 @@ class Video(db.Model):
     hashtags = db.Column(db.String(100))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     comments_count = db.Column(db.Integer, default=0)
+    is_intro = db.Column(db.Boolean, default=False)
+
 
     #Relación con el usuario
     user = db.relationship('User', backref='videos_uploaded', lazy=True)
@@ -522,9 +524,11 @@ def home():
             videos = Video.query.options(db.joinedload(Video.comments)).order_by(Video.id.desc()).all()
             chats = get_user_chats(user.id)
             return render_template('home.html', user=user, videos=videos, chats=chats)
-
     # Si no está logueado o el user no existe, cargar sin chats
-    videos = Video.query.options(db.joinedload(Video.comments)).order_by(Video.id.desc()).all()
+    intro_video = Video.query.filter_by(is_intro=True).first()
+    other_videos = Video.query.filter_by(is_intro=False).order_by(Video.id.desc()).all()
+
+    videos = [intro_video] + other_videos if intro_video else other_videos
     return render_template('home.html', videos=videos)
 
 @app.route('/video/<int:video_id>')
