@@ -23,15 +23,10 @@ import uuid
 import time
 import base64
 from flask_wtf.file import FileField, FileAllowed
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+from flask_mail import Mail, Message as Mailmessage
+from itsdangerous import URLSafeTimedSerializer
+from email.header import Header
 
-cloudinary.config(
-    cloud_name='dbqnz99nf',
-    api_key='236951855294579',
-    api_secret='ZMu36XrX8f9iZK2DhWoOdhQz0G4'
-)
 
 app = Flask(__name__)
 app.config['ENV'] = 'production'
@@ -39,7 +34,14 @@ app.config['DEBUG'] = False
 app.config["SECRET_KEY"] = "AOM11091950"
 app.config["WTF_CSRF_ENABLED"] = True
 app.config['WTF_CSRF_TIME_LIMIT'] = None  # Token CSRF nunca expira (solo para desarrollo)
-g
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'mazo.app.es@gmail.com'
+app.config['MAIL_PASSWORD'] = 'wuuvsqlospvdtuzw'  # sin espacios
+app.config['MAIL_DEFAULT_SENDER'] = 'mazo.app.es@gmail.com'
+
+
 #Configuramos la base de datos 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///mazo.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -49,6 +51,9 @@ CORS(app)
 csrf = CSRFProtect(app)
 csrf.init_app(app)
 logging.basicConfig(level=logging.DEBUG)
+
+mail = Mail(app)
+serializer = URLSafeTimedSerializer(app.secret_key)
 
 
 # Configuraciones para el directorio de archivos
@@ -160,6 +165,7 @@ class User(db.Model, UserMixin):
     profession = db.Column(db.String(100), nullable=True)
     description = db.Column(db.String(300), nullable=True)  # Descripción personal opcional (máx 300)
     location = db.Column(db.String(200), nullable=True)      # Ubicación opcional
+    is_verified = db.Column(db.Boolean, default=False)
 
     comments = db.relationship('Comment', back_populates='user')
 
@@ -293,7 +299,9 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        flash("¡Registro exitoso! Ahora puedes iniciar sesión", "success")
+        send_verification_email(new_user.email)
+        flash('Registro exitoso. Verifica tu email para activar tu cuenta.', 'info')
+
         return redirect(url_for("login"))
 
     return render_template("register.html", form=form, user=None)
@@ -326,6 +334,41 @@ def login():
         flash("Usuario o contraseña incorrectos", "error")
 
     return render_template('login.html')
+
+
+
+def send_verification_email(user_email):
+    token = serializer.dumps(user_email, salt='email-confirm')
+    confirm_url = url_for('confirm_email', token=token, _external=True)
+    html = f'''
+    <p>Hola, haz clic en el siguiente enlace para verificar tu email:</p>
+    <a href="{confirm_url}">{confirm_url}</a>
+    '''
+
+    msg = Mailmessage(
+        subject="Verifica tu email",  # Sin codificación extra
+        recipients=[user_email],
+        html=html
+    )
+    mail.send(msg)
+
+@app.route('/confirm/<token>', endpoint='confirm_email')
+def confirm_email(token):
+    try:
+        email = serializer.loads(token, salt='email-confirm', max_age=3600)
+    except:
+        flash('El enlace de verificación es inválido o ha expirado.', 'danger')
+        return redirect(url_for('login'))
+
+    user = User.query.filter_by(email=email).first()
+    if user:
+        user.is_verified = True
+        db.session.commit()
+        flash('Correo verificado con éxito. ¡Ya puedes usar todas las funciones!', 'success')
+    else:
+        flash('Usuario no encontrado.', 'error')
+
+    return redirect(url_for('login'))
 
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_too_large(error):
