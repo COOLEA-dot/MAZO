@@ -165,12 +165,19 @@ body {
     }
 
     .mobile-search-form {
-        display: none;
-        flex-direction: row;
-        padding: 5px 10px;
-        background-color: #f9f9f9;
-        border-top: 1px solid #ccc;
+    display: none;
+    position: fixed;
+    top: 44px; /* justo debajo de la navbar */
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+    flex-direction: row;
+    padding: 5px 10px;
+    background-color: #f9f9f9;
+    border-top: 1px solid #ccc;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
+
 
     .mobile-search-form input[type="text"] {
         flex: 1;

@@ -10,11 +10,7 @@
 <script src="{{ url_for('static', filename='js/home.js') }}" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='js/share.js') }}" defer></script>
-<script src="https://unpkg.com/cloudinary-video-player@1.9.13/dist/cld-video-player.min.js"></script>
-<link href="https://unpkg.com/cloudinary-video-player@1.9.13/dist/cld-video-player.min.css" rel="stylesheet">
 
-
-<main>
     <div class="video-container">
         {% for video in videos %}
         <div class="video-item" data-index="{{ loop.index0 }}">

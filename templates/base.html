@@ -100,23 +100,25 @@
 
     <!-- Scripts -->
     <script>
-        function toggleMobileSearch() {
-            const form = document.getElementById('mobileSearchForm');
-            form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
+    function toggleMobileSearch() {
+        const form = document.getElementById('mobileSearchForm');
+        if (form.style.display === 'flex') {
+            form.style.display = 'none';
+        } else {
+            form.style.display = 'flex';
+            form.querySelector('input').focus();  // Enfocar automáticamente
         }
+    }
 
-        function openLogoutModal(event) {
-            event.preventDefault();
-            document.getElementById('logoutModal').style.display = 'block';
-        }
+    // Cerrar si se hace clic fuera del buscador
+    document.addEventListener('click', function(event) {
+        const searchIcon = document.querySelector('.mobile-search-icon');
+        const form = document.getElementById('mobileSearchForm');
 
-        function closeLogoutModal() {
-            document.getElementById('logoutModal').style.display = 'none';
+        if (!form.contains(event.target) && !searchIcon.contains(event.target)) {
+            form.style.display = 'none';
         }
-
-        function confirmLogout() {
-            window.location.href = "{{ url_for('logout') }}";
-        }
+    });
     </script>
 </body>
 </html>

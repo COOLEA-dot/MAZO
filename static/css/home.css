@@ -712,7 +712,7 @@ p {
         padding: 0;
         height: 100vh;
         width: 100vw;
-        overflow: hidden;
+        overflow-x: hidden; /* Evita desbordamiento horizontal */
     }
 
     /* ✅ Ya no ocultamos todo el bloque de info */
