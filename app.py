@@ -151,7 +151,7 @@ followers = db.Table('followers',
     db.Column('followed_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
 )
 
-@app.route('/privacidad')
+@app.route('/privacy')
 def privacy_policy():
     return render_template('privacy.html', current_date="4 de junio de 2025")
 
