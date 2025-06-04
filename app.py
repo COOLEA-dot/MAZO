@@ -1466,6 +1466,10 @@ def logout():
     flash("Has cerrado sesión exitosamente", "success")
     return redirect(url_for("login"))
 
+@app.route('/delete_account')
+def eliminar_cuenta():
+    return render_template('eliminar-cuenta.html')
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()   # Y las vuelve a crear con los nuevos tamaños
