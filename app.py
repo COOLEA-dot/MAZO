@@ -76,6 +76,10 @@ app.config['PROFILE_PICS_FOLDER'] = PROFILE_PICS_FOLDER  # <--- Configuración f
 
 migrate = Migrate(app, db)
 
+@app.route('/security')
+def seguridad():
+    return render_template('seguridad.html')
+
 def allowed_file(filename):
     """Verifica si la extensión y el tipo MIME del archivo son válidos"""
     if '.' not in filename:
