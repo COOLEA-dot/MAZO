@@ -80,6 +80,10 @@ migrate = Migrate(app, db)
 def seguridad():
     return render_template('seguridad.html')
 
+@app.route('/.well-known/assetlinks.json')
+def assetlinks():
+    return send_from_directory('static/.well-known', 'assetlinks.json')
+
 def allowed_file(filename):
     """Verifica si la extensión y el tipo MIME del archivo son válidos"""
     if '.' not in filename:

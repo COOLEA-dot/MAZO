@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.mazo.app.es",
+      "sha256_cert_fingerprints": [
+        "D1:40:6C:14:95:00:C7:09:6F:9F:38:BC:BC:FC:44:8E:E4:23:F8:DE:7A:F8:6C:D1:2B:95:D4:58:66:AD:1A:F2"
+      ]
+    }
+  }
+]
