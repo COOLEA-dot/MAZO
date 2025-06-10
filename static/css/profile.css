@@ -29,6 +29,16 @@
     margin-top: 15px;
 }
 
+.premium-badge {
+  display: inline-block;
+  color: #007bff;
+  font-weight: bold;
+  margin-left: 8px;
+  font-size: 1.2em;
+  vertical-align: middle;
+}
+
+
 .profile-details p {
     font-size: 16px;
     color: #666;
@@ -510,9 +520,6 @@ video {
     color: #333;
     margin-top: 5px;
 }
-
-
-
 
 /* Oculta la scrollbar en navegadores basados en WebKit */
 .reviews-section::-webkit-scrollbar {

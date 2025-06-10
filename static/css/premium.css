@@ -1,0 +1,102 @@
+/* static/css/premium.css */
+
+.premium-container {
+  max-width: 600px;
+  margin: 40px auto;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', sans-serif;
+  text-align: center;
+}
+
+.premium-container h1 {
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+  color: #2c3e50;
+}
+
+.premium-container p.lead {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  color: #34495e;
+}
+
+.premium-container ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.premium-container ul li {
+  padding: 10px 0;
+  font-size: 1.1rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.premium-container .btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  font-size: 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.3s;
+}
+
+.premium-container .btn:hover {
+  background: #0056b3;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 20px;
+  font-weight: 500;
+}
+
+.btn-premium {
+  display: inline-block;
+  background-color: #635bff; /* color Stripe */
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-premium:hover {
+  background-color: #5145cd;
+  transform: translateY(-2px);
+}
+
+.btn-paypal {
+  display: inline-block;
+  background-color: #ffc439;
+  color: #111;
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: 12px 28px;
+  border-radius: 10px;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.btn-paypal:hover {
+  background-color: #e0ac00;
+  transform: scale(1.03);
+  text-decoration: none;
+}

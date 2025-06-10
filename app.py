@@ -26,7 +26,7 @@ from flask_wtf.file import FileField, FileAllowed
 from flask_mail import Mail, Message as Mailmessage
 from itsdangerous import URLSafeTimedSerializer
 from email.header import Header
-
+import stripe
 
 app = Flask(__name__)
 app.config['ENV'] = 'production'
@@ -40,7 +40,14 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'mazo.app.es@gmail.com'
 app.config['MAIL_PASSWORD'] = 'wuuvsqlospvdtuzw'  # sin espacios
 app.config['MAIL_DEFAULT_SENDER'] = 'mazo.app.es@gmail.com'
+# config.py
 
+import os
+
+app.config["STRIPE_SECRET_KEY"] = os.getenv("STRIPE_SECRET_KEY")
+app.config["STRIPE_PUBLIC_KEY"] = os.getenv("STRIPE_PUBLIC_KEY")
+
+stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
 #Configuramos la base de datos 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///mazo.db")
@@ -178,6 +185,7 @@ class User(db.Model, UserMixin):
     description = db.Column(db.String(300), nullable=True)  # Descripción personal opcional (máx 300)
     location = db.Column(db.String(200), nullable=True)      # Ubicación opcional
     is_verified = db.Column(db.Boolean, default=False)
+    is_premium = db.Column(db.Boolean, default=False)
 
     comments = db.relationship('Comment', back_populates='user')
 
@@ -206,6 +214,7 @@ class User(db.Model, UserMixin):
 
     def is_followed_by(self, user):
         return self.followers.filter(followers.c.follower_id == user.id).count() > 0
+
 @app.route('/follow/<int:user_id>', methods=['POST'])
 @login_required
 def follow_user(user_id):
@@ -346,8 +355,6 @@ def login():
         flash("Usuario o contraseña incorrectos", "error")
 
     return render_template('login.html')
-
-
 
 def send_verification_email(user_email):
     token = serializer.dumps(user_email, salt='email-confirm')
@@ -573,19 +580,31 @@ def home():
 
     if 'user_id' in session:
         user = User.query.get(session['user_id'])
-
-        # ⚠️ Validar que user exista
         if user:
             chats = get_user_chats(user.id)
 
-    # Obtener video introductorio y evitar duplicado en otros videos
+    # Obtener video introductorio
     intro_video = Video.query.filter_by(is_intro=True).first()
-    
+
+    # Base query excluyendo el video introductorio si existe
+    base_query = Video.query
     if intro_video:
-        other_videos = Video.query.filter(Video.id != intro_video.id).order_by(Video.id.desc()).all()
-        videos = [intro_video] + other_videos
-    else:
-        videos = Video.query.order_by(Video.id.desc()).all()
+        base_query = base_query.filter(Video.id != intro_video.id)
+
+    # Separar videos por tipo de usuario (premium primero)
+    premium_videos = (
+        base_query.join(User).filter(User.is_premium == True).order_by(Video.id.desc()).all()
+    )
+    regular_videos = (
+        base_query.join(User).filter(User.is_premium == False).order_by(Video.id.desc()).all()
+    )
+
+    # Combinar: intro (si existe) + premium + normales
+    videos = []
+    if intro_video:
+        videos.append(intro_video)
+    videos.extend(premium_videos)
+    videos.extend(regular_videos)
 
     return render_template('home.html', user=user, videos=videos, chats=chats if user else [])
 
@@ -1228,11 +1247,13 @@ def edit_profile():
 
 @app.after_request
 def add_security_headers(response):
-    if request.path.startswith('/static') or request.path.startswith('/uploads'):
-        return response  # No agregar cabeceras para estos archivos
+    # No aplicar estas cabeceras si la ruta es estática o importante para recursos externos
+    if request.path.startswith('/static') or request.path.startswith('/uploads') or request.path.startswith('/create-checkout-session') or request.path.startswith('/premium') or request.path.startswith('/register'):
+        return response
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
     response.headers['Cross-Origin-Embedder-Policy'] = 'require-corp'
     return response
+
 
 # 🔍 Función para verificar si el archivo tiene una extensión permitidadef allowed_file(filename):
     """Verifica si la extensión del archivo es válida"""
@@ -1468,6 +1489,78 @@ def delete_video(video_id):
     else:
         return redirect(url_for('home'))
 
+@app.route('/premium')
+@login_required
+def premium():
+    return render_template(
+        'premium.html',
+        STRIPE_PUBLIC_KEY=app.config['STRIPE_PUBLIC_KEY']  # 👈 esto es necesario
+    )
+
+
+@app.route('/premium/success')
+@login_required
+def activate_premium():
+    current_user.is_premium = True
+    db.session.commit()
+    flash('¡Felicidades! Ahora eres usuario premium 🎉', 'success')
+    return redirect(url_for('profile', username=current_user.username))
+
+@app.route('/create-checkout-session', methods=['POST'])
+@login_required
+def create_checkout_session():
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'eur',
+                    'product_data': {
+                        'name': 'MAZO Premium',
+                    },
+                    'unit_amount': 999,
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=url_for('activate_premium', _external=True),
+            cancel_url=url_for('premium', _external=True),
+            metadata={
+                'user_id': current_user.id
+            }
+        )
+        return jsonify({'id': checkout_session.id})
+    except Exception as e:
+        print("ERROR STRIPE:", e)  # 👈 esto te va a ayudar
+        return jsonify({'error': str(e)}), 403
+
+@app.route('/pay-with-elements', methods=['POST'])
+@login_required
+def pay_with_elements():
+    try:
+        data = request.get_json()
+        payment_method_id = data.get('payment_method_id')
+
+        # Crear el intento de pago
+        intent = stripe.PaymentIntent.create(
+            amount=999,  # en céntimos
+            currency='eur',
+            payment_method=payment_method_id,
+            confirmation_method='manual',
+            confirm=True,
+        )
+
+        if intent.status == 'requires_action' and intent.next_action.type == 'use_stripe_sdk':
+            return jsonify({'requires_action': True, 'payment_intent_client_secret': intent.client_secret})
+        elif intent.status == 'succeeded':
+            current_user.is_premium = True
+            db.session.commit()
+            return jsonify({'success': True})
+        else:
+            return jsonify({'error': 'Pago no completado.'}), 400
+    except Exception as e:
+        print("❌ ERROR EN PAGO CON ELEMENTS:", e)
+        return jsonify({'error': str(e)}), 400   
 @app.route('/logout')
 def logout():
     session.pop("user_id", None)  # Elimina al usuario de la sesión

@@ -23,7 +23,12 @@
                                 <img src="{{ url_for('static', filename='profile_pics/' + (video.user.profile_picture if video.user.profile_picture else 'default.jpg')) }}" alt="Perfil" class="profile-pic">
                             </a>
                             <a href="{{ url_for('profile', username=video.user.username) }}">
-                                <strong>{{ video.user.company if video.user.company else video.user.name }}</strong>
+                                <strong>
+                                    {{ video.user.company if video.user.company else video.user.name }}
+                                    {% if video.user.is_premium %}
+                                        <span class="premium-badge" title="Empresa Verificada">✔</span>
+                                    {% endif %}
+                                </strong>
                             </a>
                         {% else %}
                             <span>Usuario desconocido</span>

@@ -41,7 +41,11 @@
         </div>
 
         <div class="profile-details">
-            <p><strong>Nombre:</strong> {{ user.name }}</p>
+            <p><strong>Nombre:</strong> {{ user.name }}
+            {% if user.is_premium %}
+                <span class="premium-badge" title="Empresa Verificada">✔</span>
+            {% endif %}
+            </p>
             <p><strong>Correo:</strong> {{ user.email }}</p>
         
             {% if user.company %}
