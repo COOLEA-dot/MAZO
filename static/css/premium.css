@@ -100,3 +100,48 @@
   transform: scale(1.03);
   text-decoration: none;
 }
+
+@media (max-width: 600px) {
+  .card {
+    padding: 1rem;
+  }
+
+  .card h1 {
+    font-size: 1.4rem;
+    text-align: center;
+  }
+
+  .card .lead {
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .list-group-item {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.9rem;
+  }
+
+  .btn.btn-lg {
+    font-size: 1rem;
+    padding: 0.6rem 1rem;
+  }
+
+  .alert-success {
+    font-size: 0.95rem;
+    text-align: center;
+  }
+
+  .btn-premium,
+  .btn-paypal {
+    font-size: 0.7rem;           /* Texto más pequeño */
+    padding: 0.3rem 0.9rem;      /* Menos espacio interior */
+    white-space: nowrap;         /* Evita que se dividan en dos líneas */
+    flex: 0 1 auto;              /* Permite que compartan espacio sin romper fila */
+  }
+
+  .d-flex.gap-3.flex-wrap {
+    gap: 0.5rem;                 /* Reduce el espacio entre los botones */
+    justify-content: center;    /* Centra los botones en móvil */
+  }
+}
+
