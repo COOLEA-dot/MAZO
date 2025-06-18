@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Lista de chats{% endblock %}
+{% block title %}{{ _('Lista de chats') }}{% endblock %}
 
 {% block content %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chat_list.css') }}">
@@ -9,7 +9,7 @@
     <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='js/new_messages.js') }}"></script>
 
-    <h2>Tus Chats</h2>
+    <h2>{{ _('Tus Chats') }}</h2>
 
     <div class="chat-list">
         {% for chat in chats %}
@@ -24,10 +24,10 @@
                     <h3>{{ chat.username }}</h3>
                     
                     {% if chat.has_unread %}
-                        <p class="new-message">📩 Mensaje nuevo</p>
+                        <p class="new-message">{{ _('📩 Mensaje nuevo') }}</p>
                     {% else %}
                         {% if chat.sent_by_user %}
-                            <p class="sent-message"><strong>Enviado</strong></p>
+                            <p class="sent-message"><strong>{{ _('Enviado') }}</strong></p>
                         {% else %}
                             <p>{{ chat.last_message }}</p>
                         {% endif %}
@@ -36,11 +36,11 @@
 
                 <!-- Badge para mensajes no leídos -->
                 {% if chat.has_unread %}
-                    <span class="unread-badge">¡Nuevo!</span>
+                    <span class="unread-badge">{{ _('¡Nuevo!') }}</span>
                 {% endif %}
             </a>
         {% else %}
-            <p class="no-chats">No tienes chats previos.</p>
+            <p class="no-chats">{{ _('No tienes chats previos.') }}</p>
         {% endfor %}
     </div>
 {% endblock %}

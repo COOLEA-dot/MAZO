@@ -1,0 +1,571 @@
+# Japanese translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-06-18 12:30+0200\n"
+"PO-Revision-Date: 2025-06-18 12:51+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: templates/base.html:25
+msgid "Inicio"
+msgstr "ホーム"
+
+#: templates/base.html:32
+msgid "Perfil"
+msgstr "プロフィール"
+
+#: templates/base.html:50
+msgid "Salir"
+msgstr "ログアウト"
+
+#: templates/base.html:57
+msgid "Entrar"
+msgstr "ログイン"
+
+#: templates/base.html:63 templates/register.html:108
+msgid "Registrarse"
+msgstr "登録する"
+
+#: templates/base.html:99
+msgid "¿Estás seguro de que quieres cerrar sesión?"
+msgstr "本当にログアウトしますか？"
+
+#: templates/chat.html:3
+msgid "Chat con"
+msgstr "チャット相手："
+
+#: templates/chat_list.html:3
+msgid "Lista de chats"
+msgstr "チャット一覧"
+
+#: templates/chat_list.html:12
+msgid "Tus Chats"
+msgstr "あなたのチャット"
+
+#: templates/chat_list.html:27
+msgid "📩 Mensaje nuevo"
+msgstr "📩 新しいメッセージ"
+
+#: templates/chat_list.html:30
+msgid "Enviado"
+msgstr "送信済み"
+
+#: templates/chat_list.html:39
+msgid "¡Nuevo!"
+msgstr "新着！"
+
+#: templates/chat_list.html:43
+msgid "No tienes chats previos."
+msgstr "以前のチャットはありません。"
+
+#: templates/edit_profile.html:3 templates/edit_profile.html:9
+#: templates/profile.html:78
+msgid "Editar Perfil"
+msgstr "プロフィールを編集"
+
+#: templates/edit_profile.html:22 templates/profile.html:44
+msgid "Nombre:"
+msgstr "名前："
+
+#: templates/edit_profile.html:27 templates/profile.html:52
+msgid "Empresa:"
+msgstr "会社："
+
+#: templates/edit_profile.html:32 templates/profile.html:56
+msgid "Profesión:"
+msgstr "職業："
+
+#: templates/edit_profile.html:37 templates/upload.html:17
+msgid "Descripción:"
+msgstr "自己紹介："
+
+#: templates/edit_profile.html:42
+msgid "Ubicación:"
+msgstr "場所："
+
+#: templates/edit_profile.html:47
+msgid "Nombre de usuario:"
+msgstr "ユーザー名："
+
+#: templates/edit_profile.html:52 templates/register.html:76
+msgid "Teléfono:"
+msgstr "電話番号："
+
+#: templates/edit_profile.html:57
+msgid "Correo electrónico:"
+msgstr "メールアドレス："
+
+#: templates/edit_profile.html:61
+msgid "Guardar cambios"
+msgstr "変更を保存"
+
+#: templates/edit_profile.html:62
+msgid "Cancelar"
+msgstr "キャンセル"
+
+#: templates/home.html:3
+msgid "Página Principal"
+msgstr "ホームページ"
+
+#: templates/home.html:34 templates/profile.html:108
+msgid "Usuario desconocido"
+msgstr "不明なユーザー"
+
+#: templates/home.html:64
+msgid "Tu navegador no puede reproducir este video."
+msgstr "この動画はお使いのブラウザでは再生できません。"
+
+#: templates/home.html:85
+msgid "Comentarios"
+msgstr "コメント"
+
+#: templates/home.html:108
+msgid "Compartir con usuarios"
+msgstr "ユーザーと共有"
+
+#: templates/home.html:115
+msgid "Enviar"
+msgstr "送信"
+
+#: templates/inicio.html:6
+msgid "Encuentra profesionales"
+msgstr "専門家を見つける"
+
+#: templates/inicio.html:13
+msgid "Encuentra aquí a tus profesionales de confianza"
+msgstr "信頼できる専門家をここで見つけよう"
+
+#: templates/inicio.html:14
+msgid "Empezar sin registro"
+msgstr "登録せずに始める"
+
+#: templates/inicio.html:15
+msgid "Iniciar sesión"
+msgstr "ログイン"
+
+#: templates/inicio.html:19
+msgid "¿Por qué usar MAZO?"
+msgstr "なぜMAZOを使うのか？"
+
+#: templates/inicio.html:21
+msgid "📹 Perfiles con video"
+msgstr "📹 動画付きプロフィール"
+
+#: templates/inicio.html:22
+msgid "📍 Búsqueda por profesión y ubicación"
+msgstr "📍 職業・場所で検索"
+
+#: templates/inicio.html:23
+msgid "💬 Chat en tiempo real"
+msgstr "💬 リアルタイムチャット"
+
+#: templates/inicio.html:24
+msgid "⭐ Opiniones y valoraciones"
+msgstr "⭐ レビューと評価"
+
+#: templates/inicio.html:29
+msgid "Descubre cómo funciona"
+msgstr "使い方をチェック"
+
+#: templates/inicio.html:34
+msgid "2025 MAZO · Todos los derechos reservados"
+msgstr "2025 MAZO · 無断転載を禁じます"
+
+#: templates/login.html:7 templates/login.html:11
+msgid "Inicio de Sesión"
+msgstr "ログイン"
+
+#: templates/login.html:28
+msgid "Usuario:"
+msgstr "ユーザー名："
+
+#: templates/login.html:32 templates/register.html:102
+msgid "Contraseña:"
+msgstr "パスワード："
+
+#: templates/login.html:36
+msgid "Iniciar Sesión"
+msgstr "ログイン"
+
+#: templates/login.html:39
+msgid "¿No tienes cuenta?"
+msgstr "アカウントをお持ちでないですか？"
+
+#: templates/login.html:39
+msgid "Regístrate aquí"
+msgstr "こちらで登録"
+
+#: templates/premium.html:11
+msgid "Impulsa tu perfil por solo"
+msgstr "たった"
+
+#: templates/premium.html:11
+msgid "9,99 €/mes"
+msgstr "月額9.99ユーロ"
+
+#: templates/premium.html:14
+msgid "🔝 Tu perfil aparece primero en la página principal y en búsquedas."
+msgstr "🔝 あなたのプロフィールはホームページと検索結果の最上位に表示されます。"
+
+#: templates/premium.html:15
+msgid "✅ Verificación como empresa titular."
+msgstr "✅ 企業アカウントとして認証されます。"
+
+#: templates/premium.html:16
+msgid "💬 Acceso exclusivo al grupo privado de Telegram (invitación manual)."
+msgstr "💬 招待制のTelegram非公開グループへの限定アクセス。"
+
+#: templates/premium.html:20
+msgid "Ya eres usuario premium ✔"
+msgstr "すでにプレミアムユーザーです ✔"
+
+#: templates/premium.html:35
+msgid ""
+"Este es un pago mensual. Deberás renovarlo manualmente cada mes para "
+"mantener tu cuenta premium."
+msgstr ""
+"これは月額料金です。プレミアムアカウントを維持するには毎月手動で更新する必要があります。"
+
+#: templates/privacy.html:6
+msgid "Política de Privacidad"
+msgstr "プライバシーポリシー"
+
+#: templates/privacy.html:25
+msgid ""
+"nos tomamos muy en serio la privacidad de nuestros usuarios. Esta "
+"Política de Privacidad explica qué datos recopilamos, cómo los usamos y "
+"cómo protegemos tu información cuando utilizas nuestra aplicación y sitio"
+" web"
+msgstr ""
+"当社はユーザーのプライバシーを非常に重視しています。このプライバシーポリシーでは、当社が収集するデータ、使用方法、およびアプリやウェブサイトの利用時に情報を保護する方法について説明します。"
+
+#: templates/privacy.html:29
+msgid "Nombre, correo electrónico, número de teléfono"
+msgstr "氏名、メールアドレス、電話番号"
+
+#: templates/privacy.html:30
+msgid "Nombre de empresa, profesión, ubicación"
+msgstr "会社名、職業、所在地"
+
+#: templates/privacy.html:31
+msgid "Descripción personal y habilidades"
+msgstr "自己紹介とスキル"
+
+#: templates/privacy.html:32
+msgid "Foto de perfil y archivos multimedia que subas"
+msgstr "プロフィール写真とアップロードされたメディアファイル"
+
+#: templates/privacy.html:33
+msgid "Mensajes y comentarios enviados en la plataforma"
+msgstr "プラットフォーム上で送信されたメッセージやコメント"
+
+#: templates/privacy.html:35
+msgid ""
+"También recopilamos información de uso y navegación, como IP, tipo de "
+"dispositivo, navegador y ubicación aproximada (si la autorizas)."
+msgstr ""
+"また、IPアドレス、デバイスの種類、ブラウザ、位置情報（許可された場合）などの利用・閲覧情報も収集します。"
+
+#: templates/privacy.html:37
+msgid "2. Cómo usamos tus datos"
+msgstr "2. データの使用方法"
+
+#: templates/privacy.html:39
+msgid "Crear y mostrar tu perfil en la plataforma"
+msgstr "プロフィールの作成と表示"
+
+#: templates/privacy.html:40
+msgid "Conectar con otros usuarios y empresas"
+msgstr "他のユーザーや企業との接続"
+
+#: templates/privacy.html:41
+msgid "Mostrar contenido relevante según tu ubicación e intereses"
+msgstr "あなたの位置情報や興味に応じたコンテンツの表示"
+
+#: templates/privacy.html:42
+msgid "Mejorar y personalizar la experiencia"
+msgstr "ユーザー体験の向上とカスタマイズ"
+
+#: templates/privacy.html:43
+msgid "Prevenir fraudes y mantener la seguridad"
+msgstr "不正行為の防止とセキュリティの確保"
+
+#: templates/privacy.html:46
+msgid "3. Con quién compartimos tus datos"
+msgstr "3. データの共有先"
+
+#: templates/privacy.html:47
+msgid "No vendemos tu información personal. Compartimos datos solo con:"
+msgstr "個人情報は販売しません。以下の相手と限定的に共有されます："
+
+#: templates/privacy.html:49
+msgid "Otros usuarios cuando tú los haces públicos (como tu perfil)"
+msgstr "公開設定された情報（プロフィールなど）を閲覧する他のユーザー"
+
+#: templates/privacy.html:50
+msgid "Proveedores que nos ayudan a operar el servicio"
+msgstr "サービス運営を支援するプロバイダー"
+
+#: templates/privacy.html:51
+msgid "Autoridades legales cuando lo exige la ley"
+msgstr "法律で義務付けられた場合の法的機関"
+
+#: templates/privacy.html:54
+msgid "4. Tus derechos"
+msgstr "4. あなたの権利"
+
+#: templates/privacy.html:55
+msgid "Puedes:"
+msgstr "あなたは以下が可能です："
+
+#: templates/privacy.html:57
+msgid "Acceder, modificar o eliminar tu perfil"
+msgstr "プロフィールへのアクセス、編集、削除"
+
+#: templates/privacy.html:58
+msgid "Solicitar la eliminación de tu cuenta escribiendo a"
+msgstr "以下の宛先に連絡してアカウントの削除を依頼する"
+
+#: templates/privacy.html:59
+msgid "Revocar permisos como acceso a ubicación desde tu dispositivo"
+msgstr "デバイスからの位置情報アクセスなどの許可を取り消す"
+
+#: templates/privacy.html:62
+msgid "5. Seguridad"
+msgstr "5. セキュリティ"
+
+#: templates/privacy.html:63
+#, python-format
+msgid ""
+"Protegemos tu información con medidas técnicas razonables. Aun así, "
+"ningún sistema es 100% seguro."
+msgstr ""
+"お客様の情報は合理的な技術的手段で保護されますが、完全に安全なシステムは存在しません。"
+
+#: templates/privacy.html:65
+msgid "6. Cambios en esta política"
+msgstr "6. このポリシーの変更について"
+
+#: templates/privacy.html:66
+msgid ""
+"Podemos actualizar esta política. Notificaremos los cambios relevantes "
+"por email o dentro de la app."
+msgstr ""
+"このポリシーは更新される可能性があります。重要な変更はメールまたはアプリ内で通知します。"
+
+#: templates/privacy.html:68
+msgid "7. Contacto"
+msgstr "7. お問い合わせ"
+
+#: templates/privacy.html:69
+msgid "Si tienes dudas, puedes escribirnos a:"
+msgstr "ご不明な点があれば、以下までご連絡ください："
+
+#: templates/privacy.html:71
+msgid "Sitio web:"
+msgstr "ウェブサイト："
+
+#: templates/profile.html:3
+msgid "Perfil de Usuario"
+msgstr "ユーザープロフィール"
+
+#: templates/profile.html:24
+msgid "seguidores"
+msgstr "フォロワー"
+
+#: templates/profile.html:25
+msgid "siguiendo"
+msgstr "フォロー中"
+
+#: templates/profile.html:32
+msgid "Dejar de seguir"
+msgstr "フォローをやめる"
+
+#: templates/profile.html:37
+msgid "Seguir"
+msgstr "フォローする"
+
+#: templates/profile.html:49
+msgid "Correo:"
+msgstr "メール："
+
+#: templates/profile.html:86
+msgid "Opiniones de"
+msgstr "のレビュー"
+
+#: templates/profile.html:96 templates/profile.html:184
+msgid "Eliminar"
+msgstr "削除"
+
+#: templates/profile.html:118
+msgid "Mostrar respuestas"
+msgstr "返信を表示"
+
+#: templates/profile.html:152
+msgid "No hay opiniones aún."
+msgstr "まだレビューがありません。"
+
+#: templates/profile.html:172
+msgid "Videos Subidos"
+msgstr "アップロードされた動画"
+
+#: templates/profile.html:178 templates/search.html:45
+msgid "Tu navegador no soporta el video."
+msgstr "お使いのブラウザはこのビデオをサポートしていません。"
+
+#: templates/profile.html:191
+msgid "Subir un nuevo video"
+msgstr "新しい動画をアップロードする"
+
+#: templates/register.html:7 templates/register.html:43
+msgid "Registro"
+msgstr "登録"
+
+#: templates/register.html:64
+msgid "Haz clic para subir una foto de perfil"
+msgstr "クリックしてプロフィール写真をアップロード"
+
+#: templates/register.html:70
+msgid "Nombre Completo:"
+msgstr "氏名："
+
+#: templates/register.html:73
+msgid "Nombre de Usuario:"
+msgstr "ユーザー名："
+
+#: templates/register.html:80
+msgid "Correo Electrónico:"
+msgstr "メールアドレス："
+
+#: templates/register.html:83
+msgid "Empresa (Opcional):"
+msgstr "会社名（任意）："
+
+#: templates/register.html:86
+msgid "Profesión (Opcional):"
+msgstr "職業（任意）："
+
+#: templates/register.html:89
+msgid "Sobre ti (Opcional):"
+msgstr "自己紹介（任意）："
+
+#: templates/register.html:92
+msgid "Ubicación (Opcional):"
+msgstr "所在地（任意）："
+
+#: templates/register.html:100
+msgid "📍 Usar mi ubicación actual"
+msgstr "📍 現在の位置情報を使用"
+
+#: templates/register.html:105
+msgid "Repite la Contraseña:"
+msgstr "パスワードの確認："
+
+#: templates/register.html:111
+msgid "¿Ya tienes una cuenta?"
+msgstr "すでにアカウントをお持ちですか？"
+
+#: templates/register.html:111
+msgid "Inicia sesión aquí"
+msgstr "こちらからログイン"
+
+#: templates/search.html:3
+msgid "Búsqueda"
+msgstr "検索"
+
+#: templates/search.html:6 templates/search.html:11
+msgid "Buscar"
+msgstr "検索する"
+
+#: templates/search.html:17
+msgid "Perfiles relacionados con"
+msgstr "に関連するプロフィール"
+
+#: templates/search.html:38
+msgid "Videos relacionados con"
+msgstr "に関連する動画"
+
+#: templates/search.html:47
+msgid "🎥 Subido por:"
+msgstr "🎥 投稿者："
+
+#: templates/seguridad.html:5 templates/seguridad.html:8
+msgid "Estándares de Seguridad Infantil"
+msgstr "児童安全基準"
+
+#: templates/seguridad.html:9
+msgid ""
+"En MAZO nos comprometemos firmemente a prevenir cualquier tipo de "
+"explotación o abuso sexual infantil (EASI) en nuestra plataforma."
+msgstr ""
+"MAZOでは、当プラットフォーム上であらゆる児童の搾取や性的虐待（EASI）を防ぐことに強く取り組んでいます。"
+
+#: templates/seguridad.html:11
+msgid "Medidas adoptadas"
+msgstr "採用されている対策"
+
+#: templates/seguridad.html:13
+msgid ""
+"Moderación activa de contenido mediante sistemas automáticos y revisión "
+"manual."
+msgstr ""
+"自動システムと手動によるレビューによる積極的なコンテンツのモデレーション。"
+
+#: templates/seguridad.html:14
+msgid ""
+"Prohibición total de contenido relacionado con menores que viole nuestras"
+" políticas."
+msgstr ""
+"未成年者に関連し、当社のポリシーに違反するコンテンツの完全禁止。"
+
+#: templates/seguridad.html:15
+msgid "Posibilidad de denunciar contenido inapropiado de forma inmediata."
+msgstr "不適切なコンテンツを即座に通報できる機能。"
+
+#: templates/seguridad.html:16
+msgid "Colaboración con autoridades legales cuando sea necesario."
+msgstr "必要に応じて法的機関と協力。"
+
+#: templates/seguridad.html:17
+msgid "Suspensión o eliminación de cuentas que infrinjan estas normas."
+msgstr "これらの規則に違反するアカウントの停止または削除。"
+
+#: templates/seguridad.html:20
+msgid "Contacto"
+msgstr "お問い合わせ"
+
+#: templates/seguridad.html:21
+msgid "Si detectas alguna actividad sospechosa, por favor contáctanos en:"
+msgstr "不審な活動を発見した場合は、以下までご連絡ください："
+
+#: templates/upload.html:3 templates/upload.html:26
+msgid "Subir Video"
+msgstr "動画をアップロード"
+
+#: templates/upload.html:14
+msgid "Título del Video:"
+msgstr "動画のタイトル："
+
+#: templates/upload.html:20
+msgid "Hashtags (separados por comas):"
+msgstr "ハッシュタグ（カンマで区切って入力）："
+
+#: templates/upload.html:23
+msgid "Selecciona un video:"
+msgstr "動画を選択："
+
+#: templates/upload.html:30
+msgid "Volver al perfil"
+msgstr "プロフィールに戻る"

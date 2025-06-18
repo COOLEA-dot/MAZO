@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Perfil de Usuario{% endblock %}
+{% block title %}{{ _('Perfil de Usuario') }}{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
@@ -21,39 +21,39 @@
         <!-- 🔵 Contadores de seguidores -->
         <div class="follow-container">
             <div class="follow-stats">
-                <span>{{ user.followers.count() }} seguidores</span>
-                <span>{{ user.followed.count() }} siguiendo</span>
+                <span>{{ user.followers.count() }} {{ _('seguidores') }}</span>
+                <span>{{ user.followed.count() }} {{ _('siguiendo') }}</span>
             </div>
 
             {% if current_user.is_authenticated and current_user.id != user.id %}
                 {% if current_user in user.followers %}
                     <form action="{{ url_for('unfollow_user', user_id=user.id) }}" method="POST">
                         {{ form.hidden_tag() }}
-                        <button type="submit" class="btn-unfollow">Dejar de seguir</button>
+                        <button type="submit" class="btn-unfollow">{{ _('Dejar de seguir') }}</button>
                     </form>
                 {% else %}
                     <form action="{{ url_for('follow_user', user_id=user.id) }}" method="POST">
                         {{ form.hidden_tag() }}
-                        <button type="submit" class="btn-follow">Seguir</button>
+                        <button type="submit" class="btn-follow">{{ _('Seguir') }}</button>
                     </form>
                 {% endif %}
             {% endif %} 
         </div>
 
         <div class="profile-details">
-            <p><strong>Nombre:</strong> {{ user.name }}
+            <p><strong>{{ _('Nombre:') }}</strong> {{ user.name }}
             {% if user.is_premium %}
                 <span class="premium-badge" title="Empresa Verificada">✔</span>
             {% endif %}
             </p>
-            <p><strong>Correo:</strong> {{ user.email }}</p>
+            <p><strong>{{ _('Correo:') }}</strong> {{ user.email }}</p>
         
             {% if user.company %}
-                <p><strong>Empresa:</strong> {{ user.company }}</p>
+                <p><strong>{{ _('Empresa:') }}</strong> {{ user.company }}</p>
             {% endif %}
         
             {% if user.profession %}
-                <p><strong>Profesión:</strong> {{ user.profession }}</p>
+                <p><strong>{{ _('Profesión:') }}</strong> {{ user.profession }}</p>
             {% endif %}
         
             {% if user.description %}
@@ -71,19 +71,12 @@
             <p> {{ average_rating | round(1) }}</p>
         </div>
         {% endif %}
-
-        {% if current_user.id == user.id %}
-        <!-- 🔹 Botón para ir a la página de edición del perfil -->
-        <div class="edit-profile-button">
-            <a href="{{ url_for('edit_profile') }}" class="btn-edit-profile">Editar Perfil</a>
-        </div>
-        {% endif %}
     </div>
 
     <!-- 🔵 Sección de Opiniones -->
     <div id="reviews-section" class="reviews-section hidden">
         <div class="reviews-header">
-            <h3>Opiniones de {{ user.name }}</h3>
+            <h3>{{ _('Opiniones de') }} {{ user.name }}</h3>
             <span class="close-reviews">×</span>
         </div>
 
@@ -93,7 +86,7 @@
                     <div class="review-header">
                         <div class="review-actions">
                             {% if current_user.id == opinion.user_id %}
-                                <button class="delete-opinion-btn" data-opinion-id="{{ opinion.id }}">Eliminar</button>
+                                <button class="delete-opinion-btn" data-opinion-id="{{ opinion.id }}">{{ _('Eliminar') }}</button>
                             {% endif %}
                         </div>
                         
@@ -105,7 +98,7 @@
                                 {% if opinion.user %}
                                     <a href="{{ url_for('profile', username=opinion.user.username) }}">{{ opinion.user.name }}</a>
                                 {% else %}
-                                    <span>Usuario desconocido</span>
+                                    <span>{{ _('Usuario desconocido') }}</span>
                                 {% endif %}
                             </p>
                             <p class="review-rating">⭐ {{ opinion.rating }}/10</p>
@@ -115,7 +108,7 @@
                     <div class="review-content">
                         <p class="review-text">{{ opinion.text }}</p>
 
-                        <button class="show-replies-btn" data-opinion-id="{{ opinion.id }}">Mostrar respuestas</button>
+                        <button class="show-replies-btn" data-opinion-id="{{ opinion.id }}">{{ _('Mostrar respuestas') }}</button>
 
                         <div class="responses hidden" id="responses-{{ opinion.id }}">
                             {% for response in opinion.responses %}
@@ -149,7 +142,7 @@
                     </div>
                 </div>
             {% else %}
-                <p id="no-opinions-message">No hay opiniones aún.</p>
+                <p id="no-opinions-message">{{ _('No hay opiniones aún.') }}</p>
             {% endfor %}
         </div>
 
@@ -169,28 +162,36 @@
         {% endif %}
     </div>
 
-    <h2>Videos Subidos</h2>
+    <h2>{{ _('Videos Subidos') }}</h2>
     <div class="video-grid">
         {% for video in videos %}
             <div class="video">
                 <video controls>
                     <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
-                    Tu navegador no soporta el video.
+                    {{ _('Tu navegador no soporta el video.') }}
                 </video>
 
             {% if current_user.id == user.id %}
                 <form action="{{ url_for('delete_video', video_id=video.id) }}" method="POST">
                     {{ form.hidden_tag() }}
-                    <button type="submit" class="delete-video-btn">Eliminar</button>
+                    <button type="submit" class="delete-video-btn">{{ _('Eliminar') }}</button>
                 </form>
             {% endif %}
             </div>
         {% endfor %}
     </div>
 {% if current_user.id == user.id %}
-    <h3><a href="{{ url_for('upload') }}" class="upload-video-link">Subir un nuevo video</a></h3>
+    <h3><a href="{{ url_for('upload') }}" class="upload-video-link">{{ _('Subir un nuevo video') }}</a></h3>
     {% endif %}
 </div>
+{% if current_user.id == user.id %}
+<div style="position: absolute; top: 65px; right: 15px;">
+  <a href="{{ url_for('settings') }}" title="Configuración">
+    <i class="fas fa-cog" style="font-size: 24px; color: #555;"></i>
+  </a>
+</div>
+{% endif %}
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.delete-video-btn').forEach(button => {

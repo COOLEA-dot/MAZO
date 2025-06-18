@@ -583,6 +583,18 @@ video {
     font-weight: 500;
 }
 
+.settings-icon {
+  margin-left: 10px;
+  color: #555;
+  font-size: 20px;
+  text-decoration: none;
+}
+
+.settings-icon:hover {
+  color: #000;
+  cursor: pointer;
+}
+
 /* Botones de seguir/dejar de seguir */
 .btn-follow, .btn-unfollow {
     padding: 8px 18px;

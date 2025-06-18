@@ -1,0 +1,577 @@
+# Portuguese translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-06-18 12:30+0200\n"
+"PO-Revision-Date: 2025-06-18 12:51+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: pt\n"
+"Language-Team: pt <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: templates/base.html:25
+msgid "Inicio"
+msgstr "Início"
+
+#: templates/base.html:32
+msgid "Perfil"
+msgstr "Perfil"
+
+#: templates/base.html:50
+msgid "Salir"
+msgstr "Sair"
+
+#: templates/base.html:57
+msgid "Entrar"
+msgstr "Entrar"
+
+#: templates/base.html:63 templates/register.html:108
+msgid "Registrarse"
+msgstr "Cadastrar-se"
+
+#: templates/base.html:99
+msgid "¿Estás seguro de que quieres cerrar sesión?"
+msgstr "Tem certeza de que deseja sair da conta?"
+
+#: templates/chat.html:3
+msgid "Chat con"
+msgstr "Chat com"
+
+#: templates/chat_list.html:3
+msgid "Lista de chats"
+msgstr "Lista de chats"
+
+#: templates/chat_list.html:12
+msgid "Tus Chats"
+msgstr "Seus Chats"
+
+#: templates/chat_list.html:27
+msgid "📩 Mensaje nuevo"
+msgstr "📩 Nova mensagem"
+
+#: templates/chat_list.html:30
+msgid "Enviado"
+msgstr "Enviado"
+
+#: templates/chat_list.html:39
+msgid "¡Nuevo!"
+msgstr "Novo!"
+
+#: templates/chat_list.html:43
+msgid "No tienes chats previos."
+msgstr "Você não tem chats anteriores."
+
+#: templates/edit_profile.html:3 templates/edit_profile.html:9
+#: templates/profile.html:78
+msgid "Editar Perfil"
+msgstr "Editar Perfil"
+
+#: templates/edit_profile.html:22 templates/profile.html:44
+msgid "Nombre:"
+msgstr "Nome:"
+
+#: templates/edit_profile.html:27 templates/profile.html:52
+msgid "Empresa:"
+msgstr "Empresa:"
+
+#: templates/edit_profile.html:32 templates/profile.html:56
+msgid "Profesión:"
+msgstr "Profissão:"
+
+#: templates/edit_profile.html:37 templates/upload.html:17
+msgid "Descripción:"
+msgstr "Descrição:"
+
+#: templates/edit_profile.html:42
+msgid "Ubicación:"
+msgstr "Localização:"
+
+#: templates/edit_profile.html:47
+msgid "Nombre de usuario:"
+msgstr "Nome de usuário:"
+
+#: templates/edit_profile.html:52 templates/register.html:76
+msgid "Teléfono:"
+msgstr "Telefone:"
+
+#: templates/edit_profile.html:57
+msgid "Correo electrónico:"
+msgstr "E-mail:"
+
+#: templates/edit_profile.html:61
+msgid "Guardar cambios"
+msgstr "Salvar alterações"
+
+#: templates/edit_profile.html:62
+msgid "Cancelar"
+msgstr "Cancelar"
+
+#: templates/home.html:3
+msgid "Página Principal"
+msgstr "Página Inicial"
+
+#: templates/home.html:34 templates/profile.html:108
+msgid "Usuario desconocido"
+msgstr "Usuário desconhecido"
+
+#: templates/home.html:64
+msgid "Tu navegador no puede reproducir este video."
+msgstr "Seu navegador não consegue reproduzir este vídeo."
+
+#: templates/home.html:85
+msgid "Comentarios"
+msgstr "Comentários"
+
+#: templates/home.html:108
+msgid "Compartir con usuarios"
+msgstr "Compartilhar com usuários"
+
+#: templates/home.html:115
+msgid "Enviar"
+msgstr "Enviar"
+
+#: templates/inicio.html:6
+msgid "Encuentra profesionales"
+msgstr "Encontre profissionais"
+
+#: templates/inicio.html:13
+msgid "Encuentra aquí a tus profesionales de confianza"
+msgstr "Encontre aqui seus profissionais de confiança"
+
+#: templates/inicio.html:14
+msgid "Empezar sin registro"
+msgstr "Começar sem cadastro"
+
+#: templates/inicio.html:15
+msgid "Iniciar sesión"
+msgstr "Entrar"
+
+#: templates/inicio.html:19
+msgid "¿Por qué usar MAZO?"
+msgstr "Por que usar o MAZO?"
+
+#: templates/inicio.html:21
+msgid "📹 Perfiles con video"
+msgstr "📹 Perfis com vídeo"
+
+#: templates/inicio.html:22
+msgid "📍 Búsqueda por profesión y ubicación"
+msgstr "📍 Busca por profissão e localização"
+
+#: templates/inicio.html:23
+msgid "💬 Chat en tiempo real"
+msgstr "💬 Chat em tempo real"
+
+#: templates/inicio.html:24
+msgid "⭐ Opiniones y valoraciones"
+msgstr "⭐ Opiniões e avaliações"
+
+#: templates/inicio.html:29
+msgid "Descubre cómo funciona"
+msgstr "Descubra como funciona"
+
+#: templates/inicio.html:34
+msgid "2025 MAZO · Todos los derechos reservados"
+msgstr "2025 MAZO · Todos os direitos reservados"
+
+#: templates/login.html:7 templates/login.html:11
+msgid "Inicio de Sesión"
+msgstr "Login"
+
+#: templates/login.html:28
+msgid "Usuario:"
+msgstr "Usuário:"
+
+#: templates/login.html:32 templates/register.html:102
+msgid "Contraseña:"
+msgstr "Senha:"
+
+#: templates/login.html:36
+msgid "Iniciar Sesión"
+msgstr "Entrar"
+
+#: templates/login.html:39
+msgid "¿No tienes cuenta?"
+msgstr "Não tem uma conta?"
+
+#: templates/login.html:39
+msgid "Regístrate aquí"
+msgstr "Cadastre-se aqui"
+
+#: templates/premium.html:11
+msgid "Impulsa tu perfil por solo"
+msgstr "Impulsione seu perfil por apenas"
+
+#: templates/premium.html:11
+msgid "9,99 €/mes"
+msgstr "9,99 €/mês"
+
+#: templates/premium.html:14
+msgid "🔝 Tu perfil aparece primero en la página principal y en búsquedas."
+msgstr "🔝 Seu perfil aparece primeiro na página inicial e nas buscas."
+
+#: templates/premium.html:15
+msgid "✅ Verificación como empresa titular."
+msgstr "✅ Verificação como empresa titular."
+
+#: templates/premium.html:16
+msgid "💬 Acceso exclusivo al grupo privado de Telegram (invitación manual)."
+msgstr "💬 Acesso exclusivo ao grupo privado do Telegram (convite manual)."
+
+#: templates/premium.html:20
+msgid "Ya eres usuario premium ✔"
+msgstr "Você já é um usuário premium ✔"
+
+#: templates/premium.html:35
+msgid ""
+"Este es un pago mensual. Deberás renovarlo manualmente cada mes para "
+"mantener tu cuenta premium."
+msgstr ""
+"Este é um pagamento mensal. Você deve renová-lo manualmente todo mês para "
+"manter sua conta premium."
+
+#: templates/privacy.html:6
+msgid "Política de Privacidad"
+msgstr "Política de Privacidade"
+
+#: templates/privacy.html:25
+msgid ""
+"nos tomamos muy en serio la privacidad de nuestros usuarios. Esta "
+"Política de Privacidad explica qué datos recopilamos, cómo los usamos y "
+"cómo protegemos tu información cuando utilizas nuestra aplicación y sitio"
+" web"
+msgstr ""
+"Levamos muito a sério a privacidade dos nossos usuários. Esta Política de Privacidade explica quais dados coletamos, como os utilizamos e como protegemos suas informações ao usar nosso aplicativo e site."
+
+#: templates/privacy.html:29
+msgid "Nombre, correo electrónico, número de teléfono"
+msgstr "Nome, e-mail, número de telefone"
+
+#: templates/privacy.html:30
+msgid "Nombre de empresa, profesión, ubicación"
+msgstr "Nome da empresa, profissão, localização"
+
+#: templates/privacy.html:31
+msgid "Descripción personal y habilidades"
+msgstr "Descrição pessoal e habilidades"
+
+#: templates/privacy.html:32
+msgid "Foto de perfil y archivos multimedia que subas"
+msgstr "Foto de perfil e arquivos de mídia que você enviar"
+
+#: templates/privacy.html:33
+msgid "Mensajes y comentarios enviados en la plataforma"
+msgstr "Mensagens e comentários enviados na plataforma"
+
+#: templates/privacy.html:35
+msgid ""
+"También recopilamos información de uso y navegación, como IP, tipo de "
+"dispositivo, navegador y ubicación aproximada (si la autorizas)."
+msgstr ""
+"Também coletamos informações de uso e navegação, como IP, tipo de "
+"dispositivo, navegador e localização aproximada (se você autorizar)."
+
+#: templates/privacy.html:37
+msgid "2. Cómo usamos tus datos"
+msgstr "2. Como usamos seus dados"
+
+#: templates/privacy.html:39
+msgid "Crear y mostrar tu perfil en la plataforma"
+msgstr "Criar e exibir seu perfil na plataforma"
+
+#: templates/privacy.html:40
+msgid "Conectar con otros usuarios y empresas"
+msgstr "Conectar com outros usuários e empresas"
+
+#: templates/privacy.html:41
+msgid "Mostrar contenido relevante según tu ubicación e intereses"
+msgstr "Mostrar conteúdo relevante com base na sua localização e interesses"
+
+#: templates/privacy.html:42
+msgid "Mejorar y personalizar la experiencia"
+msgstr "Melhorar e personalizar a experiência"
+
+#: templates/privacy.html:43
+msgid "Prevenir fraudes y mantener la seguridad"
+msgstr "Prevenir fraudes e manter a segurança"
+
+#: templates/privacy.html:46
+msgid "3. Con quién compartimos tus datos"
+msgstr "3. Com quem compartilhamos seus dados"
+
+#: templates/privacy.html:47
+msgid "No vendemos tu información personal. Compartimos datos solo con:"
+msgstr "Não vendemos suas informações pessoais. Compartilhamos dados apenas com:"
+
+#: templates/privacy.html:49
+msgid "Otros usuarios cuando tú los haces públicos (como tu perfil)"
+msgstr "Outros usuários quando você torna essas informações públicas (como seu perfil)"
+
+#: templates/privacy.html:50
+msgid "Proveedores que nos ayudan a operar el servicio"
+msgstr "Fornecedores que nos ajudam a operar o serviço"
+
+#: templates/privacy.html:51
+msgid "Autoridades legales cuando lo exige la ley"
+msgstr "Autoridades legais quando exigido por lei"
+
+#: templates/privacy.html:54
+msgid "4. Tus derechos"
+msgstr "4. Seus direitos"
+
+#: templates/privacy.html:55
+msgid "Puedes:"
+msgstr "Você pode:"
+
+#: templates/privacy.html:57
+msgid "Acceder, modificar o eliminar tu perfil"
+msgstr "Acessar, modificar ou excluir seu perfil"
+
+#: templates/privacy.html:58
+msgid "Solicitar la eliminación de tu cuenta escribiendo a"
+msgstr "Solicitar a exclusão da sua conta escrevendo para"
+
+#: templates/privacy.html:59
+msgid "Revocar permisos como acceso a ubicación desde tu dispositivo"
+msgstr "Revogar permissões como acesso à localização no seu dispositivo"
+
+#: templates/privacy.html:62
+msgid "5. Seguridad"
+msgstr "5. Segurança"
+
+#: templates/privacy.html:63
+#, python-format
+msgid ""
+"Protegemos tu información con medidas técnicas razonables. Aun así, "
+"ningún sistema es 100% seguro."
+msgstr ""
+"Protegemos suas informações com medidas técnicas razoáveis. Ainda assim, "
+"nenhum sistema é 100% seguro."
+
+#: templates/privacy.html:65
+msgid "6. Cambios en esta política"
+msgstr "6. Alterações nesta política"
+
+#: templates/privacy.html:66
+msgid ""
+"Podemos actualizar esta política. Notificaremos los cambios relevantes "
+"por email o dentro de la app."
+msgstr ""
+"Podemos atualizar esta política. Notificaremos alterações relevantes por e-mail ou dentro do app."
+
+#: templates/privacy.html:68
+msgid "7. Contacto"
+msgstr "7. Contato"
+
+#: templates/privacy.html:69
+msgid "Si tienes dudas, puedes escribirnos a:"
+msgstr "Se tiver dúvidas, pode nos escrever para:"
+
+#: templates/privacy.html:71
+msgid "Sitio web:"
+msgstr "Site:"
+
+#: templates/profile.html:3
+msgid "Perfil de Usuario"
+msgstr "Perfil do Usuário"
+
+#: templates/profile.html:24
+msgid "seguidores"
+msgstr "seguidores"
+
+#: templates/profile.html:25
+msgid "siguiendo"
+msgstr "seguindo"
+
+#: templates/profile.html:32
+msgid "Dejar de seguir"
+msgstr "Deixar de seguir"
+
+#: templates/profile.html:37
+msgid "Seguir"
+msgstr "Seguir"
+
+#: templates/profile.html:49
+msgid "Correo:"
+msgstr "Email:"
+
+#: templates/profile.html:86
+msgid "Opiniones de"
+msgstr "Opiniões de"
+
+#: templates/profile.html:96 templates/profile.html:184
+msgid "Eliminar"
+msgstr "Excluir"
+
+#: templates/profile.html:118
+msgid "Mostrar respuestas"
+msgstr "Mostrar respostas"
+
+#: templates/profile.html:152
+msgid "No hay opiniones aún."
+msgstr "Ainda não há opiniões."
+
+#: templates/profile.html:172
+msgid "Videos Subidos"
+msgstr "Vídeos Enviados"
+
+#: templates/profile.html:178 templates/search.html:45
+msgid "Tu navegador no soporta el video."
+msgstr "Seu navegador não suporta o vídeo."
+
+#: templates/profile.html:191
+msgid "Subir un nuevo video"
+msgstr "Enviar um novo vídeo"
+
+#: templates/register.html:7 templates/register.html:43
+msgid "Registro"
+msgstr "Cadastro"
+
+#: templates/register.html:64
+msgid "Haz clic para subir una foto de perfil"
+msgstr "Clique para enviar uma foto de perfil"
+
+#: templates/register.html:70
+msgid "Nombre Completo:"
+msgstr "Nome Completo:"
+
+#: templates/register.html:73
+msgid "Nombre de Usuario:"
+msgstr "Nome de Usuário:"
+
+#: templates/register.html:80
+msgid "Correo Electrónico:"
+msgstr "Email:"
+
+#: templates/register.html:83
+msgid "Empresa (Opcional):"
+msgstr "Empresa (Opcional):"
+
+#: templates/register.html:86
+msgid "Profesión (Opcional):"
+msgstr "Profissão (Opcional):"
+
+#: templates/register.html:89
+msgid "Sobre ti (Opcional):"
+msgstr "Sobre você (Opcional):"
+
+#: templates/register.html:92
+msgid "Ubicación (Opcional):"
+msgstr "Localização (Opcional):"
+
+#: templates/register.html:100
+msgid "📍 Usar mi ubicación actual"
+msgstr "📍 Usar minha localização atual"
+
+#: templates/register.html:105
+msgid "Repite la Contraseña:"
+msgstr "Repita a Senha:"
+
+#: templates/register.html:111
+msgid "¿Ya tienes una cuenta?"
+msgstr "Já tem uma conta?"
+
+#: templates/register.html:111
+msgid "Inicia sesión aquí"
+msgstr "Entre aqui"
+
+#: templates/search.html:3
+msgid "Búsqueda"
+msgstr "Busca"
+
+#: templates/search.html:6 templates/search.html:11
+msgid "Buscar"
+msgstr "Buscar"
+
+#: templates/search.html:17
+msgid "Perfiles relacionados con"
+msgstr "Perfis relacionados a"
+
+#: templates/search.html:38
+msgid "Videos relacionados con"
+msgstr "Vídeos relacionados a"
+
+#: templates/search.html:47
+msgid "🎥 Subido por:"
+msgstr "🎥 Enviado por:"
+
+#: templates/seguridad.html:5 templates/seguridad.html:8
+msgid "Estándares de Seguridad Infantil"
+msgstr "Padrões de Segurança Infantil"
+
+#: templates/seguridad.html:9
+msgid ""
+"En MAZO nos comprometemos firmemente a prevenir cualquier tipo de "
+"explotación o abuso sexual infantil (EASI) en nuestra plataforma."
+msgstr ""
+"Na MAZO, estamos firmemente comprometidos em prevenir qualquer tipo de "
+"exploração ou abuso sexual infantil (EASI) em nossa plataforma."
+
+#: templates/seguridad.html:11
+msgid "Medidas adoptadas"
+msgstr "Medidas adotadas"
+
+#: templates/seguridad.html:13
+msgid ""
+"Moderación activa de contenido mediante sistemas automáticos y revisión "
+"manual."
+msgstr ""
+"Moderação ativa de conteúdo por meio de sistemas automáticos e revisão "
+"manual."
+
+#: templates/seguridad.html:14
+msgid ""
+"Prohibición total de contenido relacionado con menores que viole nuestras"
+" políticas."
+msgstr ""
+"Proibição total de conteúdo relacionado a menores que viole nossas "
+"políticas."
+
+#: templates/seguridad.html:15
+msgid "Posibilidad de denunciar contenido inapropiado de forma inmediata."
+msgstr "Possibilidade de denunciar conteúdo impróprio imediatamente."
+
+#: templates/seguridad.html:16
+msgid "Colaboración con autoridades legales cuando sea necesario."
+msgstr "Colaboração com autoridades legais quando necessário."
+
+#: templates/seguridad.html:17
+msgid "Suspensión o eliminación de cuentas que infrinjan estas normas."
+msgstr "Suspensão ou exclusão de contas que violem estas regras."
+
+#: templates/seguridad.html:20
+msgid "Contacto"
+msgstr "Contato"
+
+#: templates/seguridad.html:21
+msgid "Si detectas alguna actividad sospechosa, por favor contáctanos en:"
+msgstr "Se detectar alguma atividade suspeita, por favor entre em contato conosco em:"
+
+#: templates/upload.html:3 templates/upload.html:26
+msgid "Subir Video"
+msgstr "Enviar Vídeo"
+
+#: templates/upload.html:14
+msgid "Título del Video:"
+msgstr "Título do Vídeo:"
+
+#: templates/upload.html:20
+msgid "Hashtags (separados por comas):"
+msgstr "Hashtags (separados por vírgulas):"
+
+#: templates/upload.html:23
+msgid "Selecciona un video:"
+msgstr "Selecione um vídeo:"
+
+#: templates/upload.html:30
+msgid "Volver al perfil"
+msgstr "Voltar ao perfil"

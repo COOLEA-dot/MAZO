@@ -3,35 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MAZO - Encuentra profesionales</title>
+    <title>MAZO -{{ _('Encuentra profesionales') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/inicio.css') }}">
 </head>
 <body>
+    <form action="{{ url_for('set_language') }}" method="POST" class="language-selector">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <select name="language" onchange="this.form.submit()">
+        <option value="es" {% if current_locale == 'es' %}selected{% endif %}>Español</option>
+        <option value="en" {% if current_locale == 'en' %}selected{% endif %}>English</option>
+        <option value="fr" {% if current_locale == 'fr' %}selected{% endif %}>Français</option>
+        <option value="pt" {% if current_locale == 'pt' %}selected{% endif %}>Português</option>
+        <option value="ru" {% if current_locale == 'ru' %}selected{% endif %}>Русский</option>
+        <option value="ja" {% if current_locale == 'ja' %}selected{% endif %}>日本語</option>
+        <option value="ar" {% if current_locale == 'ar' %}selected{% endif %}>العربية</option>
+    </select>
+    </form>
     <header>
         <img src="/static/profile_pics/logo.png" alt="MAZO Logo" class="logo">
         <h1>MAZO</h1>
-        <p>Encuentra aquí a tus profesionales de confianza</p>
-        <a href="{{ url_for('home') }}" class="btn-principal">Empezar sin registro</a>
-        <a href="{{ url_for('login') }}" class="btn-secundario">Iniciar sesión</a>
+        <p>{{ _('Encuentra aquí a tus profesionales de confianza') }}</p>
+        <a href="{{ url_for('home') }}" class="btn-principal">{{ _('Empezar sin registro') }}</a>
+        <a href="{{ url_for('login') }}" class="btn-secundario">{{ _('Iniciar sesión') }}</a>
     </header>
 
     <section class="features">
-        <h2>¿Por qué usar MAZO?</h2>
+        <h2>{{ _('¿Por qué usar MAZO?') }}</h2>
         <ul>
-            <li>📹 Perfiles con video</li>
-            <li>📍 Búsqueda por profesión y ubicación</li>
-            <li>💬 Chat en tiempo real</li>
-            <li>⭐ Opiniones y valoraciones</li>
+            <li>{{ _('📹 Perfiles con video') }}</li>
+            <li>{{ _('📍 Búsqueda por profesión y ubicación') }}</li>
+            <li>{{ _('💬 Chat en tiempo real') }}</li>
+            <li>{{ _('⭐ Opiniones y valoraciones') }}</li>
         </ul>
     </section>
 
     <section class="demo">
-        <h2>Descubre cómo funciona</h2>
+        <h2>{{ _('Descubre cómo funciona') }}</h2>
         <img src="/static/demo.png" alt="Captura de pantalla">
     </section>
 
     <footer>
-        <p>&copy; 2025 MAZO · Todos los derechos reservados</p>
+        <p>&copy;{{ _('2025 MAZO · Todos los derechos reservados') }}</p>
     </footer>
 </body>
 </html>

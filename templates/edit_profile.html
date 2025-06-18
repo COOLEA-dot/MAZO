@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
-{% block title %}Editar Perfil{% endblock %}
+{% block title %}{{ _('Editar Perfil') }}{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_profile.css') }}">
 
 <div class="edit-profile-container">
-    <h2>Editar Perfil</h2>
+    <h2>{{ _('Editar Perfil') }}</h2>
 
     <form action="{{ url_for('edit_profile') }}" method="POST" enctype="multipart/form-data" class="edit-profile-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -19,47 +19,47 @@
         </div>
 
         <div>
-            <label for="name">Nombre:</label>
+            <label for="name">{{ _('Nombre:') }}</label>
             <input type="text" id="name" name="name" value="{{ user.name | default('', true) }}" required>
         </div>
 
         <div>
-            <label for="company">Empresa:</label>
+            <label for="company">{{ _('Empresa:') }}</label>
             <input type="text" id="company" name="company" value="{{ user.company | default('', true) }}">
         </div>
 
         <div>
-            <label for="profession">Profesión:</label>
+            <label for="profession">{{ _('Profesión:') }}</label>
             <input type="text" id="profession" name="profession" value="{{ user.profession | default('', true) }}">
         </div>
 
         <div>
-            <label for="description">Descripción:</label>
+            <label for="description">{{ _('Descripción:') }}</label>
             <textarea id="description" name="description" maxlength="500" rows="4" style="resize: none; width: 100%;">{{ user.description | default('', true) }}</textarea>
         </div>
 
         <div>
-            <label for="location">Ubicación:</label>
+            <label for="location">{{ _('Ubicación:') }}</label>
             <input type="text" id="location" name="location" value="{{ user.location | default('', true) }}">
         </div>
 
         <div>
-            <label for="username">Nombre de usuario:</label>
+            <label for="username">{{ _('Nombre de usuario:') }}</label>
             <input type="text" id="username" name="username" value="{{ user.username | default('', true) }}" disabled>
         </div>
 
         <div>
-            <label for="phone">Teléfono:</label>
+            <label for="phone">{{ _('Teléfono:') }}</label>
             <input type="text" id="phone" name="phone" value="{{ user.phone | default('', true) }}">
         </div>
 
         <div>
-            <label for="email">Correo electrónico:</label>
+            <label for="email">{{ _('Correo electrónico:') }}</label>
             <input type="email" id="email" name="email" value="{{ user.email | default('', true) }}">
         </div>
 
-        <button type="submit" class="save-profile-btn">Guardar cambios</button>
-        <a href="{{ url_for('profile', username=user.username) }}" class="cancel-btn">Cancelar</a>
+        <button type="submit" class="save-profile-btn">{{ _('Guardar cambios') }}</button>
+        <a href="{{ url_for('profile', username=user.username) }}" class="cancel-btn">{{ _('Cancelar') }}</a>
     </form>
 </div>
 

@@ -22,14 +22,14 @@
             <li>
                 <a href="{{ url_for('home') }}">
                     <i class="fas fa-home"></i>
-                    <span class="link-text">Inicio</span>
+                    <span class="link-text">{{ _('Inicio') }}</span>
                 </a>
             </li>
             {% if g.user %}
                 <li>
                     <a href="{{ url_for('profile', username=g.user.username) }}">
                         <i class="fas fa-user"></i>
-                        <span class="link-text">Perfil</span>
+                        <span class="link-text">{{ _('Perfil') }}</span>
                     </a>
                 </li>
                 <li>
@@ -47,20 +47,20 @@
                 <li>
                     <a href="{{ url_for('logout') }}" onclick="openLogoutModal(event)">
                         <i class="fas fa-sign-out-alt"></i>
-                        <span class="link-text">Salir</span>
+                        <span class="link-text">{{ _('Salir') }}</span>
                     </a>
                 </li>
             {% else %}
                 <li>
                     <a href="{{ url_for('login') }}">
                         <i class="fas fa-sign-in-alt"></i>
-                        <span class="link-text">Entrar</span>
+                        <span class="link-text">{{ _('Entrar') }}</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ url_for('register') }}">
                         <i class="fas fa-user-plus"></i>
-                        <span class="link-text">Registrarse</span>
+                        <span class="link-text">{{ _('Registrarse') }}</span>
                     </a>
                 </li>
             {% endif %}
@@ -96,7 +96,7 @@
     <!-- Modal para cerrar sesión -->
     <div id="logoutModal" class="modal">
         <div class="modal-content">
-            <p>¿Estás seguro de que quieres cerrar sesión?</p>
+            <p>{{ _('¿Estás seguro de que quieres cerrar sesión?') }}</p>
             <div class="modal-buttons">
                 <button onclick="confirmLogout()">Sí</button>
                 <button onclick="closeLogoutModal()">No</button>

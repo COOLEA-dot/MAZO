@@ -14,7 +14,7 @@ from flask_cors import CORS
 import subprocess
 from flask_migrate import Migrate
 from flask_login import login_required, current_user, UserMixin, LoginManager, login_user
-from flask_wtf.csrf import CSRFProtect, CSRFError, validate_csrf
+from flask_wtf.csrf import CSRFProtect, CSRFError, validate_csrf, generate_csrf
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 import logging
 from datetime import datetime
@@ -27,6 +27,7 @@ from flask_mail import Mail, Message as Mailmessage
 from itsdangerous import URLSafeTimedSerializer
 from email.header import Header
 import stripe
+from flask_babel import Babel, get_locale 
 
 app = Flask(__name__)
 app.config['ENV'] = 'production'
@@ -40,34 +41,21 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'mazo.app.es@gmail.com'
 app.config['MAIL_PASSWORD'] = 'wuuvsqlospvdtuzw'  # sin espacios
 app.config['MAIL_DEFAULT_SENDER'] = 'mazo.app.es@gmail.com'
-# config.py
-
-import os
-
 app.config["STRIPE_SECRET_KEY"] = os.getenv("STRIPE_SECRET_KEY")
 app.config["STRIPE_PUBLIC_KEY"] = os.getenv("STRIPE_PUBLIC_KEY")
-
-stripe.api_key = app.config['STRIPE_SECRET_KEY']
-
-#Configuramos la base de datos 
+app.config['BABEL_DEFAULT_LOCALE'] = 'es' 
+app.config['BABEL_SUPPORTED_LOCALES'] = ['es', 'en', 'fr', 'de', 'it', 'pt', 'ar', 'ja'] 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///mazo.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = SQLAlchemy(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
-CORS(app)
-csrf = CSRFProtect(app)
-csrf.init_app(app)
-logging.basicConfig(level=logging.DEBUG)
 
-mail = Mail(app)
-serializer = URLSafeTimedSerializer(app.secret_key)
-
-
-# Configuraciones para el directorio de archivos
 UPLOAD_FOLDER = 'static/uploads/videos'
 CHAT_UPLOAD_FOLDER = 'static/chat_uploads'
 THUMBNAIL_FOLDER = "static/chat_uploads/thumbnails"
 PROFILE_PICS_FOLDER = 'static/profile_pics'  # <--- Añadido
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['CHAT_UPLOAD_FOLDER'] = CHAT_UPLOAD_FOLDER
+app.config['PROFILE_PICS_FOLDER'] = PROFILE_PICS_FOLDER  
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm', 'mov', 'pdf', 'docx', 'pptx', 'avi', 'mpg'}
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
@@ -76,12 +64,39 @@ for folder in [UPLOAD_FOLDER, CHAT_UPLOAD_FOLDER, PROFILE_PICS_FOLDER]:  # <--- 
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['CHAT_UPLOAD_FOLDER'] = CHAT_UPLOAD_FOLDER
-app.config['PROFILE_PICS_FOLDER'] = PROFILE_PICS_FOLDER  # <--- Configuración final
-
-
+db = SQLAlchemy(app)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+CORS(app)
+csrf = CSRFProtect(app)
+csrf.init_app(app)
+logging.basicConfig(level=logging.DEBUG)
+stripe.api_key = app.config['STRIPE_SECRET_KEY']
 migrate = Migrate(app, db)
+mail = Mail(app)
+serializer = URLSafeTimedSerializer(app.secret_key)
+
+def select_locale():
+    return session.get('lang') or request.accept_languages.best_match(app.config['BABEL_SUPPORTED_LOCALES'])
+
+babel = Babel(app, locale_selector=select_locale)
+
+@app.context_processor
+def inject_locale():
+    return dict(current_locale=select_locale()) 
+
+@app.route('/set_language', methods=['POST'])
+def set_language():
+    lang = request.form.get('language')
+    session['lang'] = lang
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify(success=True)
+    return redirect(request.referrer or url_for('settings'))
+
+@app.route('/settings')
+@login_required
+def settings():
+    return render_template('settings.html')
 
 @app.route('/security')
 def seguridad():

@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Configuración{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+
+<div class="settings-container">
+    <h2>⚙️ Configuración</h2>
+
+    <div class="settings-section">
+        <h3>🔐 Seguridad</h3>
+        <ul>
+            <li><a href="{{ url_for('edit_profile') }}">Editar perfil</a></li>
+            <li><a href="#">Cambiar contraseña</a></li>
+        </ul>
+    </div>
+
+    <div class="settings-section">
+        <h3>🔔 Notificaciones</h3>
+        <p><em>(Próximamente podrás ajustar notificaciones por email o push)</em></p>
+    </div>
+
+    <div class="settings-section">
+        <h3>🗑️ Cuenta</h3>
+        <p>¿Quieres eliminar tu cuenta? <a href="#">Haz clic aquí</a>.</p>
+    </div>
+
+    <div style="margin-top: 2em;">
+        <a href="{{ url_for('profile', username=current_user.username) }}" class="btn-back">← Volver al perfil</a>
+    </div>
+</div>
+
+<form id="language-form" class="language-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="language">🌐 {{ _('Idioma de la Aplicación') }}:</label>
+    <select name="language" id="language">
+        <option value="es" {% if current_locale == 'es' %}selected{% endif %}>Español</option>
+        <option value="en" {% if current_locale == 'en' %}selected{% endif %}>English</option>
+        <option value="fr" {% if current_locale == 'fr' %}selected{% endif %}>Français</option>
+        <option value="pt" {% if current_locale == 'pt' %}selected{% endif %}>Português</option>
+        <option value="ru" {% if current_locale == 'ru' %}selected{% endif %}>Русский</option>
+        <option value="ja" {% if current_locale == 'ja' %}selected{% endif %}>日本語</option>
+        <option value="ar" {% if current_locale == 'ar' %}selected{% endif %}>العربية</option>
+    </select>
+</form>
+
+<script>
+document.getElementById('language').addEventListener('change', function () {
+    const form = document.getElementById('language-form');
+    const csrfToken = form.querySelector('input[name="csrf_token"]').value;
+    const language = this.value;
+
+    fetch("{{ url_for('set_language') }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": csrfToken,
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: new URLSearchParams({
+            language: language,
+            csrf_token: csrfToken
+        })
+    }).then(response => {
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert("Error al cambiar el idioma.");
+        }
+    });
+});
+</script>
+
+{% endblock %}

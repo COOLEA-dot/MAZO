@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Política de Privacidad – MAZO</title>
+    <title>{{ _('Política de Privacidad') }} – MAZO</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <style>
         body {
@@ -19,55 +19,55 @@
     </style>
 </head>
 <body>
-    <h1>Política de Privacidad – MAZO</h1>
-    <p><strong>Última actualización:</strong> {{ current_date or "4 de junio de 2025" }}</p>
+    <h1>{{ ('Política de Privacidad') }} – MAZO</h1>
+    <p><strong>{{ ('Última actualización:') }}</strong> {{ current_date or "4 de junio de 2025" }}</p>
 
-    <p>En <strong>MAZO</strong> nos tomamos muy en serio la privacidad de nuestros usuarios. Esta Política de Privacidad explica qué datos recopilamos, cómo los usamos y cómo protegemos tu información cuando utilizas nuestra aplicación y sitio web (<strong>mazo-app.com</strong>).</p>
+    <p>{{ ('En') }} <strong>MAZO</strong>{{ _('nos tomamos muy en serio la privacidad de nuestros usuarios. Esta Política de Privacidad explica qué datos recopilamos, cómo los usamos y cómo protegemos tu información cuando utilizas nuestra aplicación y sitio web') }} (<strong>mazo-app.com</strong>).</p>
 
-    <h2>1. Información que recopilamos</h2>
+    <h2>{{ ('1. Información que recopilamos') }}</h2>
     <ul>
-        <li>Nombre, correo electrónico, número de teléfono</li>
-        <li>Nombre de empresa, profesión, ubicación</li>
-        <li>Descripción personal y habilidades</li>
-        <li>Foto de perfil y archivos multimedia que subas</li>
-        <li>Mensajes y comentarios enviados en la plataforma</li>
+        <li>{{ _('Nombre, correo electrónico, número de teléfono') }}</li>
+        <li>{{ _('Nombre de empresa, profesión, ubicación') }}</li>
+        <li>{{ _('Descripción personal y habilidades') }}</li>
+        <li>{{ _('Foto de perfil y archivos multimedia que subas') }}</li>
+        <li>{{ _('Mensajes y comentarios enviados en la plataforma') }}</li>
     </ul>
-    <p>También recopilamos información de uso y navegación, como IP, tipo de dispositivo, navegador y ubicación aproximada (si la autorizas).</p>
+    <p>{{ _('También recopilamos información de uso y navegación, como IP, tipo de dispositivo, navegador y ubicación aproximada (si la autorizas).') }}</p>
 
-    <h2>2. Cómo usamos tus datos</h2>
+    <h2>{{ _('2. Cómo usamos tus datos') }}</h2>
     <ul>
-        <li>Crear y mostrar tu perfil en la plataforma</li>
-        <li>Conectar con otros usuarios y empresas</li>
-        <li>Mostrar contenido relevante según tu ubicación e intereses</li>
-        <li>Mejorar y personalizar la experiencia</li>
-        <li>Prevenir fraudes y mantener la seguridad</li>
-    </ul>
-
-    <h2>3. Con quién compartimos tus datos</h2>
-    <p>No vendemos tu información personal. Compartimos datos solo con:</p>
-    <ul>
-        <li>Otros usuarios cuando tú los haces públicos (como tu perfil)</li>
-        <li>Proveedores que nos ayudan a operar el servicio</li>
-        <li>Autoridades legales cuando lo exige la ley</li>
+        <li>{{ _('Crear y mostrar tu perfil en la plataforma') }}</li>
+        <li>{{ _('Conectar con otros usuarios y empresas') }}</li>
+        <li>{{ _('Mostrar contenido relevante según tu ubicación e intereses') }}</li>
+        <li>{{ _('Mejorar y personalizar la experiencia') }}</li>
+        <li>{{ _('Prevenir fraudes y mantener la seguridad') }}</li>
     </ul>
 
-    <h2>4. Tus derechos</h2>
-    <p>Puedes:</p>
+    <h2>{{ _('3. Con quién compartimos tus datos') }}</h2>
+    <p>{{ _('No vendemos tu información personal. Compartimos datos solo con:') }}</p>
     <ul>
-        <li>Acceder, modificar o eliminar tu perfil</li>
-        <li>Solicitar la eliminación de tu cuenta escribiendo a <strong>contacto@mazo-app.com</strong></li>
-        <li>Revocar permisos como acceso a ubicación desde tu dispositivo</li>
+        <li>{{ _('Otros usuarios cuando tú los haces públicos (como tu perfil)') }}</li>
+        <li>{{ _('Proveedores que nos ayudan a operar el servicio') }}</li>
+        <li>{{ _('Autoridades legales cuando lo exige la ley') }}</li>
     </ul>
 
-    <h2>5. Seguridad</h2>
-    <p>Protegemos tu información con medidas técnicas razonables. Aun así, ningún sistema es 100% seguro.</p>
+    <h2>{{ _('4. Tus derechos') }}</h2>
+    <p>{{ _('Puedes:') }}</p>
+    <ul>
+        <li>{{ _('Acceder, modificar o eliminar tu perfil') }}</li>
+        <li>{{ _('Solicitar la eliminación de tu cuenta escribiendo a') }} <strong>mazo.app.es@gmail.com</strong></li>
+        <li>{{ _('Revocar permisos como acceso a ubicación desde tu dispositivo') }}</li>
+    </ul>
 
-    <h2>6. Cambios en esta política</h2>
-    <p>Podemos actualizar esta política. Notificaremos los cambios relevantes por email o dentro de la app.</p>
+    <h2>{{ _('5. Seguridad') }}</h2>
+    <p>{{ _('Protegemos tu información con medidas técnicas razonables. Aun así, ningún sistema es 100% seguro.') }}</p>
 
-    <h2>7. Contacto</h2>
-    <p>Si tienes dudas, puedes escribirnos a:</p>
-    <p><strong>Email:</strong> contacto@mazo-app.com</p>
-    <p><strong>Sitio web:</strong> <a href="https://mazo-app.com">https://mazo-app.com</a></p>
+    <h2>{{ _('6. Cambios en esta política') }}</h2>
+    <p>{{ _('Podemos actualizar esta política. Notificaremos los cambios relevantes por email o dentro de la app.') }}</p>
+
+    <h2>{{ _('7. Contacto') }}</h2>
+    <p>{{ _('Si tienes dudas, puedes escribirnos a:') }}</p>
+    <p><strong>Email:</strong> mazo.app.es@gmail.com</p>
+    <p><strong>{{ _('Sitio web:') }}</strong> <a href="https://mazo-app.com">https://mazo-app.com</a></p>
 </body>
 </html>

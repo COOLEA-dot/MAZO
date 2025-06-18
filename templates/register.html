@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Registro - MAZO</title>
+    <title>{{ _('Registro') }} - MAZO</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
@@ -40,7 +40,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>Registro</h1>
+    <h1>{{ _('Registro') }}</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -61,35 +61,35 @@
                  style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 2px solid #ccc;">
         </label>
         <input type="file" id="profile_pic" name="profile_pic" accept="image/*" style="display: none;">
-        <p class="small-note" style="font-size: 12px; color: #666;">Haz clic para subir una foto de perfil</p>
+        <p class="small-note" style="font-size: 12px; color: #666;">{{ _('Haz clic para subir una foto de perfil') }}</p>
     </div>
 
     <form method="POST" enctype="multipart/form-data" class="register-form" autocomplete="off">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-        <label for="name">Nombre Completo:</label>
+        <label for="name">{{ _('Nombre Completo:') }}</label>
         <input type="text" id="name" name="name" required>
 
-        <label for="username">Nombre de Usuario:</label>
+        <label for="username">{{ _('Nombre de Usuario:') }}</label>
         <input type="text" id="username" name="username" required>
 
-        <label for="phone">Teléfono:</label>
+        <label for="phone">{{ _('Teléfono:') }}</label>
         <input type="tel" id="phone" name="phone" required placeholder="Ej: +34 612 345 678">
 
 
-        <label for="email">Correo Electrónico:</label>
+        <label for="email">{{ _('Correo Electrónico:') }}</label>
         <input type="email" id="email" name="email" required>
 
-        <label for="company">Empresa (Opcional):</label>
+        <label for="company">{{ _('Empresa (Opcional):') }}</label>
         <input type="text" id="company" name="company">
 
-        <label for="profession">Profesión (Opcional):</label>
+        <label for="profession">{{ _('Profesión (Opcional):') }}</label>
         <input type="text" id="profession" name="profession">
 
-        <label for="description">Sobre ti (Opcional):</label>
+        <label for="description">{{ _('Sobre ti (Opcional):') }}</label>
         <textarea id="description" name="description" maxlength="500" rows="4" placeholder="Cuéntanos algo sobre ti..." style="resize: none; width: 100%; min-height: 100px;"></textarea>
 
-        <label for="location">Ubicación (Opcional):</label>
+        <label for="location">{{ _('Ubicación (Opcional):') }}</label>
         <div class="location-wrapper">
             <input type="text" id="location" name="location" placeholder="Escribe o selecciona en el mapa">
             <div id="suggestions"></div>
@@ -97,18 +97,18 @@
 
         <div id="map" style="height: 300px; margin-top: 10px; border: 1px solid #ccc; border-radius: 8px;"></div>
 
-        <button type="button" id="use-my-location" style="margin: 10px 0;">📍 Usar mi ubicación actual</button>
+        <button type="button" id="use-my-location" style="margin: 10px 0;">{{ _('📍 Usar mi ubicación actual') }}</button>
 
-        <label for="password">Contraseña:</label>
+        <label for="password">{{ _('Contraseña:') }}</label>
         <input type="password" id="password" name="password" required minlength="8">
 
-        <label for="confirm_password">Repite la Contraseña:</label>
+        <label for="confirm_password">{{ _('Repite la Contraseña:') }}</label>
         <input type="password" id="confirm_password" name="confirm_password" required>
 
-        <button type="submit" style="margin-top: 15px;">Registrarse</button>
+        <button type="submit" style="margin-top: 15px;">{{ _('Registrarse') }}</button>
     </form>
 
-    <p>¿Ya tienes una cuenta? <a href="/login">Inicia sesión aquí</a></p>
+    <p>{{ _('¿Ya tienes una cuenta?') }} <a href="/login">{{ _('Inicia sesión aquí') }}</a></p>
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>

@@ -94,3 +94,16 @@ footer {
     font-size: 14px;
     color: #666;
 }
+
+.language-selector {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+}
+
+.language-selector select {
+    padding: 0.4rem;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}

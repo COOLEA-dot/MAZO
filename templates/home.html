@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Página Principal{% endblock %}
+{% block title %}{{ _('Página Principal') }}{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
@@ -31,7 +31,7 @@
                                 </strong>
                             </a>
                         {% else %}
-                            <span>Usuario desconocido</span>
+                            <span>{{ _('Usuario desconocido') }}</span>
                         {% endif %}
                     </div>
 
@@ -61,7 +61,7 @@
                         controls
                     >
                         <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
-                        Tu navegador no puede reproducir este video.
+                        {{ _('Tu navegador no puede reproducir este video.') }}'
                     </video>
                 </div>
                 <div class="video-buttons mobile-buttons">
@@ -82,7 +82,7 @@
             <!-- 🟡 Panel inferior de comentarios para móvil -->
             <div class="mobile-comments-panel hidden" id="mobile-comments-{{ video.id }}">
                 <div class="mobile-comments-header">
-                    <span>Comentarios</span>
+                    <span>{{ _('Comentarios') }}</span>
                     <button class="close-comments" data-video-id="{{ video.id }}">✕</button>
                 </div>
                 <div class="mobile-comments-list" id="comments-list-mobile-{{ video.id }}"></div>
@@ -105,14 +105,14 @@
                     </ul>
 
                     {% if chats %}
-                    <h4>Compartir con usuarios</h4>
+                    <h4>{{ _('Compartir con usuarios') }}</h4>
                     <div class="internal-user-list">
                         {% for chat in chats %}
                         <form method="POST" onsubmit="event.preventDefault(); shareInChatDirect('{{ chat.username }}', '{{ video.id }}');">
                             <div class="chat-user-item">
                                 <img src="{{ url_for('static', filename='profile_pics/' + chat.profile_pic) }}" alt="{{ chat.username }}" class="chat-user-pic">
                                 <span>{{ chat.username }}</span>
-                                <button type="submit" class="send-share-btn">Enviar</button>
+                                <button type="submit" class="send-share-btn">{{ _('Enviar') }}</button>
                             </div>
                         </form>
                         {% endfor %}

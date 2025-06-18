@@ -1,0 +1,53 @@
+.settings-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.settings-container h2 {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.settings-section {
+    margin-bottom: 30px;
+}
+
+.settings-section h3 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.settings-section ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.settings-section li {
+    margin: 8px 0;
+}
+
+.settings-section a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.settings-section a:hover {
+    text-decoration: underline;
+}
+
+.btn-back {
+    display: inline-block;
+    padding: 10px 15px;
+    background: #eee;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #333;
+}
+
+.btn-back:hover {
+    background: #ddd;
+}

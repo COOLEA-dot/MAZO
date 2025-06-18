@@ -8,16 +8,16 @@
 <div class="container mt-5">
   <div class="card p-4 shadow-sm">
     <h1 class="mb-3">💼 MAZO Premium</h1>
-    <p class="lead">Impulsa tu perfil por solo <strong>9,99 €/mes</strong></p>
+    <p class="lead">{{ _('Impulsa tu perfil por solo') }} <strong>{{ _('9,99 €/mes') }}</strong></p>
 
     <ul class="list-group list-group-flush mb-4">
-      <li class="list-group-item">🔝 Tu perfil aparece primero en la página principal y en búsquedas.</li>
-      <li class="list-group-item">✅ Verificación como empresa titular.</li>
-      <li class="list-group-item">💬 Acceso exclusivo al grupo privado de Telegram (invitación manual).</li>
+      <li class="list-group-item">{{ _('🔝 Tu perfil aparece primero en la página principal y en búsquedas.') }}</li>
+      <li class="list-group-item">{{ _('✅ Verificación como empresa titular.') }}</li>
+      <li class="list-group-item">{{ _('💬 Acceso exclusivo al grupo privado de Telegram (invitación manual).') }}</li>
     </ul>
 
     {% if current_user.is_premium %}
-      <div class="alert alert-success">Ya eres usuario premium ✔</div>
+      <div class="alert alert-success">{{ _('Ya eres usuario premium ✔') }}</div>
     {% else %}
       <div class="d-flex gap-3 flex-wrap mt-3">
         <!-- Botón Stripe -->
@@ -32,7 +32,7 @@
       </div>
        <!-- Nota aclaratoria -->
       <p class="text-muted mt-3" style="font-size: 0.95rem;">
-        Este es un pago mensual. Deberás renovarlo manualmente cada mes para mantener tu cuenta premium.
+        {{ _('Este es un pago mensual. Deberás renovarlo manualmente cada mes para mantener tu cuenta premium.') }}'
       </p>
     {% endif %}
   </div>
