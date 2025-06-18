@@ -75,10 +75,12 @@ migrate = Migrate(app, db)
 mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
 
+babel = Babel(app)
+
+@babel.localeselector
 def select_locale():
     return session.get('lang') or request.accept_languages.best_match(app.config['BABEL_SUPPORTED_LOCALES'])
 
-babel = Babel(app, locale_selector=select_locale)
 
 @app.context_processor
 def inject_locale():
