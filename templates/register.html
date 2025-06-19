@@ -84,8 +84,13 @@
         <input type="text" id="company" name="company">
 
         <label for="profession">{{ _('Profesión (Opcional):') }}</label>
-        <input type="text" id="profession" name="profession">
-
+        <input list="profession-list" id="profession" name="profession" placeholder="{{ _('Escribe o elige una profesión') }}">
+        <datalist id="profession-list">
+            {% for p in profession_options %}
+                <option value="{{ p }}">
+            {% endfor %}
+        </datalist>
+        
         <label for="description">{{ _('Sobre ti (Opcional):') }}</label>
         <textarea id="description" name="description" maxlength="500" rows="4" placeholder="Cuéntanos algo sobre ti..." style="resize: none; width: 100%; min-height: 100px;"></textarea>
 

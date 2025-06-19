@@ -304,6 +304,13 @@ def register():
         description = form.description.data.strip() or None
         location = form.location.data.strip() or None
 
+        if profession:
+            existing_prof = Profession.query.filter_by(name=profession).first()
+            if not existing_prof:
+                new_prof = Profession(name=profession)
+                db.session.add(new_prof)
+                db.session.commit()
+
         if password != confirm_password:
             flash("Las contraseñas no coinciden", "error")
             return render_template("register.html", form=form)
@@ -339,8 +346,12 @@ def register():
         flash('Registro exitoso. Verifica tu email para activar tu cuenta.', 'info')
 
         return redirect(url_for("login"))
+    professions = [p.name for p in Profession.query.order_by(Profession.name).all()]
+    return render_template("register.html", form=form, user=None, professions=professions)
 
-    return render_template("register.html", form=form, user=None)
+class Profession(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
