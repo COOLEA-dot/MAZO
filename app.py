@@ -28,6 +28,7 @@ from itsdangerous import URLSafeTimedSerializer
 from email.header import Header
 import stripe
 from flask_babel import Babel, get_locale 
+import eventlet
 
 app = Flask(__name__)
 app.config['ENV'] = 'production'
@@ -77,6 +78,7 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 
 babel = Babel(app)
 
+eventlet.monkey_patch()
 @babel.localeselector
 def select_locale():
     return session.get('lang') or request.accept_languages.best_match(app.config['BABEL_SUPPORTED_LOCALES'])
