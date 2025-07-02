@@ -14,4 +14,5 @@ if [ ! -L static/uploads/videos ]; then
 fi
 
 # Lanzar la aplicación
-exec gunicorn app:app
+gunicorn app:app --worker-class eventlet -w 1
+
