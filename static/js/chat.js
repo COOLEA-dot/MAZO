@@ -1,7 +1,10 @@
-// Conexión con el servidor usando Socket.IO
-const socket = io.connect('http://' + document.domain + ':' + location.port, {
-    transports: ['websocket', 'polling']
+// Conexión al servidor WebSocket usando Socket.IO
+const protocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
+const socket = io(protocol + window.location.host, {
+    transports: ['websocket'],
+    secure: true
 });
+
 
 // Variables globales
 let usernames = [document.getElementById('chat-box').dataset.username, document.getElementById('chat-box').dataset.recipient];
