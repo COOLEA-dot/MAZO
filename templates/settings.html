@@ -25,6 +25,36 @@
         <h3>🗑️ Cuenta</h3>
         <p>¿Quieres eliminar tu cuenta? <a href="#">Haz clic aquí</a>.</p>
     </div>
+    <div class="logout-container">
+        <button class="logout-trigger" onclick="openLogoutModal(event)">
+            <i class="fas fa-sign-out-alt"></i>
+            Cerrar sesión: haz clic aquí
+        </button>
+    </div>
+    <!-- Modal para cerrar sesión -->
+    <div id="logoutModal" class="logout-modal">
+        <div class="logout-modal-content">
+            <p>{{ _('¿Estás seguro de que quieres cerrar sesión?') }}</p>
+            <div class="logout-modal-buttons">
+                <button class="btn confirm" onclick="confirmLogout()">Sí</button>
+                <button class="btn cancel" onclick="closeLogoutModal()">No</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    function openLogoutModal(event) {
+        event.preventDefault();
+        document.getElementById("logoutModal").style.display = "flex";
+    }
+
+    function closeLogoutModal() {
+        document.getElementById("logoutModal").style.display = "none";
+   }
+
+    function confirmLogout() {
+        window.location.href = "{{ url_for('logout') }}";
+   }
+   </script>
 
     <div style="margin-top: 2em;">
         <a href="{{ url_for('profile', username=current_user.username) }}" class="btn-back">← Volver al perfil</a>
