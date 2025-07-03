@@ -132,3 +132,23 @@
 .logout-trigger:hover {
     background-color: #c0392b;
 }
+.flash-messages {
+  margin: 1em 0;
+}
+
+.flash {
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+}

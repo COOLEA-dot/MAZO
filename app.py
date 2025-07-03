@@ -5,8 +5,8 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import RequestEntityTooLarge
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, TextAreaField, IntegerField
-from wtforms.validators import DataRequired, Optional, NumberRange, Length
+from wtforms import StringField, PasswordField, TextAreaField, IntegerField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Optional, NumberRange, Length, EqualTo
 from sqlalchemy.orm import backref
 import os 
 import mimetypes
@@ -29,6 +29,8 @@ from email.header import Header
 import stripe
 from flask_babel import Babel, get_locale 
 import eventlet
+eventlet.monkey_patch()
+
 
 app = Flask(__name__)
 app.config['ENV'] = 'production'
@@ -78,7 +80,7 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 
 babel = Babel(app)
 
-eventlet.monkey_patch()
+
 @babel.localeselector
 def select_locale():
     return session.get('lang') or request.accept_languages.best_match(app.config['BABEL_SUPPORTED_LOCALES'])
@@ -195,7 +197,7 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(300), nullable=False)
+    password_hash = db.Column(db.String(128))   
     profile_pic = db.Column(db.String(100), nullable=True)
     name = db.Column(db.String(100))
     phone = db.Column(db.String(20), nullable=True)
@@ -233,6 +235,14 @@ class User(db.Model, UserMixin):
 
     def is_followed_by(self, user):
         return self.followers.filter(followers.c.follower_id == user.id).count() > 0
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
+
 
 @app.route('/follow/<int:user_id>', methods=['POST'])
 @login_required
@@ -306,6 +316,7 @@ def register():
         description = form.description.data.strip() or None
         location = form.location.data.strip() or None
 
+        # Crear profesión si es nueva
         if profession:
             existing_prof = Profession.query.filter_by(name=profession).first()
             if not existing_prof:
@@ -313,15 +324,18 @@ def register():
                 db.session.add(new_prof)
                 db.session.commit()
 
+        # Verificar contraseñas
         if password != confirm_password:
             flash("Las contraseñas no coinciden", "error")
             return render_template("register.html", form=form)
 
+        # Verificar usuario o email existentes
         existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
         if existing_user:
             flash("El nombre de usuario o correo ya está en uso.", "error")
             return render_template("register.html", form=form)
 
+        # Guardar foto de perfil
         profile_picture = form.profile_pic.data
         filename = None
         if profile_picture:
@@ -329,18 +343,20 @@ def register():
             picture_path = os.path.join(app.config["PROFILE_PICS_FOLDER"], filename)
             profile_picture.save(picture_path)
 
+        # Crear nuevo usuario (sin password directo)
         new_user = User(
             name=name,
             username=username,
             phone=phone,
             email=email,
-            password=generate_password_hash(password),
             company=company,
             profession=profession,
             description=description,
             location=location,
             profile_pic=f"profile_pics/{filename}" if filename else "profile_pics/default.jpg"
         )
+        new_user.set_password(password)  # Usar método seguro
+
         db.session.add(new_user)
         db.session.commit()
 
@@ -348,8 +364,31 @@ def register():
         flash('Registro exitoso. Verifica tu email para activar tu cuenta.', 'info')
 
         return redirect(url_for("login"))
+
     professions = [p.name for p in Profession.query.order_by(Profession.name).all()]
     return render_template("register.html", form=form, user=None, professions=professions)
+
+
+@app.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if current_user.check_password(form.current_password.data):
+            current_user.set_password(form.new_password.data)
+            db.session.commit()
+            flash('Contraseña actualizada correctamente.', 'success')
+            return redirect(url_for('profile', username=current_user.username))
+        else:
+            flash('La contraseña actual no es correcta.', 'danger')
+    return render_template('change_password.html', form=form)
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Contraseña actual', validators=[DataRequired()])
+    new_password = PasswordField('Nueva contraseña', validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('Confirmar nueva contraseña', validators=[DataRequired(), EqualTo('new_password')])
+    submit = SubmitField('Cambiar contraseña')
+
 
 class Profession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -367,16 +406,13 @@ def login():
 
         # Buscar el usuario en la base de datos
         user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):  # Verifica la contraseña
+        
+        if user and check_password_hash(user.password_hash, password):  # <- Cambiado aquí
             login_user(user)  # Inicia sesión con Flask-Login
             
-            # Guardar tanto el ID como el username en la sesión
             session["user_id"] = user.id  
-            session["username"] = user.username  # <-- Agregado
+            session["username"] = user.username
 
-            # Verificar si el username se guardó correctamente en la sesión
-            print(f"Usuario {user.username} guardado en la sesión.")
-            
             flash(f"¡Bienvenido, {user.username}!", "success")
             return redirect(url_for("home"))
         
@@ -606,9 +642,14 @@ def home():
     user = None
     chats = []
 
-    if 'user_id' in session:
-        user = User.query.get(session['user_id'])
-        if user:
+    user_id = session.get('user_id')
+    if user_id:
+        user = User.query.get(user_id)
+        if user is None:
+            # El usuario no existe, limpiar sesión
+            session.pop('user_id', None)
+            session.pop('username', None)
+        else:
             chats = get_user_chats(user.id)
 
     # Obtener video introductorio
@@ -634,8 +675,7 @@ def home():
     videos.extend(premium_videos)
     videos.extend(regular_videos)
 
-    return render_template('home.html', user=user, videos=videos, chats=chats if user else [])
-
+    return render_template('home.html', user=user, videos=videos, chats=chats)
 
 @app.route('/search', methods=['GET'])
 def search():
@@ -729,6 +769,11 @@ def get_user_chats(user_id):
     chat_data = []
     for conv in conversations:
         other_user = conv.get_other_user(user_id)
+        
+        if other_user is None:
+            # Si no existe el otro usuario, ignorar esta conversación
+            continue
+        
         last_message = Message.query.filter_by(conversation_id=conv.id).order_by(Message.timestamp.desc()).first()
 
         if last_message:
@@ -1613,8 +1658,11 @@ def eliminar_cuenta():
     return render_template('eliminar-cuenta.html')
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()   # Y las vuelve a crear con los nuevos tamaños
+    import sys
+    if 'db' not in sys.argv:
+        # Solo crea tablas y arranca el servidor si NO estás ejecutando comandos de migración
+        with app.app_context():
+            db.create_all()
 
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
+        socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
 

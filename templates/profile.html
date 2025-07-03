@@ -6,6 +6,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
 <script src="{{ url_for('static', filename='js/opinions.js') }}"></script>
 
+{% if current_user.is_authenticated and current_user.id == user.id %}
+    <a href="{{ url_for('settings') }}" class="settings-icon" title="Configuración">⚙️</a>
+{% endif %}
 <div class="profile-container">
     <!-- 🔹 Información del usuario -->
     <div class="profile-header">
