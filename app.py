@@ -636,10 +636,6 @@ def home():
 
     return render_template('home.html', user=user, videos=videos, chats=chats if user else [])
 
-@app.route('/video/<int:video_id>')
-def video(video_id):
-    video = Video.query.get_or_404(video_id)
-    return render_template('video.html', video=video)
 
 @app.route('/search', methods=['GET'])
 def search():
@@ -1240,6 +1236,23 @@ def profile(username):
     videos = Video.query.filter_by(user_id=user.id).all()
 
     return render_template('profile.html', user=user, opinions=opinions, form=form, average_rating=average_rating, videos=videos)
+
+@app.route('/video/<int:video_id>')
+def view_video(video_id):
+    video = Video.query.get_or_404(video_id)
+    user = User.query.get(video.user_id)
+
+    # Solo los videos del mismo usuario
+    lista_videos = Video.query.filter_by(user_id=video.user_id).order_by(Video.id.desc()).all()
+
+
+    return render_template(
+        "view_video.html",
+        videos=lista_videos,
+        video=video,
+        user=user,       
+    )
+
 
 @app.route("/edit_profile", methods=["GET", "POST"])
 @login_required

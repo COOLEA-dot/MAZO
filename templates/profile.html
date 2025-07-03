@@ -162,35 +162,31 @@
         {% endif %}
     </div>
 
-    <h2>{{ _('Videos Subidos') }}</h2>
-    <div class="video-grid">
-        {% for video in videos %}
-            <div class="video">
-                <video controls>
+   <h2>{{ _('Videos Subidos') }}</h2>
+   <div class="video-grid">
+    {% for video in videos %}
+        <div class="video">
+            <a href="{{ url_for('view_video', video_id=video.id) }}">
+                <video>
                     <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
                     {{ _('Tu navegador no soporta el video.') }}
                 </video>
-
+            </a>
             {% if current_user.id == user.id %}
                 <form action="{{ url_for('delete_video', video_id=video.id) }}" method="POST">
                     {{ form.hidden_tag() }}
                     <button type="submit" class="delete-video-btn">{{ _('Eliminar') }}</button>
                 </form>
             {% endif %}
-            </div>
-        {% endfor %}
-    </div>
-{% if current_user.id == user.id %}
-    <h3><a href="{{ url_for('upload') }}" class="upload-video-link">{{ _('Subir un nuevo video') }}</a></h3>
-    {% endif %}
+        </div>
+    {% endfor %}
 </div>
 {% if current_user.id == user.id %}
-<div style="position: absolute; top: 65px; right: 15px;">
-  <a href="{{ url_for('settings') }}" title="Configuración">
-    <i class="fas fa-cog" style="font-size: 24px; color: #555;"></i>
-  </a>
-</div>
+    <a href="{{ url_for('upload') }}" class="upload-button">
+        <i class="fas fa-upload"></i> Subir video
+    </a>
 {% endif %}
+
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {

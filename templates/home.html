@@ -98,10 +98,10 @@
                     <span class="close-share-modal" data-video-id="{{ video.id }}">&times;</span>
                     <h3>Compartir este video</h3>
                     <ul>
-                        <li><a href="https://wa.me/?text={{ url_for('video', video_id=video.id, _external=True) }}" target="_blank">WhatsApp</a></li>
-                        <li><a href="https://www.instagram.com/sharer.php?u={{ url_for('video', video_id=video.id, _external=True) }}" target="_blank">Instagram</a></li>
-                        <li><a href="mailto:?subject=Video interesante&body={{ url_for('video', video_id=video.id, _external=True) }}" target="_blank">Gmail</a></li>
-                        <li><a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('video', video_id=video.id, _external=True) }}" target="_blank">Facebook</a></li>
+                        <li><a href="https://wa.me/?text={{ url_for('view_video', video_id=video.id, _external=True) }}" target="_blank">WhatsApp</a></li>
+                        <li><a href="https://www.instagram.com/sharer.php?u={{ url_for('view_video', video_id=video.id, _external=True) }}" target="_blank">Instagram</a></li>
+                        <li><a href="mailto:?subject=Video interesante&body={{ url_for('view_video', video_id=video.id, _external=True) }}" target="_blank">Gmail</a></li>
+                        <li><a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('view_video', video_id=video.id, _external=True) }}" target="_blank">Facebook</a></li>
                     </ul>
 
                     {% if chats %}
