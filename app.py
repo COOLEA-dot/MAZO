@@ -29,7 +29,10 @@ from email.header import Header
 import stripe
 from flask_babel import Babel, get_locale 
 import eventlet
-eventlet.monkey_patch()
+import firebase_admin
+from firebase_admin import credentials, messaging
+
+
 
 
 app = Flask(__name__)
@@ -77,9 +80,10 @@ stripe.api_key = app.config['STRIPE_SECRET_KEY']
 migrate = Migrate(app, db)
 mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
-
+cred = credentials.Certificate('serviceAccountKey.json')
+firebase_admin.initialize_app(cred)
 babel = Babel(app)
-
+eventlet.monkey_patch()
 
 @babel.localeselector
 def select_locale():
@@ -243,6 +247,53 @@ class User(db.Model, UserMixin):
             return False
         return check_password_hash(self.password_hash, password)
 
+class UserToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    fcm_token = db.Column(db.String(255), unique=True, nullable=False)
+
+    user = db.relationship('User', backref=db.backref('tokens', lazy=True))
+
+@app.route('/register_token', methods=['POST'])
+@login_required
+def register_token():
+    token = request.json.get('token')
+    if not token:
+        return jsonify({'error': 'No token provided'}), 400
+
+    # Verificar si ya existe
+    existing = UserToken.query.filter_by(fcm_token=token).first()
+    if not existing:
+        new_token = UserToken(user_id=current_user.id, fcm_token=token)
+        db.session.add(new_token)
+        db.session.commit()
+
+    return jsonify({'success': True})
+
+def send_push_notification(tokens, title, body):
+    # tokens puede ser una lista o un solo token (string)
+    if isinstance(tokens, str):
+        tokens = [tokens]
+
+    message = messaging.MulticastMessage(
+        notification=messaging.Notification(title=title, body=body),
+        tokens=tokens
+    )
+    response = messaging.send_multicast(message)
+    print(f'Successfully sent {response.success_count} messages; {response.failure_count} failures.')
+
+@app.route('/send_test_notification')
+@login_required
+def send_test_notification():
+    # Obtener todos los tokens del usuario actual (puedes modificar para otros usuarios)
+    tokens = [t.fcm_token for t in current_user.tokens]
+
+    if not tokens:
+        return 'No hay tokens registrados para enviar notificaciones.', 400
+
+    send_push_notification(tokens, '¡Hola!', 'Esta es una notificación de prueba.')
+
+    return 'Notificación enviada'
 
 @app.route('/follow/<int:user_id>', methods=['POST'])
 @login_required
