@@ -1,6 +1,10 @@
 # No subir claves ni configuración privada
 .env
 
+# Archivo de credenciales Firebase (service account)
+serviceAccountKey.json
+
+
 # Archivos de Python
 __pycache__/
 *.pyc
