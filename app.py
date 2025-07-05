@@ -458,7 +458,8 @@ def login():
         # Buscar el usuario en la base de datos
         user = User.query.filter_by(username=username).first()
         
-        if user and check_password_hash(user.password_hash, password):  # <- Cambiado aquí
+        # Verifica que el hash exista antes de comprobar la contraseña
+        if user and user.password_hash and check_password_hash(user.password_hash, password):
             login_user(user)  # Inicia sesión con Flask-Login
             
             session["user_id"] = user.id  
