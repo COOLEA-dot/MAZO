@@ -89,6 +89,19 @@ eventlet.monkey_patch()
 def select_locale():
     return session.get('lang') or request.accept_languages.best_match(app.config['BABEL_SUPPORTED_LOCALES'])
 
+firebase_creds_json = os.environ.get('FIREBASE_CREDENTIALS')
+
+if firebase_creds_json:
+    # Crear el archivo temporal serviceAccountKey.json
+    with open('serviceAccountKey.json', 'w') as f:
+        f.write(firebase_creds_json)
+
+    # Ahora puedes inicializar Firebase usando ese archivo
+    from firebase_admin import credentials, initialize_app
+    cred = credentials.Certificate('serviceAccountKey.json')
+    initialize_app(cred)
+else:
+    print("ERROR: No se encontró la variable de entorno FIREBASE_CREDENTIALS")
 
 @app.context_processor
 def inject_locale():
