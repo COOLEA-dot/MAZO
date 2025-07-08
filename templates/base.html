@@ -100,6 +100,59 @@
             form.style.display = 'none';
         }
     });
+
+    document.addEventListener('DOMContentLoaded', () => {
+  // Solo pedir permiso si no se ha concedido antes
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then(permission => {
+      if (permission === 'granted') {
+        registerPushToken();
+      } else {
+        console.log('Usuario no concedió permiso para notificaciones');
+      }
+    });
+  } else if (Notification.permission === 'granted') {
+    // Ya concedido, solo registrar token
+    registerPushToken();
+  }
+});
+
+function registerPushToken() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/firebase-messaging-sw.js')
+      .then(registration => {
+        console.log('Service Worker registrado:', registration);
+        return getToken(messaging, {
+          vapidKey: 'BDcTpTjm-XVDpZmRxD1qYRyQfKzHyvXkhkzMuCayeYCmPAVtU7LcCNYseJoem59k1GEXlqsWPwx-xFB04-i5Fos',
+          serviceWorkerRegistration: registration
+        });
+      })
+      .then(token => {
+        if (token) {
+          console.log('Token FCM:', token);
+          // Enviar al backend
+          fetch('/register_token', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({token})
+          })
+          .then(res => res.json())
+          .then(data => {
+            console.log('Token registrado en backend:', data);
+          })
+          .catch(err => console.error('Error registrando token:', err));
+        } else {
+          console.log('No se pudo obtener token');
+        }
+      })
+      .catch(err => {
+        console.error('Error registro service worker:', err);
+      });
+  } else {
+    console.log('Service Worker no soportado');
+  }
+}
+
     </script>
 </body>
 </html>
