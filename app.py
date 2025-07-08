@@ -30,7 +30,7 @@ import stripe
 from flask_babel import Babel, get_locale 
 import eventlet
 import firebase_admin
-from firebase_admin import credentials, messaging
+from firebase_admin import credentials, messaging, initialize_app
 
 
 
@@ -80,8 +80,6 @@ stripe.api_key = app.config['STRIPE_SECRET_KEY']
 migrate = Migrate(app, db)
 mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
-cred = credentials.Certificate('serviceAccountKey.json')
-firebase_admin.initialize_app(cred)
 babel = Babel(app)
 eventlet.monkey_patch()
 
@@ -92,12 +90,10 @@ def select_locale():
 firebase_creds_json = os.environ.get('FIREBASE_CREDENTIALS')
 
 if firebase_creds_json:
-    # Crear el archivo temporal serviceAccountKey.json
+    # Crear el archivo temporal serviceAccountKey.json antes de inicializar Firebase
     with open('serviceAccountKey.json', 'w') as f:
         f.write(firebase_creds_json)
 
-    # Ahora puedes inicializar Firebase usando ese archivo
-    from firebase_admin import credentials, initialize_app
     cred = credentials.Certificate('serviceAccountKey.json')
     initialize_app(cred)
 else:
