@@ -31,7 +31,7 @@ from flask_babel import Babel, get_locale
 import eventlet
 import firebase_admin
 from firebase_admin import credentials, messaging, initialize_app
-
+import json
 
 
 
@@ -90,10 +90,14 @@ def select_locale():
 firebase_creds_json = os.environ.get('FIREBASE_CREDENTIALS')
 
 if firebase_creds_json:
-    # Crear el archivo temporal serviceAccountKey.json antes de inicializar Firebase
-    with open('serviceAccountKey.json', 'w') as f:
-        f.write(firebase_creds_json)
+    # Convertir string JSON a dict para manejar correctamente los saltos de línea
+    creds_dict = json.loads(firebase_creds_json)
 
+    # Guardar el JSON formateado correctamente en el archivo
+    with open('serviceAccountKey.json', 'w') as f:
+        json.dump(creds_dict, f, indent=2)
+
+    # Inicializar Firebase
     cred = credentials.Certificate('serviceAccountKey.json')
     initialize_app(cred)
 else:
