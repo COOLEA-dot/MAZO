@@ -32,6 +32,7 @@ import eventlet
 import firebase_admin
 from firebase_admin import credentials, messaging, initialize_app
 import json
+from sqlalchemy import or_, func
 
 
 
@@ -748,36 +749,44 @@ def home():
 
 @app.route('/search', methods=['GET'])
 def search():
-    query = request.args.get('q','').strip()
-    location = request.args.get('location','').strip()
+    query = request.args.get('q', '').strip()
+    location = request.args.get('location', '').strip()
 
     if query:
-        # Búsqueda de videos, perfiles y profesiones
+        # Construir patrón para ilike, seguro para múltiples palabras
+        pattern = f"%{query}%"
+
+        # Buscar videos donde título, descripción o usuario relacionado contengan query
         videos = Video.query.join(User).filter(
-            (Video.title.ilike(f"%{query}%")) | 
-            (Video.description.ilike(f"%{query}%")) |
-            (User.name.ilike(f"%{query}%")) | 
-            (User.company.ilike(f"%{query}%")) | 
-            (User.profession.ilike(f"%{query}%")) 
+            or_(
+                Video.title.ilike(pattern),
+                Video.description.ilike(pattern),
+                User.name.ilike(pattern),
+                User.company.ilike(pattern),
+                User.profession.ilike(pattern),
+                User.description.ilike(pattern),
+                User.location.ilike(pattern)
+            )
         ).order_by(Video.id.desc()).all()
 
-        #Búsqueda de usuarios (perfiles)
+        # Buscar usuarios donde varios campos contengan query
         users = User.query.filter(
-            (User.name.ilike(f"%{query}%")) |
-            (User.company.ilike(f"%{query}%")) |
-            (User.profession.ilike(f"%{query}%")) |
-            (User.location.ilike(f"%{query}%"))
+            or_(
+                User.name.ilike(pattern),
+                User.company.ilike(pattern),
+                User.profession.ilike(pattern),
+                User.description.ilike(pattern),
+                User.location.ilike(pattern)
+            )
         ).all()
 
-        for video in videos:
-            print(f"Video ID: {video.id}, URL: {video.video_url}")  
-
         flash(f"Resultados para: '{query}'", "info")
+
     else:
         videos, users = [], []
-    return render_template('search.html', videos=videos, users=users, query=query)
 
-@app.route('/search_suggestions', methods=['GET'])
+    return render_template('search.html', videos=videos, users=users, query=query)@app.route('/search_suggestions', methods=['GET'])
+
 def search_suggestions():
     query = request.args.get('q','').strip()
     
