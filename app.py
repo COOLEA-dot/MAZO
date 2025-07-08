@@ -90,14 +90,18 @@ def select_locale():
 firebase_creds_json = os.environ.get('FIREBASE_CREDENTIALS')
 
 if firebase_creds_json:
-    # Convertir string JSON a dict para manejar correctamente los saltos de línea
+    # Cargar la variable de entorno JSON a dict Python
     creds_dict = json.loads(firebase_creds_json)
 
-    # Guardar el JSON formateado correctamente en el archivo
+    # Reemplazar los saltos de línea escapados \\n por saltos reales \n
+    if 'private_key' in creds_dict:
+        creds_dict['private_key'] = creds_dict['private_key'].replace('\\n', '\n')
+
+    # Guardar el JSON corregido en el archivo
     with open('serviceAccountKey.json', 'w') as f:
         json.dump(creds_dict, f, indent=2)
 
-    # Inicializar Firebase
+    # Inicializar Firebase con el archivo corregido
     cred = credentials.Certificate('serviceAccountKey.json')
     initialize_app(cred)
 else:
