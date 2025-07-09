@@ -59,6 +59,7 @@
                         loop
                         playsinline
                         controls
+                        preload="metadata"
                     >
                         <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
                         {{ _('Tu navegador no puede reproducir este video.') }}'
