@@ -786,6 +786,11 @@ def search():
         videos, users = [], []
 
     return render_template('search.html', videos=videos, users=users, query=query)
+
+@app.route('/test-video')
+def test_video():
+    return render_template('test_video.html')
+
 def search_suggestions():
     query = request.args.get('q','').strip()
     
