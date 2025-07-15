@@ -206,7 +206,6 @@ class Video(db.Model):
 
 @app.route('/api/videos')
 def api_videos():
-
     videos = Video.query.order_by(Video.id.desc()).all()
 
     video_list = []
@@ -218,7 +217,11 @@ def api_videos():
             "hashtags": video.hashtags,
             "user": {
                 "username": video.user.username if video.user else "desconocido",
-                "profile_picture": url_for('static', filename='profile_pics/' + (video.user.profile_pic if video.user and video.User.profile_pic else 'default.jpg'), _external=True),
+                "profile_picture": url_for(
+                    'static', 
+                    filename='profile_pics/' + (video.user.profile_pic if video.user and video.user.profile_pic else 'default.jpg'),
+                    _external=True
+                ),
                 "company": video.user.company if video.user else "",
                 "name": video.user.name if video.user else ""
             }
