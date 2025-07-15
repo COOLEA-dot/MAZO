@@ -206,8 +206,8 @@ class Video(db.Model):
 
 @app.route('/api/videos')
 def api_videos():
-    
-    videos = Video.query.order_by(Video.timestamp.desc()).all()
+
+    videos = Video.query.order_by(Video.id.desc()).all()
 
     video_list = []
     for video in videos:
