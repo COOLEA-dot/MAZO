@@ -218,7 +218,7 @@ def api_videos():
             "hashtags": video.hashtags,
             "user": {
                 "username": video.user.username if video.user else "desconocido",
-                "profile_picture": url_for('static', filename='profile_pics/' + (video.user.profile_picture if video.user and video.user.profile_picture else 'default.jpg'), _external=True),
+                "profile_picture": url_for('static', filename='profile_pics/' + (video.user.profile_pic if video.user and video.User.profile_pic else 'default.jpg'), _external=True),
                 "company": video.user.company if video.user else "",
                 "name": video.user.name if video.user else ""
             }
