@@ -204,6 +204,28 @@ class Video(db.Model):
     def __repr__(self):
         return f'<Video {self.title}>'
 
+@app.route('/api/videos')
+def api_videos():
+    
+    videos = Video.query.order_by(Video.timestamp.desc()).all()
+
+    video_list = []
+    for video in videos:
+        video_list.append({
+            "url": url_for('uploaded_file', filename=video.video_url, _external=True),
+            "title": video.title,
+            "description": video.description,
+            "hashtags": video.hashtags,
+            "user": {
+                "username": video.user.username if video.user else "desconocido",
+                "profile_picture": url_for('static', filename='profile_pics/' + (video.user.profile_picture if video.user and video.user.profile_picture else 'default.jpg'), _external=True),
+                "company": video.user.company if video.user else "",
+                "name": video.user.name if video.user else ""
+            }
+        })
+
+    return jsonify(video_list)
+
 followers = db.Table('followers',
     db.Column('follower_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('followed_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
