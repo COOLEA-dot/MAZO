@@ -220,8 +220,8 @@ def api_videos():
             "title": video.title,
             "description": video.description,
             "hashtags": video.hashtags,
-            "likes_count": len(video.likes),
-            "comments_count": len(video.comments),
+            "likes_count": len(video.like_count),
+            "comments_count": len(video.Comment),
             "is_liked": is_liked,
             "user": {
                 "username": user.username if user else "desconocido",
