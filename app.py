@@ -210,33 +210,28 @@ def api_videos():
 
     video_list = []
     for video in videos:
-        user = video.user
-        is_liked = False
-        if current_user.is_authenticated:
-            is_liked = any(like.user_id == current_user.id for like in video.likes)
+        is_liked = current_user.is_authenticated and current_user in video.liked_by
 
         video_list.append({
             "url": url_for('uploaded_file', filename=video.video_url, _external=True),
             "title": video.title,
             "description": video.description,
             "hashtags": video.hashtags,
-            "likes_count": len(video.like_count),
-            "comments_count": len(video.Comment),
+            "likes": video.like_count,
             "is_liked": is_liked,
             "user": {
-                "username": user.username if user else "desconocido",
+                "username": video.user.username if video.user else "desconocido",
                 "profile_picture": url_for(
                     'static', 
-                    filename='profile_pics/' + (user.profile_pic if user and user.profile_pic else 'default.jpg'),
+                    filename='profile_pics/' + (video.user.profile_pic if video.user and video.user.profile_pic else 'default.jpg'),
                     _external=True
                 ),
-                "company": user.company if user else "",
-                "name": user.name if user else ""
+                "company": video.user.company if video.user else "",
+                "name": video.user.name if video.user else ""
             }
         })
 
     return jsonify(video_list)
-
 
 followers = db.Table('followers',
     db.Column('follower_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
