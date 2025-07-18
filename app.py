@@ -293,6 +293,15 @@ class User(db.Model, UserMixin):
         if not self.password_hash:
             return False
         return check_password_hash(self.password_hash, password)
+@app.route('/api/me')
+@login_required
+def api_me():
+    return jsonify({
+        "username": g.user.username,
+        "email":g.user.email,
+        "phone": g.user.phone
+    })
+
 
 class UserToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -300,6 +309,7 @@ class UserToken(db.Model):
     fcm_token = db.Column(db.String(255), unique=True, nullable=False)
 
     user = db.relationship('User', backref=db.backref('tokens', lazy=True))
+
 
 @app.route('/register_token', methods=['POST'])
 @login_required
