@@ -214,6 +214,7 @@ def api_videos():
 
         video_list.append({
             "url": url_for('uploaded_file', filename=video.video_url, _external=True),
+            "id": video.id,
             "title": video.title,
             "description": video.description,
             "hashtags": video.hashtags,
