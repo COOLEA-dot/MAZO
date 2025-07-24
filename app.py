@@ -84,6 +84,11 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 babel = Babel(app)
 eventlet.monkey_patch()
 
+@app.after_request
+def add_csrf_cookie(response):
+    response.set_cookie('csrf_token', generate_csrf(), samesite='Lax', secure=True)
+    return response
+
 @babel.localeselector
 def select_locale():
     return session.get('lang') or request.accept_languages.best_match(app.config['BABEL_SUPPORTED_LOCALES'])
