@@ -42,6 +42,7 @@ app.config['DEBUG'] = False
 app.config["SECRET_KEY"] = "AOM11091950"
 app.config["WTF_CSRF_ENABLED"] = True
 app.config['WTF_CSRF_TIME_LIMIT'] = None  # Token CSRF nunca expira (solo para desarrollo)
+app.config["WTF_CSRF_CHECK_REFERER"] = False
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
