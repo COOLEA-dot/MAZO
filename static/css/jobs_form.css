@@ -1,0 +1,87 @@
+.form-card {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+.form-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: .5rem;
+}
+.form-header h1 {
+  font-size: 1.35rem;
+  margin: 0;
+}
+.back-link {
+  text-decoration: none;
+  font-size: .95rem;
+  color: #374151;
+}
+.back-link:hover { text-decoration: underline; }
+
+.flash-list { list-style: none; padding: 0; margin: 0 0 .75rem; }
+.flash { padding: .6rem .8rem; border-radius: .5rem; font-size: .95rem; }
+.flash-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.flash-error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+.jobproj-form {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: .75rem;
+  padding: 1rem;
+}
+
+.form-row { display: flex; flex-direction: column; gap: .35rem; margin-bottom: .85rem; }
+.form-row label { font-weight: 600; font-size: .95rem; color: #111827; }
+
+.jobproj-form input[type="text"],
+.jobproj-form textarea,
+.jobproj-form select {
+  border: 1px solid #e5e7eb;
+  border-radius: .5rem;
+  padding: .6rem .7rem;
+  font: inherit;
+}
+
+.hint { color: #6b7280; font-size: .85rem; }
+.error { color: #b91c1c; font-size: .85rem; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .85rem;
+}
+
+.actions {
+  display: flex;
+  gap: .6rem;
+  margin-top: .5rem;
+}
+
+.btn-primary {
+  background: #111827;
+  color: #fff;
+  border: 1px solid #111827;
+  border-radius: .5rem;
+  padding: .6rem 1rem;
+  cursor: pointer;
+}
+.btn-primary:hover { filter: brightness(.98); }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  border: 1px solid #e5e7eb;
+  border-radius: .5rem;
+  padding: .6rem 1rem;
+  color: #111827;
+  background: #f9fafb;
+}
+.btn-secondary:hover { background: #f3f4f6; }
+
+@media (max-width: 760px) {
+  .form-grid { grid-template-columns: 1fr; }
+}

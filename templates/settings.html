@@ -9,6 +9,12 @@
     <h2>⚙️ Configuración</h2>
 
     <div class="settings-section">
+        <h3>💎 MAZO Premium</h3>
+        <p>{{ _('Disfruta de beneficios exclusivos con MAZO Premium.') }}</p>
+        <a href="{{ url_for('premium') }}" class="btn primary">{{ _('Ir a MAZO Premium') }}</a>
+    </div>
+
+    <div class="settings-section">
         <h3>🔐 Seguridad</h3>
         <ul>
             <li><a href="{{ url_for('edit_profile') }}">Editar perfil</a></li>
@@ -25,12 +31,14 @@
         <h3>🗑️ Cuenta</h3>
         <p>¿Quieres eliminar tu cuenta? <a href="#">Haz clic aquí</a>.</p>
     </div>
+
     <div class="logout-container">
         <button class="logout-trigger" onclick="openLogoutModal(event)">
             <i class="fas fa-sign-out-alt"></i>
             Cerrar sesión: haz clic aquí
         </button>
     </div>
+
     <!-- Modal para cerrar sesión -->
     <div id="logoutModal" class="logout-modal">
         <div class="logout-modal-content">
@@ -41,6 +49,7 @@
             </div>
         </div>
     </div>
+
     <script>
     function openLogoutModal(event) {
         event.preventDefault();
@@ -49,12 +58,12 @@
 
     function closeLogoutModal() {
         document.getElementById("logoutModal").style.display = "none";
-   }
+    }
 
     function confirmLogout() {
         window.location.href = "{{ url_for('logout') }}";
-   }
-   </script>
+    }
+    </script>
 
     <div style="margin-top: 2em;">
         <a href="{{ url_for('profile', username=current_user.username) }}" class="btn-back">← Volver al perfil</a>

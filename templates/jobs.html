@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Proyectos y Empleos') }}{% endblock %}
+
+{% block content %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/jobs.css') }}?v=11">
+
+  <section class="jobs-container">
+    <nav class="jobs-tabs" role="tablist" aria-label="Proyectos y Empleos">
+      {% set current_tab = request.args.get('tab', 'proyectos') %}
+      <a href="{{ url_for('jobs') }}?tab=proyectos"
+         class="tab {{ 'active' if current_tab == 'proyectos' else '' }}"
+         role="tab" aria-selected="{{ 'true' if current_tab == 'proyectos' else 'false' }}"
+         aria-controls="panel-proyectos" id="tab-proyectos">
+        <i class="fas fa-diagram-project"></i> {{ _('Proyectos') }}
+      </a>
+      <a href="{{ url_for('jobs') }}?tab=empleos"
+         class="tab {{ 'active' if current_tab == 'empleos' else '' }}"
+         role="tab" aria-selected="{{ 'true' if current_tab == 'empleos' else 'false' }}"
+         aria-controls="panel-empleos" id="tab-empleos">
+        <i class="fas fa-briefcase"></i> {{ _('Empleos') }}
+      </a>
+    </nav>
+
+    <!-- PROYECTOS -->
+    <section id="panel-proyectos"
+             class="tab-panel {{ 'active' if current_tab == 'proyectos' else '' }}"
+             role="tabpanel" aria-labelledby="tab-proyectos" tabindex="0">
+      <div class="panel-header"><h2>{{ _('Proyectos') }}</h2></div>
+
+      <!-- Toolbar Proyectos -->
+      <div class="toolbar">
+        <form class="jobs-tools" method="GET" action="{{ url_for('jobs') }}">
+          <input type="hidden" name="tab" value="proyectos">
+          <input type="text" name="q" placeholder="{{ _('Buscar por título o descripción') }}" value="{{ request.args.get('q','') }}">
+          <input type="text" name="location" placeholder="{{ _('Ubicación') }}" value="{{ request.args.get('location','') }}">
+          {% set mod = request.args.get('modality','') %}
+          <select name="modality">
+            <option value="">{{ _('Modalidad (todas)') }}</option>
+            <option value="remoto" {{ 'selected' if mod == 'remoto' else '' }}>{{ _('Remoto') }}</option>
+            <option value="presencial" {{ 'selected' if mod == 'presencial' else '' }}>{{ _('Presencial') }}</option>
+            <option value="híbrido" {{ 'selected' if mod == 'híbrido' else '' }}>{{ _('Híbrido') }}</option>
+          </select>
+          <button type="submit" class="btn-search">{{ _('Buscar') }}</button>
+        </form>
+
+        <a class="add-btn" href="{{ url_for('new_project') }}">
+          <i class="fas fa-plus"></i> {{ _('Añadir proyecto') }}
+        </a>
+      </div>
+
+      <div class="panel-content">
+        {% if current_tab == 'proyectos' %}
+          {% if results %}
+            {% for p in results %}
+              <article class="result-card">
+                {% set avatar = (p.user.profile_pic if p.user and p.user.profile_pic else 'default.jpg') %}
+                {% set display_name = (p.user.company or p.user.name or p.user.username) if p.user else _('Usuario') %}
+                {% set avatar_path = avatar if avatar.startswith('profile_pics/') else 'profile_pics/' ~ avatar %}
+
+                <div class="rc-left">
+                  <a href="{{ url_for('profile', username=p.user.username) if p.user else '#' }}" class="avatar-link">
+                    <img
+                      class="avatar"
+                      src="{{ url_for('static', filename=avatar_path) }}"
+                      alt="{{ display_name }}"
+                      onerror="this.onerror=null;this.src=this.dataset.fallback;"
+                    >
+                  </a>
+                  <a class="rc-name" href="{{ url_for('profile', username=p.user.username) if p.user else '#' }}">
+                    {{ display_name }}
+                  </a>
+                </div>
+                <div class="rc-center">
+                  <h3 class="rc-title">{{ p.title }}</h3>
+                  <p class="rc-short">
+                    {{ p.short_description or (p.description or '')[:160] ~ ('…' if p.description and p.description|length > 160 else '') }}
+                  </p>
+                </div>
+
+                <div class="rc-right">
+                  {% if p.location %}
+                    <div class="location-badge"><i class="fas fa-location-dot"></i> {{ p.location }}</div>
+                  {% endif %}
+                </div>
+                <a class="card-link" href="{{ url_for('project_detail', project_id=p.id) }}" </a>
+              </article>
+            {% endfor %}
+          {% else %}
+            <p>{{ _('No se han encontrado proyectos con esos filtros.') }}</p>
+          {% endif %}
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- EMPLEOS -->
+    <section id="panel-empleos"
+             class="tab-panel {{ 'active' if current_tab == 'empleos' else '' }}"
+             role="tabpanel" aria-labelledby="tab-empleos" tabindex="0">
+      <div class="panel-header"><h2>{{ _('Empleos') }}</h2></div>
+
+      <!-- Toolbar Empleos -->
+      <div class="toolbar">
+        <form class="jobs-tools" method="GET" action="{{ url_for('jobs') }}">
+          <input type="hidden" name="tab" value="empleos">
+          <input type="text" name="q" placeholder="{{ _('Buscar por título o descripción') }}" value="{{ request.args.get('q','') }}">
+          <input type="text" name="location" placeholder="{{ _('Ubicación') }}" value="{{ request.args.get('location','') }}">
+          {% set mod2 = request.args.get('modality','') %}
+          <select name="modality">
+            <option value="">{{ _('Modalidad (todas)') }}</option>
+            <option value="remoto" {{ 'selected' if mod2 == 'remoto' else '' }}>{{ _('Remoto') }}</option>
+            <option value="presencial" {{ 'selected' if mod2 == 'presencial' else '' }}>{{ _('Presencial') }}</option>
+            <option value="híbrido" {{ 'selected' if mod2 == 'híbrido' else '' }}>{{ _('Híbrido') }}</option>
+          </select>
+          <button type="submit" class="btn-search">{{ _('Buscar') }}</button>
+        </form>
+
+        <a class="add-btn" href="{{ url_for('new_job') }}">
+          <i class="fas fa-plus"></i> {{ _('Añadir empleo') }}
+        </a>
+      </div>
+
+      <div class="panel-content">
+        {% if current_tab == 'empleos' %}
+          {% if results %}
+            {% for j in results %}
+              <article class="result-card">
+                {% set avatar = (j.user.profile_pic if j.user and j.user.profile_pic else 'default.jpg') %}
+                {% set display_name = (j.user.company or j.user.name or j.user.username) if j.user else _('Usuario') %}
+                {% set avatar_path = avatar if avatar.startswith('profile_pics/') else 'profile_pics/' ~ avatar %}
+
+                <div class="rc-left">
+                  <a href="{{ url_for('profile', username=j.user.username) if j.user else '#' }}" class="avatar-link">
+                    <img
+                      class="avatar"
+                      src="{{ url_for('static', filename=avatar_path) }}"
+                      alt="{{ display_name }}"
+                      onerror="this.onerror=null;this.src=this.dataset.fallback;"
+                    >
+                  </a>
+                  <a class="rc-name" href="{{ url_for('profile', username=j.user.username) if j.user else '#' }}">
+                    {{ display_name }}
+                  </a>
+                </div>
+                <div class="rc-center">
+                  <h3 class="rc-title">{{ j.title }}</h3>
+                  <p class="rc-short">
+                    {{ j.short_description or (j.description or '')[:160] ~ ('…' if j.description and j.description|length > 160 else '') }}
+                  </p>
+                </div>
+
+                <div class="rc-right">
+                  {% if j.location %}
+                    <div class="location-badge"><i class="fas fa-location-dot"></i> {{ j.location }}</div>
+                  {% endif %}
+                </div>
+                <a class="card-link" href="{{ url_for('job_detail', job_id=j.id) }}" </a>
+              </article>
+            {% endfor %}
+          {% else %}
+            <p>{{ _('No se han encontrado empleos con esos filtros.') }}</p>
+          {% endif %}
+        {% endif %}
+      </div>
+    </section>
+  </section>
+ 
+{% endblock %}

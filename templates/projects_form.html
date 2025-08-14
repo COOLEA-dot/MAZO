@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Añadir proyecto') }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/projects_form.css') }}">
+
+<section class="form-card">
+  <header class="form-header">
+    <h1>{{ _('Añadir proyecto') }}</h1>
+    <a class="back-link" href="{{ url_for('jobs') }}?tab=proyectos">← {{ _('Volver') }}</a>
+  </header>
+
+  {# Mensajes flash #}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flash-list">
+        {% for category, message in messages %}
+          <li class="flash flash-{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" novalidate class="jobproj-form" action="{{ url_for('new_project') }}">
+    {{ form.hidden_tag() }}
+
+    <div class="form-row">
+      <label for="title">{{ _('Título') }}</label>
+      {{ form.title(id="title", placeholder=_('Ej.: Web para cafetería local')) }}
+      {% if form.title.errors %}<small class="error">{{ form.title.errors[0] }}</small>{% endif %}
+    </div>
+
+    <div class="form-row">
+      <label for="short_description">{{ _('Información corta') }}</label>
+      {{ form.short_description(id="short_description", maxlength="160", placeholder=_('1 frase rápida')) }}
+      <small class="hint">{{ _('Máx 160 caracteres.') }}</small>
+      {% if form.short_description.errors %}<small class="error">{{ form.short_description.errors[0] }}</small>{% endif %}
+    </div>
+
+    <div class="form-row">
+      <label for="description">{{ _('Información larga') }}</label>
+      {{ form.description(id="description", rows="8", placeholder=_('Describe requisitos, alcance, entregables…')) }}
+      {% if form.description.errors %}<small class="error">{{ form.description.errors[0] }}</small>{% endif %}
+    </div>
+
+    <div class="form-grid">
+      <div class="form-row">
+        <label for="modality">{{ _('Modalidad') }}</label>
+        {% if form.modality.type == 'SelectField' %}
+          {{ form.modality(id="modality") }}
+        {% else %}
+          <select name="modality" id="modality">
+            <option value="">{{ _('Selecciona…') }}</option>
+            <option value="remoto"   {% if form.modality.data == 'remoto' %}selected{% endif %}>{{ _('Remoto') }}</option>
+            <option value="presencial" {% if form.modality.data == 'presencial' %}selected{% endif %}>{{ _('Presencial') }}</option>
+            <option value="híbrido"  {% if form.modality.data == 'híbrido' %}selected{% endif %}>{{ _('Híbrido') }}</option>
+          </select>
+        {% endif %}
+        {% if form.modality.errors %}<small class="error">{{ form.modality.errors[0] }}</small>{% endif %}
+      </div>
+
+      <div class="form-row">
+        <label for="location">{{ _('Localización') }}</label>
+        {{ form.location(id="location", placeholder=_('Ciudad / País o Remoto')) }}
+        {% if form.location.errors %}<small class="error">{{ form.location.errors[0] }}</small>{% endif %}
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn-primary">{{ _('Publicar proyecto') }}</button>
+      <a class="btn-secondary" href="{{ url_for('jobs') }}?tab=proyectos">{{ _('Cancelar') }}</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

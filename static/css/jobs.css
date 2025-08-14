@@ -1,0 +1,190 @@
+/* Contenedor general */
+.jobs-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Pestañas arriba */
+.jobs-tabs {
+  display: flex;
+  gap: 1.6rem;
+  border-bottom: 1px solid #e5e7eb;
+  margin: 1rem 0 1.25rem;
+}
+.jobs-tabs .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .9rem 1.25rem;
+  font-size: 1.12rem;
+  text-decoration: none;
+  color: inherit;
+  border-radius: .75rem .75rem 0 0;
+  border: 1px solid transparent;
+  line-height: 1;
+}
+.jobs-tabs .tab i { font-size: 1.18rem; }
+/* Empuja "Empleos" a la derecha en desktop ancho */
+.jobs-tabs .tab:last-child { margin-left: auto; }
+.jobs-tabs .tab:hover { background: #f8f9fb; }
+.jobs-tabs .tab.active {
+  font-weight: 600;
+  border-color: #e5e7eb;
+  border-bottom-color: transparent;
+  background: #fff;
+}
+
+/* Paneles */
+.tab-panel {
+  display: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 0 .9rem .9rem .9rem;
+  padding: 1.1rem;
+  background: #fff;
+}
+.tab-panel.active { display: block; }
+
+/* Oculta H2 visualmente pero deja accesible */
+.panel-header h2 {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden; clip: rect(1px,1px,1px,1px);
+  white-space: nowrap;
+}
+
+.panel-header { margin-bottom: .75rem; }
+.panel-content { display: grid; gap: .75rem; }
+
+/* ===== Toolbar: formulario + botón a la derecha ===== */
+.toolbar {
+  display: grid;
+  grid-template-columns: 1fr auto; /* form ocupa, botón a la derecha */
+  align-items: start;
+  gap: .6rem;
+  margin-bottom: .9rem;
+}
+
+/* Formulario de filtros */
+.jobs-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: .5rem;
+  padding: .5rem;
+  min-width: 0; /* importante para que no desborde en grid */
+}
+
+.jobs-tools input[type="text"],
+.jobs-tools select {
+  flex: 1 1 220px;
+  border: 1px solid #e5e7eb;
+  border-radius: .5rem;
+  padding: .55rem .7rem;
+  font: inherit;
+  min-width: 0; /* permite encoger */
+}
+
+.btn-search {
+  border: 1px solid #e5e7eb;
+  background: #f3f4f6;
+  border-radius: .5rem;
+  padding: .55rem .9rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Botón Añadir (fuera del form, en la 2ª columna del grid) */
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .55rem .9rem;
+  border-radius: .5rem;
+  text-decoration: none;
+  background: #111827;
+  color: #fff;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.add-btn:hover { filter: brightness(0.98); }
+
+.add-btn{ position: relative; z-index: 10; outline: 2px solid red; }
+
+.toolbar{display:flex;gap:.75rem;align-items:center;justify-content:space-between;margin:.75rem 0}
+    .result-card{
+      display:grid;grid-template-columns:220px 1fr 220px;gap:1rem;
+      align-items:center;border:1px solid #e5e7eb;border-radius:.75rem;
+      padding:.9rem;background:#fff
+    }
+    .rc-left{display:flex;flex-direction:column;align-items:flex-start;gap:.5rem}
+    .avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;border:1px solid #e5e7eb}
+    .rc-name{font-weight:600;text-decoration:none;color:#111827}
+    .rc-center .rc-title{font-size:1.15rem;margin:0 0 .35rem 0}
+    .rc-center .rc-short{margin:0;color:#374151}
+    .rc-right{display:flex;justify-content:flex-end}
+    .location-badge{display:inline-flex;align-items:center;gap:.4rem;border:1px solid #e5e7eb;border-radius:.5rem;padding:.4rem .6rem;background:#f9fafb;white-space:nowrap}
+    @media(max-width:900px){.result-card{grid-template-columns:64px 1fr;grid-template-areas:"left center" "right right"}
+      .rc-left{grid-area:left}.rc-center{grid-area:center}.rc-right{grid-area:right;justify-content:flex-start;margin-top:.5rem}}
+
+/* Tarjeta clicable: el enlace cubre toda el área */
+.result-card {
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: .75rem;
+  background: #fff;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 220px 1fr auto;
+  gap: 1rem;
+  cursor: pointer;
+  transition: box-shadow .15s ease, transform .05s ease;
+}
+.result-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,.06);
+}
+.result-card .card-link {
+  position: absolute;
+  inset: 0;        /* top/right/bottom/left: 0 */
+  z-index: 1;      /* debajo de botones si los hubiera con z-index mayor */
+}
+
+/* Asegúrate de que enlaces internos (botones) estén por encima si los usas */
+.result-card .btn, 
+.result-card .avatar-link, 
+.result-card .rc-name {
+  position: relative;
+  z-index: 2;
+}
+
+/* Desktop: evita que el form rompa línea y controla anchos */
+@media (min-width: 901px) {
+  .jobs-tools { flex-wrap: nowrap; }
+  .jobs-tools input[type="text"], .jobs-tools select { width: auto !important; }
+
+  .jobs-tools input[name="q"]        { flex: 1 1 280px; max-width: 420px; }
+  .jobs-tools input[name="location"] { flex: 0 1 200px; max-width: 240px; }
+  .jobs-tools select[name="modality"]{ flex: 0 0 160px; }
+  .btn-search { flex: 0 0 auto; }
+}
+
+/* Tablet/móvil: el botón baja debajo del form, a ancho completo */
+@media (max-width: 900px) {
+  .jobs-container { padding: 0 .75rem; }
+  .jobs-tabs { gap: .85rem; }
+  .jobs-tabs .tab { padding: .7rem 1rem; font-size: 1.03rem; }
+  .jobs-tabs .tab i { font-size: 1.08rem; }
+
+  .toolbar {
+    grid-template-columns: 1fr;     /* form y botón en dos filas */
+  }
+  .add-btn { width: 100%; justify-content: center; }
+}
+
+/* Móvil estrecho: pestañas juntas */
+@media (max-width: 600px) {
+  .jobs-tabs .tab:last-child { margin-left: 0; }
+}

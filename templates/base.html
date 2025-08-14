@@ -26,39 +26,41 @@
                     <span class="link-text">{{ _('Inicio') }}</span>
                 </a>
             </li>
+
             {% if g.user %}
-                <li>
-                    <a href="{{ url_for('profile', username=g.user.username) }}">
-                        <i class="fas fa-user"></i>
-                        <span class="link-text">{{ _('Perfil') }}</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('chats') }}">
-                        <i class="fas fa-comments"></i>
-                        <span class="link-text">Chats</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('premium') }}">
-                        <i class="fas fa-crown"></i>
-                        <span class="link-text"> Premium</span>
-                    </a>
-                </li>
+            <li>
+                <a href="{{ url_for('profile', username=g.user.username) }}">
+                    <i class="fas fa-user"></i>
+                    <span class="link-text">{{ _('Perfil') }}</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('chats') }}">
+                    <i class="fas fa-comments"></i>
+                    <span class="link-text">Chats</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('jobs') }}">
+                    <i class="fas fa-briefcase"></i>
+                    <span class="link-text">{{ _('Proyectos y Empleos') }}</span>
+                </a>
+            </li>
             {% else %}
-                <li>
-                    <a href="{{ url_for('login') }}">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span class="link-text">{{ _('Entrar') }}</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('register') }}">
-                        <i class="fas fa-user-plus"></i>
-                        <span class="link-text">{{ _('Registrarse') }}</span>
-                    </a>
-                </li>
+            <li>
+                <a href="{{ url_for('login') }}">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span class="link-text">{{ _('Entrar') }}</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('register') }}">
+                    <i class="fas fa-user-plus"></i>
+                    <span class="link-text">{{ _('Registrarse') }}</span>
+                </a>
+            </li>
             {% endif %}
+
             <li class="mobile-only">
                 <button class="mobile-search-icon" onclick="toggleMobileSearch()">
                     <i class="fas fa-search"></i>
@@ -87,8 +89,9 @@
     <main>
         {% block content %}{% endblock %}
     </main>
+</body>
+</html>
 
-    
     <!-- Scripts -->
     <script>
     // Cerrar si se hace clic fuera del buscador

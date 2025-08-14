@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} · Proyecto{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/jobs_detail.css') }}?v=4">
+
+<section class="detail-container">
+  {# ---- Encabezado ---- #}
+  <header class="detail-header">
+    {# avatar + nombre empresa/usuario #}
+    <div class="header-left">
+      {% set display_name = (project.user.company or project.user.name or project.user.username) if project.user else _('Usuario') %}
+      {% set raw_avatar = project.user.profile_pic if project.user and project.user.profile_pic else 'default.jpg' %}
+      {% if raw_avatar.startswith('http') %}
+        {% set avatar_url = raw_avatar %}
+      {% else %}
+        {% set avatar_file = raw_avatar if raw_avatar.startswith('profile_pics/') else 'profile_pics/' ~ raw_avatar %}
+        {% set avatar_url = url_for('static', filename=avatar_file) %}
+      {% endif %}
+
+      <img
+        class="avatar-xl"
+        src="{{ avatar_url }}"
+        alt="{{ display_name }}"
+        data-fallback="{{ url_for('static', filename='profile_pics/default.jpg') }}"
+        onerror="this.onerror=null;this.src=this.dataset.fallback;">
+      <div class="company-name">
+        <a href="{{ url_for('profile', username=project.user.username) if project.user else '#' }}">{{ display_name }}</a>
+      </div>
+    </div>
+
+    {# título + descripción corta #}
+    <div class="header-main">
+      <h1 class="detail-title">{{ project.title }}</h1>
+      {% if project.short_description %}
+        <p class="detail-short">{{ project.short_description }}</p>
+      {% endif %}
+    </div>
+  </header>
+
+  {# ---- Información detallada ---- #}
+  <article class="detail-body">
+    {{ project.description }}
+  </article>
+
+  {# ---- Ubicación / modalidad ---- #}
+  <div class="detail-meta">
+    {% if project.location %}
+      <span class="badge"><i class="fas fa-location-dot"></i> {{ project.location }}</span>
+    {% endif %}
+    {% if project.modality %}
+      <span class="badge"><i class="fas fa-laptop-house"></i> {{ project.modality|capitalize }}</span>
+    {% endif %}
+  </div>
+
+  {# ---- Botones finales ---- #}
+  <footer class="detail-actions">
+    {% if not current_user.is_authenticated %}
+      <a class="btn contact" href="{{ url_for('login', next=request.url) }}">
+        <i class="fas fa-paper-plane"></i> {{ _('Inicia sesión para contactar') }}
+      </a>
+      <a class="btn apply" href="{{ url_for('login', next=request.url) }}">
+        <i class="fas fa-file-signature"></i> {{ _('Solicitar proyecto') }}
+      </a>
+    {% else %}
+      {% if project.user_id and current_user.id != project.user_id %}
+        <a class="btn contact" href="{{ url_for('send_message', recipient_id=project.user_id) }}">
+          <i class="fas fa-paper-plane"></i> {{ _('Contactar') }}
+        </a>
+
+        {# ¿ya solicitó? #}
+        {% set ns = namespace(applied=false) %}
+        {% for a in project.applications or [] %}
+          {% if a.applicant_id == current_user.id and a.status == 'active' %}
+            {% set ns.applied = true %}
+          {% endif %}
+        {% endfor %}
+
+        {% if ns.applied %}
+          <a class="btn cancel" href="{{ url_for('cancel_project_application', project_id=project.id) }}">
+            <i class="fas fa-times-circle"></i> {{ _('Cancelar solicitud') }}
+          </a>
+        {% else %}
+          <a class="btn apply" href="{{ url_for('apply_project', project_id=project.id) }}">
+            <i class="fas fa-file-signature"></i> {{ _('Solicitar proyecto') }}
+          </a>
+        {% endif %}
+      {% else %}
+        {# Es el autor: no mostramos botones de aplicar/contactar #}
+      {% endif %}
+    {% endif %}
+  </footer>
+
+  {# ---- Solicitudes (solo visible para el autor, debajo de la oferta) ---- #}
+  {% if current_user.is_authenticated and project.user_id and current_user.id == project.user_id %}
+    <section class="applications-owner">
+      <h3>{{ _('Solicitudes') }}</h3>
+
+      {% if apps and apps|length > 0 %}
+        <ul class="apps">
+          {% for a in apps %}
+            {% set u = a.applicant %}
+            {% set disp = (u.company or u.name or u.username) if u else _('Usuario') %}
+            {% set raw = (u.profile_pic if u and u.profile_pic else 'default.jpg') %}
+            {% set file = raw if raw.startswith('profile_pics/') else 'profile_pics/' ~ raw %}
+
+            <li class="app-item">
+              <a class="app-link" href="{{ url_for('profile', username=u.username) if u else '#' }}">
+                <img class="avatar sm"
+                     src="{{ url_for('static', filename=file) }}"
+                     alt="{{ disp }}"
+                     data-fallback="{{ url_for('static', filename='profile_pics/default.jpg') }}"
+                     onerror="this.onerror=null;this.src=this.dataset.fallback;">
+                <div class="app-data">
+                  <div class="name">{{ disp }}</div>
+                  {% if u and u.profession %}
+                    <div class="profession">{{ u.profession }}</div>
+                  {% endif %}
+                </div>
+              </a>
+              <div class="app-actions">
+                {% if u %}
+                  <a class="btn contact" href="{{ url_for('send_message', recipient_id=u.id) }}">
+                    <i class="fas fa-paper-plane"></i> {{ _('Contactar') }}
+                  </a>
+                {% endif %}
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>{{ _('Aún no hay solicitudes.') }}</p>
+      {% endif %}
+    </section>
+  {% endif %}
+</section>
+{% endblock %}
+

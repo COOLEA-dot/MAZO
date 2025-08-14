@@ -1,0 +1,10 @@
+import os, sqlite3
+dburi = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///mazo.db")
+assert dburi.startswith("sqlite:///")
+path = dburi.replace("sqlite:///","")
+print("DB:", path)
+con = sqlite3.connect(path)
+con.execute("DROP TABLE IF EXISTS alembic_version")
+con.commit()
+con.close()
+print("Dropped alembic_version")

@@ -152,3 +152,16 @@
   background-color: #f8d7da;
   color: #721c24;
 }
+
+.premium-badge {
+  font-weight: 600;
+  margin-bottom: .5rem;
+}
+.premium-actions {
+  display: flex;
+  gap: .75rem;
+  margin-top: .75rem;
+}
+.btn.primary { background: #2563eb; color: #fff; }
+.btn.outline { border: 1px solid #ccc; background: transparent; }
+.btn { padding: .5rem .9rem; border-radius: .5rem; display:inline-block; text-decoration:none; }

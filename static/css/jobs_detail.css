@@ -1,0 +1,236 @@
+.detail-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem 1.1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: .9rem;
+}
+
+/* Encabezado: avatar grande a la izquierda, texto a la derecha */
+.detail-header {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar-xl {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  background: #f3f4f6;
+}
+
+.company-name {
+  margin-top: .5rem;
+  font-weight: 600;
+  text-align: center;
+}
+.company-name a {
+  color: #111827;
+  text-decoration: none;
+}
+.company-name a:hover { text-decoration: underline; }
+
+.header-main .detail-title {
+  font-size: 1.9rem;
+  line-height: 1.25;
+  margin: .25rem 0 .4rem;
+  color: #111827;
+}
+.header-main .detail-short {
+  color: #374151;
+  font-size: 1.025rem;
+}
+
+/* Cuerpo detallado */
+.detail-body {
+  margin-top: .75rem;
+  line-height: 1.65;
+  color: #111827;
+  white-space: pre-line; /* conserva saltos de línea */
+}
+
+/* Meta (ubicación, modalidad…) */
+.detail-meta {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.badge {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  padding: .35rem .6rem;
+  border-radius: .5rem;
+  font-size: .95rem;
+  color: #111827;
+  white-space: nowrap;
+}
+
+/* Acciones */
+.detail-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: .6rem;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .6rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: .55rem;
+  text-decoration: none;
+  color: #111827;
+  background: #fff;
+  font-weight: 500;
+}
+.btn:hover { filter: brightness(.98); }
+.btn.primary {
+  background: #111827;
+  color: #fff;
+  border-color: transparent;
+}
+.detail-actions {
+  display: flex;
+  gap: .6rem;
+  margin-top: 1rem;
+}
+
+.btn.contact { /* estilo por si quieres diferenciarlo */
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+}
+
+.btn.apply {
+  background: #111827;
+  color: #fff;
+  border: 1px solid #111827;
+}
+
+.btn.cancel {
+  background: #fff;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+.btn.cancel:hover {
+  background: #fee2e2;
+}
+/* --- Solicitudes del autor --- */
+.applications-owner {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.applications-owner h3 {
+  margin: 0 0 .75rem 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.apps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: .6rem;
+}
+
+.app-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .65rem .75rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: .75rem;
+}
+
+.app-main {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex: 1 1 auto;
+  text-decoration: none;
+  color: inherit;
+  border-radius: .5rem;
+  padding: .25rem;
+}
+
+.app-main:hover {
+  background: #f9fafb;
+}
+
+.avatar.sm {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.app-data .line1 {
+  font-weight: 600;
+}
+
+.app-data .line2 {
+  margin-top: 2px;
+  color: #6b7280; /* gris */
+}
+
+.app-actions .btn {
+  margin-left: .25rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .app-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .app-actions {
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+  }
+}
+/* Ajustes para nombre y profesión en solicitudes */
+.app-data .name {
+  font-size: 1.12rem;     /* más grande */
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.app-data .profession {
+  margin-top: 2px;
+  color: #6b7280;         /* gris suave */
+  font-size: .96rem;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  .detail-header {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+  .header-main .detail-title {
+    font-size: 1.6rem;
+  }
+  .detail-actions {
+    flex-direction: column;
+  }
+  .btn { justify-content: center; }
+}

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-06-18 12:30+0200\n"
+"POT-Creation-Date: 2025-08-14 18:13+0200\n"
 "PO-Revision-Date: 2025-06-18 12:51+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -18,29 +18,25 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: templates/base.html:25
+#: templates/base.html:26
 msgid "Inicio"
 msgstr "ホーム"
 
-#: templates/base.html:32
+#: templates/base.html:34
 msgid "Perfil"
 msgstr "プロフィール"
 
-#: templates/base.html:50
-msgid "Salir"
-msgstr "ログアウト"
+#: templates/base.html:46 templates/jobs.html:2
+msgid "Proyectos y Empleos"
+msgstr "プロジェクトと求人"
 
-#: templates/base.html:57
+#: templates/base.html:53
 msgid "Entrar"
 msgstr "ログイン"
 
-#: templates/base.html:63 templates/register.html:108
+#: templates/base.html:59 templates/register.html:114
 msgid "Registrarse"
 msgstr "登録する"
-
-#: templates/base.html:99
-msgid "¿Estás seguro de que quieres cerrar sesión?"
-msgstr "本当にログアウトしますか？"
 
 #: templates/chat.html:3
 msgid "Chat con"
@@ -71,19 +67,18 @@ msgid "No tienes chats previos."
 msgstr "以前のチャットはありません。"
 
 #: templates/edit_profile.html:3 templates/edit_profile.html:9
-#: templates/profile.html:78
 msgid "Editar Perfil"
 msgstr "プロフィールを編集"
 
-#: templates/edit_profile.html:22 templates/profile.html:44
+#: templates/edit_profile.html:22 templates/profile.html:47
 msgid "Nombre:"
 msgstr "名前："
 
-#: templates/edit_profile.html:27 templates/profile.html:52
+#: templates/edit_profile.html:27 templates/profile.html:55
 msgid "Empresa:"
 msgstr "会社："
 
-#: templates/edit_profile.html:32 templates/profile.html:56
+#: templates/edit_profile.html:32 templates/profile.html:59
 msgid "Profesión:"
 msgstr "職業："
 
@@ -99,7 +94,7 @@ msgstr "場所："
 msgid "Nombre de usuario:"
 msgstr "ユーザー名："
 
-#: templates/edit_profile.html:52 templates/register.html:76
+#: templates/edit_profile.html:52 templates/register.html:77
 msgid "Teléfono:"
 msgstr "電話番号："
 
@@ -111,7 +106,8 @@ msgstr "メールアドレス："
 msgid "Guardar cambios"
 msgstr "変更を保存"
 
-#: templates/edit_profile.html:62
+#: templates/edit_profile.html:62 templates/jobs_form.html:81
+#: templates/projects_form.html:71
 msgid "Cancelar"
 msgstr "キャンセル"
 
@@ -119,23 +115,23 @@ msgstr "キャンセル"
 msgid "Página Principal"
 msgstr "ホームページ"
 
-#: templates/home.html:34 templates/profile.html:108
+#: templates/home.html:34 templates/profile.html:104
 msgid "Usuario desconocido"
 msgstr "不明なユーザー"
 
-#: templates/home.html:64
+#: templates/home.html:66 templates/view_video.html:53
 msgid "Tu navegador no puede reproducir este video."
 msgstr "この動画はお使いのブラウザでは再生できません。"
 
-#: templates/home.html:85
+#: templates/home.html:87 templates/view_video.html:73
 msgid "Comentarios"
 msgstr "コメント"
 
-#: templates/home.html:108
+#: templates/home.html:110 templates/view_video.html:96
 msgid "Compartir con usuarios"
 msgstr "ユーザーと共有"
 
-#: templates/home.html:115
+#: templates/home.html:117 templates/view_video.html:103
 msgid "Enviar"
 msgstr "送信"
 
@@ -143,67 +139,222 @@ msgstr "送信"
 msgid "Encuentra profesionales"
 msgstr "専門家を見つける"
 
-#: templates/inicio.html:13
+#: templates/inicio.html:26
 msgid "Encuentra aquí a tus profesionales de confianza"
 msgstr "信頼できる専門家をここで見つけよう"
 
-#: templates/inicio.html:14
+#: templates/inicio.html:27
 msgid "Empezar sin registro"
 msgstr "登録せずに始める"
 
-#: templates/inicio.html:15
+#: templates/inicio.html:28
 msgid "Iniciar sesión"
 msgstr "ログイン"
 
-#: templates/inicio.html:19
+#: templates/inicio.html:32
 msgid "¿Por qué usar MAZO?"
 msgstr "なぜMAZOを使うのか？"
 
-#: templates/inicio.html:21
+#: templates/inicio.html:34
 msgid "📹 Perfiles con video"
 msgstr "📹 動画付きプロフィール"
 
-#: templates/inicio.html:22
+#: templates/inicio.html:35
 msgid "📍 Búsqueda por profesión y ubicación"
 msgstr "📍 職業・場所で検索"
 
-#: templates/inicio.html:23
+#: templates/inicio.html:36
 msgid "💬 Chat en tiempo real"
 msgstr "💬 リアルタイムチャット"
 
-#: templates/inicio.html:24
+#: templates/inicio.html:37
 msgid "⭐ Opiniones y valoraciones"
 msgstr "⭐ レビューと評価"
 
-#: templates/inicio.html:29
+#: templates/inicio.html:42
 msgid "Descubre cómo funciona"
 msgstr "使い方をチェック"
 
-#: templates/inicio.html:34
+#: templates/inicio.html:47
 msgid "2025 MAZO · Todos los derechos reservados"
 msgstr "2025 MAZO · 無断転載を禁じます"
 
-#: templates/login.html:7 templates/login.html:11
+#: templates/job_detail.html:12 templates/job_detail.html:105
+#: templates/jobs.html:57 templates/jobs.html:128
+#: templates/project_detail.html:12 templates/project_detail.html:103
+#, fuzzy
+msgid "Usuario"
+msgstr "ユーザー名："
+
+#: templates/job_detail.html:61 templates/project_detail.html:60
+#, fuzzy
+msgid "Inicia sesión para contactar"
+msgstr "こちらからログイン"
+
+#: templates/job_detail.html:64 templates/job_detail.html:87
+msgid "Solicitar empleo"
+msgstr "求人に応募する"
+
+#: templates/job_detail.html:70 templates/job_detail.html:127
+#: templates/project_detail.html:68 templates/project_detail.html:124
+#, fuzzy
+msgid "Contactar"
+msgstr "お問い合わせ"
+
+#: templates/job_detail.html:83 templates/project_detail.html:81
+#, fuzzy
+msgid "Cancelar solicitud"
+msgstr "キャンセル"
+
+#: templates/job_detail.html:99 templates/project_detail.html:97
+msgid "Solicitudes"
+msgstr "応募"
+
+#: templates/job_detail.html:136 templates/project_detail.html:132
+msgid "Aún no hay solicitudes."
+msgstr "まだ応募はありません。"
+
+#: templates/jobs.html:14 templates/jobs.html:28
+msgid "Proyectos"
+msgstr "プロジェクト"
+
+#: templates/jobs.html:20 templates/jobs.html:99
+#, fuzzy
+msgid "Empleos"
+msgstr "会社："
+
+#: templates/jobs.html:34 templates/jobs.html:105
+msgid "Buscar por título o descripción"
+msgstr "タイトルまたは説明で検索"
+
+#: templates/jobs.html:35 templates/jobs.html:106
+#, fuzzy
+msgid "Ubicación"
+msgstr "場所："
+
+#: templates/jobs.html:38 templates/jobs.html:109
+msgid "Modalidad (todas)"
+msgstr "形態（すべて）"
+
+#: templates/jobs.html:39 templates/jobs.html:110 templates/jobs_form.html:61
+#: templates/projects_form.html:54
+msgid "Remoto"
+msgstr "リモート"
+
+#: templates/jobs.html:40 templates/jobs.html:111 templates/jobs_form.html:62
+#: templates/projects_form.html:55
+msgid "Presencial"
+msgstr "出社"
+
+#: templates/jobs.html:41 templates/jobs.html:112 templates/jobs_form.html:63
+#: templates/projects_form.html:56
+msgid "Híbrido"
+msgstr "ハイブリッド"
+
+#: templates/jobs.html:43 templates/jobs.html:114 templates/search.html:6
+#: templates/search.html:11
+msgid "Buscar"
+msgstr "検索する"
+
+#: templates/jobs.html:47 templates/jobs_form.html:11
+#: templates/projects_form.html:2 templates/projects_form.html:9
+msgid "Añadir proyecto"
+msgstr "プロジェクトを追加"
+
+#: templates/jobs.html:89
+msgid "No se han encontrado proyectos con esos filtros."
+msgstr "その条件ではプロジェクトが見つかりません。"
+
+#: templates/jobs.html:118 templates/jobs_form.html:11
+msgid "Añadir empleo"
+msgstr "求人を追加"
+
+#: templates/jobs.html:160
+msgid "No se han encontrado empleos con esos filtros."
+msgstr "その条件では求人が見つかりません。"
+
+#: templates/jobs_form.html:2
+msgid "Añadir"
+msgstr "追加"
+
+#: templates/jobs_form.html:14 templates/projects_form.html:10
+msgid "Volver"
+msgstr "戻る"
+
+#: templates/jobs_form.html:34 templates/projects_form.html:28
+msgid "Título"
+msgstr "タイトル"
+
+#: templates/jobs_form.html:35 templates/projects_form.html:29
+msgid "Ej.: Web para cafetería local"
+msgstr "例：地元のカフェのウェブサイト"
+
+#: templates/jobs_form.html:40 templates/projects_form.html:34
+msgid "Información corta"
+msgstr "短い説明"
+
+#: templates/jobs_form.html:41 templates/projects_form.html:35
+msgid "1 frase rápida"
+msgstr "短い文章1つ"
+
+#: templates/jobs_form.html:42 templates/projects_form.html:36
+msgid "Máx 160 caracteres."
+msgstr "最大160文字。"
+
+#: templates/jobs_form.html:47 templates/projects_form.html:41
+msgid "Información larga"
+msgstr "詳細情報"
+
+#: templates/jobs_form.html:48
+msgid "Describe los requisitos, alcance, responsabilidades…"
+msgstr "要件、範囲、責任などを記述してください…"
+
+#: templates/jobs_form.html:54 templates/projects_form.html:48
+msgid "Modalidad"
+msgstr "形態"
+
+#: templates/jobs_form.html:60 templates/projects_form.html:53
+#, fuzzy
+msgid "Selecciona…"
+msgstr "動画を選択："
+
+#: templates/jobs_form.html:70 templates/projects_form.html:63
+msgid "Localización"
+msgstr "所在地"
+
+#: templates/jobs_form.html:71 templates/projects_form.html:64
+msgid "Ciudad / País o Remoto"
+msgstr "都市 / 国 または リモート"
+
+#: templates/jobs_form.html:78 templates/projects_form.html:70
+msgid "Publicar proyecto"
+msgstr "プロジェクトを公開"
+
+#: templates/jobs_form.html:78
+msgid "Publicar empleo"
+msgstr "求人を公開"
+
+#: templates/login.html:7 templates/login.html:12
 msgid "Inicio de Sesión"
 msgstr "ログイン"
 
-#: templates/login.html:28
+#: templates/login.html:29
 msgid "Usuario:"
 msgstr "ユーザー名："
 
-#: templates/login.html:32 templates/register.html:102
+#: templates/login.html:33 templates/register.html:108
 msgid "Contraseña:"
 msgstr "パスワード："
 
-#: templates/login.html:36
+#: templates/login.html:37
 msgid "Iniciar Sesión"
 msgstr "ログイン"
 
-#: templates/login.html:39
+#: templates/login.html:40
 msgid "¿No tienes cuenta?"
 msgstr "アカウントをお持ちでないですか？"
 
-#: templates/login.html:39
+#: templates/login.html:40
 msgid "Regístrate aquí"
 msgstr "こちらで登録"
 
@@ -235,145 +386,140 @@ msgstr "すでにプレミアムユーザーです ✔"
 msgid ""
 "Este es un pago mensual. Deberás renovarlo manualmente cada mes para "
 "mantener tu cuenta premium."
-msgstr ""
-"これは月額料金です。プレミアムアカウントを維持するには毎月手動で更新する必要があります。"
+msgstr "これは月額料金です。プレミアムアカウントを維持するには毎月手動で更新する必要があります。"
 
 #: templates/privacy.html:6
 msgid "Política de Privacidad"
 msgstr "プライバシーポリシー"
 
-#: templates/privacy.html:25
+#: templates/privacy.html:26
 msgid ""
 "nos tomamos muy en serio la privacidad de nuestros usuarios. Esta "
 "Política de Privacidad explica qué datos recopilamos, cómo los usamos y "
 "cómo protegemos tu información cuando utilizas nuestra aplicación y sitio"
 " web"
-msgstr ""
-"当社はユーザーのプライバシーを非常に重視しています。このプライバシーポリシーでは、当社が収集するデータ、使用方法、およびアプリやウェブサイトの利用時に情報を保護する方法について説明します。"
+msgstr "当社はユーザーのプライバシーを非常に重視しています。このプライバシーポリシーでは、当社が収集するデータ、使用方法、およびアプリやウェブサイトの利用時に情報を保護する方法について説明します。"
 
-#: templates/privacy.html:29
+#: templates/privacy.html:30
 msgid "Nombre, correo electrónico, número de teléfono"
 msgstr "氏名、メールアドレス、電話番号"
 
-#: templates/privacy.html:30
+#: templates/privacy.html:31
 msgid "Nombre de empresa, profesión, ubicación"
 msgstr "会社名、職業、所在地"
 
-#: templates/privacy.html:31
+#: templates/privacy.html:32
 msgid "Descripción personal y habilidades"
 msgstr "自己紹介とスキル"
 
-#: templates/privacy.html:32
+#: templates/privacy.html:33
 msgid "Foto de perfil y archivos multimedia que subas"
 msgstr "プロフィール写真とアップロードされたメディアファイル"
 
-#: templates/privacy.html:33
+#: templates/privacy.html:34
 msgid "Mensajes y comentarios enviados en la plataforma"
 msgstr "プラットフォーム上で送信されたメッセージやコメント"
 
-#: templates/privacy.html:35
+#: templates/privacy.html:36
 msgid ""
 "También recopilamos información de uso y navegación, como IP, tipo de "
 "dispositivo, navegador y ubicación aproximada (si la autorizas)."
-msgstr ""
-"また、IPアドレス、デバイスの種類、ブラウザ、位置情報（許可された場合）などの利用・閲覧情報も収集します。"
+msgstr "また、IPアドレス、デバイスの種類、ブラウザ、位置情報（許可された場合）などの利用・閲覧情報も収集します。"
 
-#: templates/privacy.html:37
+#: templates/privacy.html:38
 msgid "2. Cómo usamos tus datos"
 msgstr "2. データの使用方法"
 
-#: templates/privacy.html:39
+#: templates/privacy.html:40
 msgid "Crear y mostrar tu perfil en la plataforma"
 msgstr "プロフィールの作成と表示"
 
-#: templates/privacy.html:40
+#: templates/privacy.html:41
 msgid "Conectar con otros usuarios y empresas"
 msgstr "他のユーザーや企業との接続"
 
-#: templates/privacy.html:41
+#: templates/privacy.html:42
 msgid "Mostrar contenido relevante según tu ubicación e intereses"
 msgstr "あなたの位置情報や興味に応じたコンテンツの表示"
 
-#: templates/privacy.html:42
+#: templates/privacy.html:43
 msgid "Mejorar y personalizar la experiencia"
 msgstr "ユーザー体験の向上とカスタマイズ"
 
-#: templates/privacy.html:43
+#: templates/privacy.html:44
 msgid "Prevenir fraudes y mantener la seguridad"
 msgstr "不正行為の防止とセキュリティの確保"
 
-#: templates/privacy.html:46
+#: templates/privacy.html:47
 msgid "3. Con quién compartimos tus datos"
 msgstr "3. データの共有先"
 
-#: templates/privacy.html:47
+#: templates/privacy.html:48
 msgid "No vendemos tu información personal. Compartimos datos solo con:"
 msgstr "個人情報は販売しません。以下の相手と限定的に共有されます："
 
-#: templates/privacy.html:49
+#: templates/privacy.html:50
 msgid "Otros usuarios cuando tú los haces públicos (como tu perfil)"
 msgstr "公開設定された情報（プロフィールなど）を閲覧する他のユーザー"
 
-#: templates/privacy.html:50
+#: templates/privacy.html:51
 msgid "Proveedores que nos ayudan a operar el servicio"
 msgstr "サービス運営を支援するプロバイダー"
 
-#: templates/privacy.html:51
+#: templates/privacy.html:52
 msgid "Autoridades legales cuando lo exige la ley"
 msgstr "法律で義務付けられた場合の法的機関"
 
-#: templates/privacy.html:54
+#: templates/privacy.html:55
 msgid "4. Tus derechos"
 msgstr "4. あなたの権利"
 
-#: templates/privacy.html:55
+#: templates/privacy.html:56
 msgid "Puedes:"
 msgstr "あなたは以下が可能です："
 
-#: templates/privacy.html:57
+#: templates/privacy.html:58
 msgid "Acceder, modificar o eliminar tu perfil"
 msgstr "プロフィールへのアクセス、編集、削除"
 
-#: templates/privacy.html:58
+#: templates/privacy.html:59
 msgid "Solicitar la eliminación de tu cuenta escribiendo a"
 msgstr "以下の宛先に連絡してアカウントの削除を依頼する"
 
-#: templates/privacy.html:59
+#: templates/privacy.html:60
 msgid "Revocar permisos como acceso a ubicación desde tu dispositivo"
 msgstr "デバイスからの位置情報アクセスなどの許可を取り消す"
 
-#: templates/privacy.html:62
+#: templates/privacy.html:63
 msgid "5. Seguridad"
 msgstr "5. セキュリティ"
 
-#: templates/privacy.html:63
+#: templates/privacy.html:64
 #, python-format
 msgid ""
 "Protegemos tu información con medidas técnicas razonables. Aun así, "
 "ningún sistema es 100% seguro."
-msgstr ""
-"お客様の情報は合理的な技術的手段で保護されますが、完全に安全なシステムは存在しません。"
+msgstr "お客様の情報は合理的な技術的手段で保護されますが、完全に安全なシステムは存在しません。"
 
-#: templates/privacy.html:65
+#: templates/privacy.html:66
 msgid "6. Cambios en esta política"
 msgstr "6. このポリシーの変更について"
 
-#: templates/privacy.html:66
+#: templates/privacy.html:67
 msgid ""
 "Podemos actualizar esta política. Notificaremos los cambios relevantes "
 "por email o dentro de la app."
-msgstr ""
-"このポリシーは更新される可能性があります。重要な変更はメールまたはアプリ内で通知します。"
+msgstr "このポリシーは更新される可能性があります。重要な変更はメールまたはアプリ内で通知します。"
 
-#: templates/privacy.html:68
+#: templates/privacy.html:69
 msgid "7. Contacto"
 msgstr "7. お問い合わせ"
 
-#: templates/privacy.html:69
+#: templates/privacy.html:70
 msgid "Si tienes dudas, puedes escribirnos a:"
 msgstr "ご不明な点があれば、以下までご連絡ください："
 
-#: templates/privacy.html:71
+#: templates/privacy.html:72
 msgid "Sitio web:"
 msgstr "ウェブサイト："
 
@@ -381,113 +527,117 @@ msgstr "ウェブサイト："
 msgid "Perfil de Usuario"
 msgstr "ユーザープロフィール"
 
-#: templates/profile.html:24
+#: templates/profile.html:27
 msgid "seguidores"
 msgstr "フォロワー"
 
-#: templates/profile.html:25
+#: templates/profile.html:28
 msgid "siguiendo"
 msgstr "フォロー中"
 
-#: templates/profile.html:32
+#: templates/profile.html:35
 msgid "Dejar de seguir"
 msgstr "フォローをやめる"
 
-#: templates/profile.html:37
+#: templates/profile.html:40
 msgid "Seguir"
 msgstr "フォローする"
 
-#: templates/profile.html:49
+#: templates/profile.html:52
 msgid "Correo:"
 msgstr "メール："
 
-#: templates/profile.html:86
+#: templates/profile.html:82
 msgid "Opiniones de"
 msgstr "のレビュー"
 
-#: templates/profile.html:96 templates/profile.html:184
+#: templates/profile.html:92 templates/profile.html:181
 msgid "Eliminar"
 msgstr "削除"
 
-#: templates/profile.html:118
+#: templates/profile.html:114
 msgid "Mostrar respuestas"
 msgstr "返信を表示"
 
-#: templates/profile.html:152
+#: templates/profile.html:148
 msgid "No hay opiniones aún."
 msgstr "まだレビューがありません。"
 
-#: templates/profile.html:172
+#: templates/profile.html:168
 msgid "Videos Subidos"
 msgstr "アップロードされた動画"
 
-#: templates/profile.html:178 templates/search.html:45
+#: templates/profile.html:175 templates/search.html:45
 msgid "Tu navegador no soporta el video."
 msgstr "お使いのブラウザはこのビデオをサポートしていません。"
 
-#: templates/profile.html:191
-msgid "Subir un nuevo video"
-msgstr "新しい動画をアップロードする"
+#: templates/project_detail.html:63 templates/project_detail.html:85
+msgid "Solicitar proyecto"
+msgstr "プロジェクトに応募する"
 
-#: templates/register.html:7 templates/register.html:43
+#: templates/projects_form.html:42
+msgid "Describe requisitos, alcance, entregables…"
+msgstr "要件、範囲、成果物などを記述してください…"
+
+#: templates/register.html:7 templates/register.html:44
 msgid "Registro"
 msgstr "登録"
 
-#: templates/register.html:64
+#: templates/register.html:65
 msgid "Haz clic para subir una foto de perfil"
 msgstr "クリックしてプロフィール写真をアップロード"
 
-#: templates/register.html:70
+#: templates/register.html:71
 msgid "Nombre Completo:"
 msgstr "氏名："
 
-#: templates/register.html:73
+#: templates/register.html:74
 msgid "Nombre de Usuario:"
 msgstr "ユーザー名："
 
-#: templates/register.html:80
+#: templates/register.html:81
 msgid "Correo Electrónico:"
 msgstr "メールアドレス："
 
-#: templates/register.html:83
+#: templates/register.html:84
 msgid "Empresa (Opcional):"
 msgstr "会社名（任意）："
 
-#: templates/register.html:86
+#: templates/register.html:87
 msgid "Profesión (Opcional):"
 msgstr "職業（任意）："
 
-#: templates/register.html:89
+#: templates/register.html:88
+msgid "Escribe o elige una profesión"
+msgstr "職業を入力または選択してください"
+
+#: templates/register.html:95
 msgid "Sobre ti (Opcional):"
 msgstr "自己紹介（任意）："
 
-#: templates/register.html:92
+#: templates/register.html:98
 msgid "Ubicación (Opcional):"
 msgstr "所在地（任意）："
 
-#: templates/register.html:100
+#: templates/register.html:106
 msgid "📍 Usar mi ubicación actual"
 msgstr "📍 現在の位置情報を使用"
 
-#: templates/register.html:105
+#: templates/register.html:111
 msgid "Repite la Contraseña:"
 msgstr "パスワードの確認："
 
-#: templates/register.html:111
+#: templates/register.html:117
 msgid "¿Ya tienes una cuenta?"
 msgstr "すでにアカウントをお持ちですか？"
 
-#: templates/register.html:111
+#: templates/register.html:117
 msgid "Inicia sesión aquí"
 msgstr "こちらからログイン"
 
 #: templates/search.html:3
 msgid "Búsqueda"
 msgstr "検索"
-
-#: templates/search.html:6 templates/search.html:11
-msgid "Buscar"
-msgstr "検索する"
 
 #: templates/search.html:17
 msgid "Perfiles relacionados con"
@@ -501,54 +651,67 @@ msgstr "に関連する動画"
 msgid "🎥 Subido por:"
 msgstr "🎥 投稿者："
 
-#: templates/seguridad.html:5 templates/seguridad.html:8
+#: templates/seguridad.html:5 templates/seguridad.html:9
 msgid "Estándares de Seguridad Infantil"
 msgstr "児童安全基準"
 
-#: templates/seguridad.html:9
+#: templates/seguridad.html:10
 msgid ""
 "En MAZO nos comprometemos firmemente a prevenir cualquier tipo de "
 "explotación o abuso sexual infantil (EASI) en nuestra plataforma."
-msgstr ""
-"MAZOでは、当プラットフォーム上であらゆる児童の搾取や性的虐待（EASI）を防ぐことに強く取り組んでいます。"
+msgstr "MAZOでは、当プラットフォーム上であらゆる児童の搾取や性的虐待（EASI）を防ぐことに強く取り組んでいます。"
 
-#: templates/seguridad.html:11
+#: templates/seguridad.html:12
 msgid "Medidas adoptadas"
 msgstr "採用されている対策"
 
-#: templates/seguridad.html:13
+#: templates/seguridad.html:14
 msgid ""
 "Moderación activa de contenido mediante sistemas automáticos y revisión "
 "manual."
-msgstr ""
-"自動システムと手動によるレビューによる積極的なコンテンツのモデレーション。"
+msgstr "自動システムと手動によるレビューによる積極的なコンテンツのモデレーション。"
 
-#: templates/seguridad.html:14
+#: templates/seguridad.html:15
 msgid ""
 "Prohibición total de contenido relacionado con menores que viole nuestras"
 " políticas."
-msgstr ""
-"未成年者に関連し、当社のポリシーに違反するコンテンツの完全禁止。"
+msgstr "未成年者に関連し、当社のポリシーに違反するコンテンツの完全禁止。"
 
-#: templates/seguridad.html:15
+#: templates/seguridad.html:16
 msgid "Posibilidad de denunciar contenido inapropiado de forma inmediata."
 msgstr "不適切なコンテンツを即座に通報できる機能。"
 
-#: templates/seguridad.html:16
+#: templates/seguridad.html:17
 msgid "Colaboración con autoridades legales cuando sea necesario."
 msgstr "必要に応じて法的機関と協力。"
 
-#: templates/seguridad.html:17
+#: templates/seguridad.html:18
 msgid "Suspensión o eliminación de cuentas que infrinjan estas normas."
 msgstr "これらの規則に違反するアカウントの停止または削除。"
 
-#: templates/seguridad.html:20
+#: templates/seguridad.html:21
 msgid "Contacto"
 msgstr "お問い合わせ"
 
-#: templates/seguridad.html:21
+#: templates/seguridad.html:22
 msgid "Si detectas alguna actividad sospechosa, por favor contáctanos en:"
 msgstr "不審な活動を発見した場合は、以下までご連絡ください："
+
+#: templates/settings.html:13
+msgid "Disfruta de beneficios exclusivos con MAZO Premium."
+msgstr "MAZO Premiumで特別な特典をお楽しみください。"
+
+#: templates/settings.html:14
+msgid "Ir a MAZO Premium"
+msgstr "MAZO Premiumへ"
+
+#: templates/settings.html:45
+msgid "¿Estás seguro de que quieres cerrar sesión?"
+msgstr "本当にログアウトしますか？"
+
+#: templates/settings.html:75
+msgid "Idioma de la Aplicación"
+msgstr "アプリの言語"
 
 #: templates/upload.html:3 templates/upload.html:26
 msgid "Subir Video"
@@ -569,3 +732,15 @@ msgstr "動画を選択："
 #: templates/upload.html:30
 msgid "Volver al perfil"
 msgstr "プロフィールに戻る"
+
+#: templates/view_video.html:3
+#, fuzzy
+msgid "Video"
+msgstr "送信済み"
+
+#~ msgid "Salir"
+#~ msgstr "ログアウト"
+
+#~ msgid "Subir un nuevo video"
+#~ msgstr "新しい動画をアップロードする"
+

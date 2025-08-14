@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import RequestEntityTooLarge
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, TextAreaField, IntegerField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, TextAreaField, IntegerField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Optional, NumberRange, Length, EqualTo
 from sqlalchemy.orm import backref
 import os 
@@ -16,6 +16,7 @@ from flask_migrate import Migrate
 from flask_login import login_required, current_user, UserMixin, LoginManager, login_user
 from flask_wtf.csrf import CSRFProtect, CSRFError, validate_csrf, generate_csrf
 from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy.exc import SQLAlchemyError
 import logging
 from datetime import datetime
 from jinja2 import environment
@@ -28,12 +29,8 @@ from itsdangerous import URLSafeTimedSerializer
 from email.header import Header
 import stripe
 from flask_babel import Babel, get_locale 
-import eventlet
-import firebase_admin
-from firebase_admin import credentials, messaging, initialize_app
 import json
-from sqlalchemy import or_, func
-
+from sqlalchemy import or_, func, inspect, UniqueConstraint
 
 
 app = Flask(__name__)
@@ -73,17 +70,49 @@ for folder in [UPLOAD_FOLDER, CHAT_UPLOAD_FOLDER, PROFILE_PICS_FOLDER]:  # <--- 
         os.makedirs(folder)
 
 db = SQLAlchemy(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 CORS(app)
+
 csrf = CSRFProtect(app)
 csrf.init_app(app)
+
 logging.basicConfig(level=logging.DEBUG)
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
+
 migrate = Migrate(app, db)
 mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
 babel = Babel(app)
-eventlet.monkey_patch()
+
+def ensure_jobs_projects_tables():
+    inspector = inspect(db.engine)
+    db.create_all()  # crea todas las tablas de todos los modelos
+    # (Opcional) explícito por si quieres:
+    if not inspector.has_table("project"):
+        Project.__table__.create(bind=db.engine, checkfirst=True)
+    if not inspector.has_table("job"):
+        Job.__table__.create(bind=db.engine, checkfirst=True)
+
+def init_services():
+    import os
+    if os.getenv("MAZO_SKIP_SERVICES") == "1":
+        print("SKIP services (migrations/CLI)")
+        return
+
+    # Importar Firebase SOLO si vamos a usarlo
+    import firebase_admin
+    from firebase_admin import credentials
+
+    cred_path = os.getenv("FIREBASE_CREDENTIALS")
+    if cred_path and os.path.isfile(cred_path):
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred)
+        print("Firebase inicializado")
+    else:
+        print("WARN: FIREBASE_CREDENTIALS no definido o ruta inválida. Omitiendo Firebase.")
+
+
 
 @app.after_request
 def add_csrf_cookie(response):
@@ -94,25 +123,48 @@ def add_csrf_cookie(response):
 def select_locale():
     return session.get('lang') or request.accept_languages.best_match(app.config['BABEL_SUPPORTED_LOCALES'])
 
-firebase_creds_json = os.environ.get('FIREBASE_CREDENTIALS')
+def init_services():
+    import os, json
+    global firebase_ready, messaging
 
-if firebase_creds_json:
-    # Cargar la variable de entorno JSON a dict Python
-    creds_dict = json.loads(firebase_creds_json)
+    # Saltar servicios externos en CLI/migraciones
+    if os.getenv("MAZO_SKIP_SERVICES") == "1":
+        print("SKIP services (migrations/CLI)")
+        return
 
-    # Reemplazar los saltos de línea escapados \\n por saltos reales \n
-    if 'private_key' in creds_dict:
-        creds_dict['private_key'] = creds_dict['private_key'].replace('\\n', '\n')
+    try:
+        import firebase_admin
+        from firebase_admin import credentials, messaging as fb_messaging
 
-    # Guardar el JSON corregido en el archivo
-    with open('serviceAccountKey.json', 'w') as f:
-        json.dump(creds_dict, f, indent=2)
+        creds_env = os.getenv("FIREBASE_CREDENTIALS")
+        if not creds_env:
+            print("WARN: FIREBASE_CREDENTIALS no definido. Omitiendo Firebase.")
+            return
 
-    # Inicializar Firebase con el archivo corregido
-    cred = credentials.Certificate('serviceAccountKey.json')
-    initialize_app(cred)
-else:
-    print("ERROR: No se encontró la variable de entorno FIREBASE_CREDENTIALS")
+        # Ruta a archivo o JSON embebido
+        if os.path.isfile(creds_env):
+            cred = credentials.Certificate(creds_env)
+        else:
+            data = json.loads(creds_env)
+            if "private_key" in data:
+                data["private_key"] = data["private_key"].replace("\\n", "\n")
+            cred = credentials.Certificate(data)
+
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred)
+
+        # Exponer messaging para el resto del módulo
+        messaging = fb_messaging
+        firebase_ready = True
+        print("Firebase inicializado")
+
+    except Exception as e:
+        # No bloquees el arranque por Firebase
+        firebase_ready = False
+        messaging = None
+        print(f"WARN: No se pudo inicializar Firebase: {e}")
+
+
 
 @app.context_processor
 def inject_locale():
@@ -334,17 +386,39 @@ def register_token():
 
     return jsonify({'success': True})
 
-def send_push_notification(tokens, title, body):
-    # tokens puede ser una lista o un solo token (string)
+def send_push_notification(tokens, title, body, data=None):
+    # Normaliza tokens
     if isinstance(tokens, str):
         tokens = [tokens]
+    tokens = [t for t in (tokens or []) if t]
+    if not tokens:
+        return False, {'error': 'Sin tokens'}
 
-    message = messaging.MulticastMessage(
-        notification=messaging.Notification(title=title, body=body),
-        tokens=tokens
-    )
-    response = messaging.send_multicast(message)
-    print(f'Successfully sent {response.success_count} messages; {response.failure_count} failures.')
+    # Verifica estado de Firebase
+    if not firebase_ready or messaging is None:
+        return False, {'error': 'Firebase no inicializado'}
+
+    # FCM: máximo 500 tokens por lote
+    CHUNK = 500
+    total_success, total_failure = 0, 0
+    data = {str(k): str(v) for k, v in (data or {}).items()}
+
+    for i in range(0, len(tokens), CHUNK):
+        chunk = tokens[i:i+CHUNK]
+        msg = messaging.MulticastMessage(
+            notification=messaging.Notification(title=title, body=body),
+            data=data,
+            tokens=chunk
+        )
+        try:
+            resp = messaging.send_multicast(msg)
+            total_success += resp.success_count
+            total_failure += resp.failure_count
+        except Exception as e:
+            print("ERROR FCM:", e)
+            total_failure += len(chunk)
+
+    return True, {'success': total_success, 'failure': total_failure}
 
 @app.route('/send_test_notification')
 @login_required
@@ -1787,12 +1861,298 @@ def logout():
 def eliminar_cuenta():
     return render_template('eliminar-cuenta.html')
 
+@app.route("/jobs", endpoint="jobs")
+def jobs_view():
+    tab = request.args.get("tab", "proyectos")
+
+    q = (request.args.get("q") or "").strip()
+    location = (request.args.get("location") or "").strip()
+    modality = (request.args.get("modality") or "").strip()  # '', 'remoto', 'presencial', 'híbrido'
+
+    Model = Project if tab == "proyectos" else Job
+    query = Model.query
+
+    if q:
+        like = f"%{q}%"
+        query = query.filter(or_(Model.title.ilike(like), Model.description.ilike(like)))
+
+    if location:
+        query = query.filter(Model.location.ilike(f"%{location}%"))
+
+    if modality:
+        query = query.filter(Model.modality == modality)
+
+    results = query.order_by(Model.created_at.desc()).limit(50).all()
+
+    # importante: envia active_tab para que el template marque la pestaña
+    return render_template("jobs.html", results=results, active_tab=tab)
+
+class ProjectForm(FlaskForm):
+    title = StringField('Título', validators=[DataRequired(), Length(max=150)])
+    short_description = StringField('Descripción corta', validators=[DataRequired(), Length(max=180)])
+    description = TextAreaField('Descripción larga', validators=[DataRequired(), Length(min=10)])
+    location = StringField('Ubicación', validators=[Optional(), Length(max=120)])
+    modality = SelectField(
+        'Modalidad',
+        choices=[('', '— Selecciona —'), ('remoto', 'Remoto'), ('presencial', 'Presencial'), ('hibrido', 'Híbrido')],
+        validators=[Optional()]
+    )
+    submit = SubmitField('Publicar proyecto')
+
+class JobForm(FlaskForm):
+    title = StringField('Título', validators=[DataRequired(), Length(max=150)])
+    short_description = StringField('Descripción corta', validators=[DataRequired(), Length(max=180)])
+    description = TextAreaField('Descripción larga', validators=[DataRequired(), Length(min=10)])
+    location = StringField('Ubicación', validators=[Optional(), Length(max=120)])
+    modality = SelectField(
+        'Modalidad',
+        choices=[('', '— Selecciona —'), ('remoto', 'Remoto'), ('presencial', 'Presencial'), ('hibrido', 'Híbrido')],
+        validators=[Optional()]
+    )
+    submit = SubmitField('Publicar empleo')
+
+class Project(db.Model):
+    __tablename__ = "project"
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+
+    title = db.Column(db.String(150), nullable=False, index=True)
+    short_description = db.Column(db.String(180), nullable=True, index=True)  # frase corta
+    description = db.Column(db.Text, nullable=False)  # descripción larga
+    location = db.Column(db.String(120), index=True)
+    modality = db.Column(db.String(20), index=True)  # 'remoto', 'presencial', 'híbrido'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('projects', lazy='dynamic'))
+
+class Job(db.Model):
+    __tablename__ = "job"
+    __table_args__ = {'extend_existing': True} 
+    id = db.Column(db.Integer, primary_key=True)
+
+    title = db.Column(db.String(150), nullable=False, index=True)
+    short_description = db.Column(db.String(180), nullable=True, index=True)  # frase corta
+    description = db.Column(db.Text, nullable=False)  # descripción larga
+    location = db.Column(db.String(120), index=True)
+    modality = db.Column(db.String(20), index=True)  # 'remoto', 'presencial', 'híbrido'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('jobs', lazy='dynamic'))
+
+@app.route('/jobs/new-project', methods=['GET', 'POST'])
+@login_required
+def new_project():
+    form = ProjectForm()
+    if form.validate_on_submit():
+        try:
+            p = Project(
+                title=form.title.data.strip(),
+                short_description=form.short_description.data.strip(),
+                description=form.description.data.strip(),
+                location=form.location.data.strip() if form.location.data else None,
+                modality=form.modality.data or None,
+                user_id=current_user.id
+            )
+            db.session.add(p)
+            db.session.commit()
+            flash('Proyecto publicado 🎉', 'success')
+            return redirect(url_for('jobs', tab='proyectos'))
+        except Exception as e:
+            db.session.rollback()
+            # opcional: current_app.logger.exception("Error publicando proyecto")
+            flash('No se pudo publicar el proyecto. Inténtalo de nuevo.', 'error')
+    return render_template('jobs_form.html', form=form, kind='proyecto')
+
+
+@app.route('/jobs/new-job', methods=['GET', 'POST'])
+@login_required
+def new_job():
+    form = JobForm()
+    if form.validate_on_submit():
+        try:
+            j = Job(
+                title=form.title.data.strip(),
+                short_description=form.short_description.data.strip(),
+                description=form.description.data.strip(),
+                location=form.location.data.strip() if form.location.data else None,
+                modality=form.modality.data or None,
+                user_id=current_user.id
+            )
+            db.session.add(j)
+            db.session.commit()
+            flash('Oferta de empleo publicada 🎉', 'success')
+            return redirect(url_for('jobs', tab='empleos'))
+        except Exception as e:
+            db.session.rollback()
+            # opcional: current_app.logger.exception("Error publicando empleo")
+            flash('No se pudo publicar la oferta. Inténtalo de nuevo.', 'error')
+    return render_template('jobs_form.html', form=form, kind='empleo')
+
+@app.route("/projects/<int:project_id>", endpoint="project_detail")
+def project_detail(project_id):
+    project = Project.query.get_or_404(project_id)
+    apps = []
+    # Solo cargamos solicitudes si el usuario es el autor
+    if current_user.is_authenticated and project.user_id and current_user.id == project.user_id:
+        apps = (ProjectApplication.query
+                .filter_by(project_id=project.id)
+                .order_by(ProjectApplication.created_at.desc())
+                .all())
+    return render_template("project_detail.html", project=project, apps=apps)
+
+
+@app.route("/jobs/<int:job_id>", endpoint="job_detail")
+def job_detail(job_id):
+    job = Job.query.get_or_404(job_id)
+    apps = []
+    # Solo cargamos solicitudes si el usuario es el autor
+    if current_user.is_authenticated and job.user_id and current_user.id == job.user_id:
+        apps = (JobApplication.query
+                .filter_by(job_id=job.id)
+                .order_by(JobApplication.created_at.desc())
+                .all())
+    return render_template("job_detail.html", job=job, apps=apps)
+
+
+class JobApplication(db.Model):
+    __tablename__ = "job_application"
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    applicant_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="active")  # active | cancelled
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    job = db.relationship('Job', backref=db.backref('applications', lazy='dynamic', cascade='all, delete-orphan'))
+    applicant = db.relationship('User', backref=db.backref('job_applications', lazy='dynamic'))
+
+    __table_args__ = (UniqueConstraint('job_id', 'applicant_id', name='uq_job_applicant'),)
+
+
+class ProjectApplication(db.Model):
+    __tablename__ = "project_application"
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    applicant_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="active")  # active | cancelled
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    project = db.relationship('Project', backref=db.backref('applications', lazy='dynamic', cascade='all, delete-orphan'))
+    applicant = db.relationship('User', backref=db.backref('project_applications', lazy='dynamic'))
+
+    __table_args__ = (UniqueConstraint('project_id', 'applicant_id', name='uq_project_applicant'),)
+
+@app.route("/jobs/<int:job_id>/apply", methods=["POST", "GET"], endpoint="apply_job")
+@login_required
+def apply_job(job_id):
+    job = Job.query.get_or_404(job_id)
+    if job.user_id == current_user.id:
+        flash("No puedes solicitar tu propio empleo.", "warning")
+        return redirect(url_for("job_detail", job_id=job.id))
+
+    app_row = JobApplication.query.filter_by(job_id=job.id, applicant_id=current_user.id).first()
+    try:
+        if app_row and app_row.status == "active":
+            flash("Ya has solicitado este empleo.", "info")
+        else:
+            if not app_row:
+                app_row = JobApplication(job_id=job.id, applicant_id=current_user.id, status="active")
+                db.session.add(app_row)
+            else:
+                app_row.status = "active"
+            db.session.commit()
+            flash("Solicitud enviada.", "success")
+    except SQLAlchemyError:
+        db.session.rollback()
+        flash("No se pudo enviar la solicitud. Inténtalo de nuevo.", "error")
+
+    return redirect(url_for("job_detail", job_id=job.id))
+
+
+@app.route("/jobs/<int:job_id>/cancel", methods=["POST", "GET"], endpoint="cancel_job_application")
+@login_required
+def cancel_job_application(job_id):
+    job = Job.query.get_or_404(job_id)
+    app_row = JobApplication.query.filter_by(job_id=job.id, applicant_id=current_user.id, status="active").first()
+    try:
+        if app_row:
+            app_row.status = "cancelled"
+            db.session.commit()
+            flash("Solicitud cancelada.", "info")
+        else:
+            flash("No tienes una solicitud activa para este empleo.", "warning")
+    except SQLAlchemyError:
+        db.session.rollback()
+        flash("No se pudo cancelar la solicitud. Inténtalo de nuevo.", "error")
+
+    return redirect(url_for("job_detail", job_id=job.id))
+
+
+# --------- PROYECTOS ---------
+@app.route("/projects/<int:project_id>/apply", methods=["POST", "GET"], endpoint="apply_project")
+@login_required
+def apply_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    if project.user_id == current_user.id:
+        flash("No puedes solicitar tu propio proyecto.", "warning")
+        return redirect(url_for("project_detail", project_id=project.id))
+
+    app_row = ProjectApplication.query.filter_by(project_id=project.id, applicant_id=current_user.id).first()
+    try:
+        if app_row and app_row.status == "active":
+            flash("Ya has solicitado este proyecto.", "info")
+        else:
+            if not app_row:
+                app_row = ProjectApplication(project_id=project.id, applicant_id=current_user.id, status="active")
+                db.session.add(app_row)
+            else:
+                app_row.status = "active"
+            db.session.commit()
+
+            # (Opcional) notificación al dueño
+            # try:
+            #     create_system_message(sender_id=current_user.id, recipient_id=project.user_id,
+            #                           text=f"{current_user.username} ha solicitado tu proyecto: {project.title}")
+            # except Exception:
+            #     pass
+
+            flash("Solicitud enviada.", "success")
+    except SQLAlchemyError:
+        db.session.rollback()
+        flash("No se pudo enviar la solicitud. Inténtalo de nuevo.", "error")
+
+    return redirect(url_for("project_detail", project_id=project.id))
+
+
+@app.route("/projects/<int:project_id>/cancel", methods=["POST", "GET"], endpoint="cancel_project_application")
+@login_required
+def cancel_project_application(project_id):
+    project = Project.query.get_or_404(project_id)
+    app_row = ProjectApplication.query.filter_by(project_id=project.id, applicant_id=current_user.id, status="active").first()
+    try:
+        if app_row:
+            app_row.status = "cancelled"
+            db.session.commit()
+            flash("Solicitud cancelada.", "info")
+        else:
+            flash("No tienes una solicitud activa para este proyecto.", "warning")
+    except SQLAlchemyError:
+        db.session.rollback()
+        flash("No se pudo cancelar la solicitud. Inténtalo de nuevo.", "error")
+
+    return redirect(url_for("project_detail", project_id=project.id))
+
 if __name__ == '__main__':
     import sys
     if 'db' not in sys.argv:
-        # Solo crea tablas y arranca el servidor si NO estás ejecutando comandos de migración
+        # TODO: las clases Project/Job deben estar definidas ANTES de este bloque
         with app.app_context():
-            db.create_all()
+            db.create_all()   # crea todas las tablas de todos los modelos cargados
 
-        socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
+        init_services()  # se salta si MAZO_SKIP_SERVICES=1
+
+    # Muy importante: sin reloader para evitar doble import
+    socketio.run(app, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
+
 
