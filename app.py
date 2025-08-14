@@ -31,7 +31,7 @@ import stripe
 from flask_babel import Babel, get_locale 
 import json
 from sqlalchemy import or_, func, inspect, UniqueConstraint
-
+from eventlet import monkey_patch
 
 app = Flask(__name__)
 app.config['ENV'] = 'production'
@@ -83,6 +83,7 @@ migrate = Migrate(app, db)
 mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
 babel = Babel(app)
+monkey_patch() 
 
 def ensure_jobs_projects_tables():
     inspector = inspect(db.engine)
