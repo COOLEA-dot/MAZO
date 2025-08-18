@@ -113,8 +113,6 @@ def init_services():
     else:
         print("WARN: FIREBASE_CREDENTIALS no definido o ruta inválida. Omitiendo Firebase.")
 
-
-
 @app.after_request
 def add_csrf_cookie(response):
     response.set_cookie('csrf_token', generate_csrf(), samesite='Lax', secure=True)
@@ -2138,13 +2136,12 @@ def cancel_project_application(project_id):
 if __name__ == '__main__':
     import sys
     if 'db' not in sys.argv:
-        # TODO: las clases Project/Job deben estar definidas ANTES de este bloque
         with app.app_context():
-            db.create_all()   # crea todas las tablas de todos los modelos cargados
+            db.create_all()
+        init_services()
 
-        init_services()  # se salta si MAZO_SKIP_SERVICES=1
+    # Nada de reloader
+    socketio.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=False, use_reloader=False)
 
-    # Muy importante: sin reloader para evitar doble import
-    socketio.run(app, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
 
 
