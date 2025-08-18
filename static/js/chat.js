@@ -1,95 +1,132 @@
-// Conexión al servidor WebSocket usando Socket.IO
-const protocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
-const socket = io(protocol + window.location.host, {
-    transports: ['websocket'],
-    secure: true
+// Conexión al servidor Socket.IO (no usar ws:// ni wss:// manualmente)
+const socket = io("/", {
+  path: "/socket.io",
+  transports: ["websocket", "polling"], // deja ambas para entorno cloud
+  withCredentials: true                 // si usas sesión por cookies
 });
 
-
-// Variables globales
-let usernames = [document.getElementById('chat-box').dataset.username, document.getElementById('chat-box').dataset.recipient];
+// Variables globales (como ya tenías)
+const chatBox = document.getElementById('chat-box');
+let usernames = [chatBox.dataset.username, chatBox.dataset.recipient];
 let room = `chat_${usernames.sort().join('_')}`;
-let username = document.getElementById('chat-box').dataset.username;
-let recipient = document.getElementById('chat-box').dataset.recipient;
+let username = chatBox.dataset.username;
+let recipient = chatBox.dataset.recipient;
 console.log(room, username, recipient);
 
+// Gestión de selección de archivos (igual que tenías)
 let selectedFiles = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    const fileInput = document.getElementById('file-input');
-    const messageTextarea = document.getElementById('message');
-    const previewContainer = document.getElementById('file-preview-container');
+  const fileInput = document.getElementById('file-input');
+  const messageTextarea = document.getElementById('message');
+  const previewContainer = document.getElementById('file-preview-container');
 
-    fileInput.addEventListener('change', () => {
-        const newFiles = Array.from(fileInput.files);
-        selectedFiles.push(...newFiles);
+  fileInput?.addEventListener('change', () => {
+    const newFiles = Array.from(fileInput.files);
+    selectedFiles.push(...newFiles);
+    renderFilePreview();
+    fileInput.value = '';
+  });
+
+  function renderFilePreview() {
+    if (!previewContainer) return;
+    previewContainer.innerHTML = '';
+    selectedFiles.forEach((file, index) => {
+      const preview = document.createElement('div');
+      preview.className = 'file-preview';
+
+      const name = document.createElement('span');
+      name.textContent = file.name;
+
+      const remove = document.createElement('span');
+      remove.className = 'remove-file';
+      remove.textContent = '✖';
+      remove.addEventListener('click', () => {
+        selectedFiles.splice(index, 1);
         renderFilePreview();
-        fileInput.value = '';
+      });
+
+      preview.appendChild(name);
+      preview.appendChild(remove);
+      previewContainer.appendChild(preview);
+    });
+  }
+
+  // ⬇️ Enviar mensaje (con append optimista)
+  const form = document.getElementById('message-form');
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const content = (messageTextarea?.value || '').trim();
+    if (!content && selectedFiles.length === 0) return;
+
+    // 1) Append optimista (para que el emisor lo vea ya)
+    const tmpId = 'tmp-' + Date.now();
+    displayMessage({
+      username,
+      message: content,
+      message_id: tmpId,
+      file_url: "",        // si envías archivos, rellena según tu flujo
+      thumbnail_url: ""
     });
 
-    function renderFilePreview() {
-        previewContainer.innerHTML = '';
+    // 2) Construye payload para el servidor
+    const payload = {
+      username,
+      recipient,
+      message: content
+      // file: ... // Si vas a mandar archivos aquí, añade tu lógica Base64 o ruta
+    };
 
-        selectedFiles.forEach((file, index) => {
-            const preview = document.createElement('div');
-            preview.className = 'file-preview';
-
-            const name = document.createElement('span');
-            name.textContent = file.name;
-
-            const remove = document.createElement('span');
-            remove.className = 'remove-file';
-            remove.textContent = '✖';
-            remove.addEventListener('click', () => {
-                selectedFiles.splice(index, 1);
-                renderFilePreview();
-            });
-
-            preview.appendChild(name);
-            preview.appendChild(remove);
-            previewContainer.appendChild(preview);
-        });
-    }
-
-    document.getElementById('message-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        console.log("Mensaje:", messageTextarea.value);
-        console.log("Archivos:", selectedFiles);
-
-        // Aquí puedes enviar el mensaje + archivos
-
-        messageTextarea.value = '';
-        fileInput.value = '';
-        selectedFiles = [];
-        renderFilePreview();
+    // 3) Emit con ACK (el backend debe ser @socketio.on('send_message') y devolver dict)
+    socket.emit('send_message', payload, (ack) => {
+      if (!ack || !ack.ok) {
+        console.error('Fallo al enviar', ack);
+        // Opcional: marca el mensaje optimista como error
+        // markMessageAsError(tmpId);
+        return;
+      }
+      // Opcional: reemplaza el tmpId por el id real
+      // replaceTempId(tmpId, ack.message_id);
     });
+
+    // 4) Limpia UI
+    if (messageTextarea) messageTextarea.value = '';
+    if (fileInput) fileInput.value = '';
+    selectedFiles = [];
+    renderFilePreview();
+  });
 });
-;
 
 // Conexión inicial
 socket.on('connect', function () {
-    console.log('Conectado al servidor');
+  console.log('Conectado al servidor');
 
-    if (room && username && recipient) {
-        socket.emit('join', { room: room });
-        socket.emit('get_previous_messages', { room: room });
-    } else {
-        console.error('No se han asignado correctamente las variables: room, username, recipient');
-    }
+  if (room && username && recipient) {
+    socket.emit('join', { room: room });
+    socket.emit('get_previous_messages', { room: room });
+  } else {
+    console.error('No se han asignado correctamente las variables: room, username, recipient');
+  }
+});
+
+// 🔁 Rehacer join tras reconexión (clave en Render)
+socket.on('reconnect', () => {
+  console.log('Reconectado, rehaciendo join a la sala', room);
+  if (room) {
+    socket.emit('join', { room: room });
+  }
 });
 
 // Recibe los mensajes previos al cargar el chat
 socket.on('previous_messages', function (messages) {
-    console.log('Mensajes previos recibidos:', messages);
-    messages.forEach(displayMessage);
+  console.log('Mensajes previos recibidos:', messages);
+  messages.forEach(displayMessage);
 });
 
-// Recibe mensajes nuevos
+// Recibe mensajes nuevos (incluido el propio emisor)
 socket.on('receive_message', function (data) {
-    console.log('📥 Mensaje recibido en receive_message:', data);
-    console.log('📍 Usuario actual:', username);
-    displayMessage(data);
+  console.log('📥 Mensaje recibido en receive_message:', data, 'Usuario actual:', username);
+  displayMessage(data);
 });
 
 // Recibe mensajes editados

@@ -165,8 +165,6 @@ def init_services():
         messaging = None
         print(f"WARN: No se pudo inicializar Firebase: {e}")
 
-
-
 @app.context_processor
 def inject_locale():
     return dict(current_locale=select_locale()) 
@@ -362,14 +360,12 @@ def api_me():
         "phone": g.user.phone
     })
 
-
 class UserToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     fcm_token = db.Column(db.String(255), unique=True, nullable=False)
 
     user = db.relationship('User', backref=db.backref('tokens', lazy=True))
-
 
 @app.route('/register_token', methods=['POST'])
 @login_required
@@ -559,7 +555,6 @@ def register():
 
     professions = [p.name for p in Profession.query.order_by(Profession.name).all()]
     return render_template("register.html", form=form, user=None, professions=professions)
-
 
 @app.route('/change_password', methods=['GET', 'POST'])
 @login_required
@@ -1170,115 +1165,120 @@ def clean_base64(file_str):
         file_str = file_str.split(",")[1]
     return file_str
 
-@socketio.on('message')
-def handle_message(data):
+# helpers/salas.py (o en el mismo archivo si prefieres)
+def chat_room_by_usernames(u1: str, u2: str) -> str:
+    a, b = sorted([str(u1), str(u2)])
+    return f"chat_{a}_{b}"
+
+@socketio.on('send_message')  # ← antes era 'message'
+def handle_send_message(data):
     print("Recibiendo mensaje de WebSocket...")
     print("Datos recibidos:", data)
 
-    if 'username' not in data or 'recipient' not in data or 'message' not in data:
-        print("❌ Error: Faltan datos en el mensaje.")
-        return jsonify({'error': 'Faltan datos en el mensaje.'}), 400
+    sender = data.get('username')
+    recipient = data.get('recipient')
+    message = data.get('message', '')
+    file = data.get('file')        # puede ser None/Base64/ruta
+    filename = data.get('filename')  # nombre para base64
 
-    sender = data['username']
-    recipient = data['recipient']
-    message = data['message']
-    file = data.get('file')  # Puede ser None, Base64 o una ruta
-    filename = data.get('filename')  # Nombre del archivo si viene en Base64
-
-    if not message and not file:
-        print("❌ Error: El mensaje está vacío y no hay archivo adjunto.")
-        return jsonify({'error': 'El mensaje está vacío y no hay archivo adjunto.'}), 400
+    if not sender or not recipient or (not message and not file):
+        print("❌ Error: Faltan datos o mensaje vacío.")
+        return {'ok': False, 'error': 'missing_fields'}
 
     file_path = None
-    thumbnail_path = None  # 🔹 Para almacenar la miniatura
+    thumbnail_path = None  # miniatura si es vídeo
 
-    # 🔹 Procesamiento del archivo si existe
+    # Procesamiento del archivo si existe (igual que tenías)
     if file:
         print(f"📂 Tipo de archivo recibido: {type(file)}")
-
-        if isinstance(file, str):  # Puede ser Base64 o una ruta guardada
-            if file.startswith("static/chat_uploads/"):  # 📌 Verifica si ya está guardado
-                file_path = file
-                print(f"✅ Archivo ya guardado en: {file_path}")
-            elif file.startswith("data:") and "," in file:  # 📌 Detectar Base64 correctamente
-                print("📂 Recibiendo archivo como Base64")
-                if filename:
-                    try:
-                        file_path = handle_small_file(file, filename)
-                    except Exception as e:
-                        print(f"❌ Error al procesar el archivo Base64: {e}")
-                        return jsonify({'error': f'Error al procesar el archivo Base64: {e}'}), 400
+        try:
+            if isinstance(file, str):
+                if file.startswith("static/chat_uploads/"):
+                    file_path = file  # ya guardado
+                    print(f"✅ Archivo ya guardado en: {file_path}")
+                elif file.startswith("data:") and "," in file:
+                    print("📂 Recibiendo archivo como Base64")
+                    if not filename:
+                        print("❌ Error: El archivo Base64 no tiene nombre.")
+                        return {'ok': False, 'error': 'missing_filename'}
+                    file_path = handle_small_file(file, filename)
                 else:
-                    print("❌ Error: El archivo Base64 no tiene nombre.")
-            else:
-                print("❌ Error: Formato de archivo desconocido.")
-        elif hasattr(file, 'filename'):  # Si es un objeto FileStorage
-            print(f"📂 Recibiendo archivo con nombre: {file.filename}")
-            file_path = upload_file(file, CHAT_UPLOAD_FOLDER)  # 📌 Asegurar que se guarda en chat_uploads
+                    print("❌ Error: Formato de archivo desconocido.")
+                    return {'ok': False, 'error': 'unknown_file_format'}
+            elif hasattr(file, 'filename'):
+                print(f"📂 Recibiendo archivo con nombre: {file.filename}")
+                file_path = upload_file(file, CHAT_UPLOAD_FOLDER)
+        except Exception as e:
+            print(f"❌ Error al procesar el archivo: {e}")
+            return {'ok': False, 'error': f'file_process_error: {e}'}
 
-        # 🔹 Si el archivo es un video, generar miniatura
+        # Si es video, generar miniatura
         if file_path and file_path.lower().endswith(('.mp4', '.webm', '.mov', '.avi', '.mpg')):
-            filename = os.path.basename(file_path)
-            thumbnail_path = os.path.join(THUMBNAIL_FOLDER, f"thumb_{filename}.png")
-            generate_thumbnail(file_path, thumbnail_path)
-            thumbnail_path = thumbnail_path.replace("\\", "/")  # 🔹 Normalizar la URL
+            base = os.path.basename(file_path)           # ej: ejemplo.mp4
+            thumb_name = f"thumb_{base}.png"             # ej: thumb_ejemplo.mp4.png
+            thumbnail_path = os.path.join(THUMBNAIL_FOLDER, thumb_name)
+            try:
+                generate_thumbnail(file_path, thumbnail_path)
+                thumbnail_path = thumbnail_path.replace("\\", "/")
+            except Exception as e:
+                print(f"⚠️ No se pudo generar miniatura: {e}")
+                thumbnail_path = None
 
-    print(f"📨 Mensaje de {sender} para {recipient}: {message}, Archivo adjunto: {file_path}, Miniatura: {thumbnail_path}")
+    print(f"📨 Mensaje de {sender} para {recipient}: {message}, Archivo: {file_path}, Miniatura: {thumbnail_path}")
 
-    # 🔹 Buscar usuarios en la base de datos
+    # Usuarios y conversación
     sender_user = User.query.filter_by(username=sender).first()
     recipient_user = User.query.filter_by(username=recipient).first()
+    if not sender_user or not recipient_user:
+        print(f"❌ Error: Usuario {sender} o {recipient} no encontrado.")
+        return {'ok': False, 'error': 'user_not_found'}
 
-    if sender_user and recipient_user:
-        conversation = Conversation.query.filter(
-            ((Conversation.user_id == sender_user.id) & (Conversation.recipient_id == recipient_user.id)) |
-            ((Conversation.user_id == recipient_user.id) & (Conversation.recipient_id == sender_user.id))
-        ).first()
+    conversation = Conversation.query.filter(
+        ((Conversation.user_id == sender_user.id) & (Conversation.recipient_id == recipient_user.id)) |
+        ((Conversation.user_id == recipient_user.id) & (Conversation.recipient_id == sender_user.id))
+    ).first()
 
-        if not conversation:
-            conversation = Conversation(user_id=sender_user.id, recipient_id=recipient_user.id)
-            db.session.add(conversation)
-            db.session.commit()
-            print(f"🆕 Se ha creado una nueva conversación entre {sender} y {recipient}")
+    if not conversation:
+        conversation = Conversation(user_id=sender_user.id, recipient_id=recipient_user.id)
+        db.session.add(conversation)
+        db.session.commit()
+        print(f"🆕 Conversación creada entre {sender} y {recipient}")
 
-        # 🔹 Guardar mensaje en la base de datos con miniatura
+    # Guardar mensaje
+    try:
         new_message = Message(
             sender_id=sender_user.id,
             conversation_id=conversation.id,
             content=message if message else None,
             file_url=file_path,
-            thumbnail_url=thumbnail_path  # 🔹 Guardar la miniatura en la BD
+            thumbnail_url=thumbnail_path
         )
-
         db.session.add(new_message)
         db.session.commit()
+    except Exception as e:
+        print(f"❌ Error guardando mensaje en DB: {e}")
+        db.session.rollback()
+        return {'ok': False, 'error': 'db_error'}
 
-        print(f"✅ Mensaje guardado en la base de datos con ID: {new_message.id}")
+    print(f"✅ Mensaje guardado con ID: {new_message.id}")
 
-        # 🔹 Emitir el mensaje a los clientes conectados
-        room = f"chat_{sorted([sender, recipient])[0]}_{sorted([sender, recipient])[1]}"
+    # Emitir a la sala (incluye al emisor)
+    room = chat_room_by_usernames(sender, recipient)
+    payload = {
+        'username': sender,
+        'message': message,
+        'message_id': new_message.id,
+        'file_url': file_path or "",
+        'thumbnail_url': thumbnail_path or "",
+    }
+    socketio.emit('receive_message', payload, room=room)
+    print(f"✅ Mensaje emitido a la sala {room}")
 
-        socketio.emit('receive_message', {
-            'username': sender,
-            'message': message,
-            'message_id': new_message.id,
-            'file_url': file_path if file_path else "",
-            'thumbnail_url': thumbnail_path if thumbnail_path else "",
-        }, room=room, include_self=True)
+    # (Opcional) Notificación por username SOLO si unes a esa sala en el cliente
+    # socketio.emit('new_message', {'conversation_id': conversation.id, 'sender': sender}, room=recipient_user.username)
 
-        print(f"✅ Mensaje emitido a la sala {room}")
-
-        socketio.emit('new_message', {
-            'conversation_id': conversation.id,
-            'sender': sender
-        }, room=recipient_user.username)
-
-        return jsonify({'success': True, 'file_url': file_path, 'thumbnail_url': thumbnail_path}), 200
-
-    else:
-        print(f"❌ Error: Usuario {sender} o {recipient} no encontrado en la base de datos.")
-        return jsonify({'error': 'Usuario no encontrado.'}), 400
-
+    # ACK para el cliente (para reemplazar id temporal)
+    return {'ok': True, 'message_id': new_message.id, 'file_url': file_path, 'thumbnail_url': thumbnail_path}
 #Editar el mensaje
 @socketio.on('edit_message')
 def handle_edit_message(data):
@@ -1503,7 +1503,6 @@ def view_video(video_id):
         user=user,       
     )
 
-
 @app.route("/edit_profile", methods=["GET", "POST"])
 @login_required
 def edit_profile():
@@ -1535,7 +1534,6 @@ def edit_profile():
 
     return render_template("edit_profile.html", user=current_user)
 
-
 @app.after_request
 def add_security_headers(response):
     # No aplicar estas cabeceras si la ruta es estática o importante para recursos externos
@@ -1549,7 +1547,6 @@ def add_security_headers(response):
 # 🔍 Función para verificar si el archivo tiene una extensión permitidadef allowed_file(filename):
     """Verifica si la extensión del archivo es válida"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 @app.route('/uploads/videos/<filename>')
 def uploaded_file(filename):
@@ -1788,7 +1785,6 @@ def premium():
         STRIPE_PUBLIC_KEY=app.config['STRIPE_PUBLIC_KEY']  # 👈 esto es necesario
     )
 
-
 @app.route('/premium/success')
 @login_required
 def activate_premium():
@@ -2016,7 +2012,6 @@ def job_detail(job_id):
                 .all())
     return render_template("job_detail.html", job=job, apps=apps)
 
-
 class JobApplication(db.Model):
     __tablename__ = "job_application"
     id = db.Column(db.Integer, primary_key=True)
@@ -2029,7 +2024,6 @@ class JobApplication(db.Model):
     applicant = db.relationship('User', backref=db.backref('job_applications', lazy='dynamic'))
 
     __table_args__ = (UniqueConstraint('job_id', 'applicant_id', name='uq_job_applicant'),)
-
 
 class ProjectApplication(db.Model):
     __tablename__ = "project_application"
@@ -2070,7 +2064,6 @@ def apply_job(job_id):
 
     return redirect(url_for("job_detail", job_id=job.id))
 
-
 @app.route("/jobs/<int:job_id>/cancel", methods=["POST", "GET"], endpoint="cancel_job_application")
 @login_required
 def cancel_job_application(job_id):
@@ -2088,7 +2081,6 @@ def cancel_job_application(job_id):
         flash("No se pudo cancelar la solicitud. Inténtalo de nuevo.", "error")
 
     return redirect(url_for("job_detail", job_id=job.id))
-
 
 # --------- PROYECTOS ---------
 @app.route("/projects/<int:project_id>/apply", methods=["POST", "GET"], endpoint="apply_project")
@@ -2124,7 +2116,6 @@ def apply_project(project_id):
         flash("No se pudo enviar la solicitud. Inténtalo de nuevo.", "error")
 
     return redirect(url_for("project_detail", project_id=project.id))
-
 
 @app.route("/projects/<int:project_id>/cancel", methods=["POST", "GET"], endpoint="cancel_project_application")
 @login_required
