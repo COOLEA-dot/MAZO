@@ -70,7 +70,13 @@ for folder in [UPLOAD_FOLDER, CHAT_UPLOAD_FOLDER, PROFILE_PICS_FOLDER]:  # <--- 
         os.makedirs(folder)
 
 db = SQLAlchemy(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+socketio = SocketIO(
+    app,
+    async_mode="eventlet",
+    cors_allowed_origins=["https://mazo-app.com", "http://localhost:5000"],
+    logger=True,            # <- quítalo cuando acabes de depurar
+    engineio_logger=True    # <- quítalo cuando acabes de depurar
+)
 CORS(app)
 
 csrf = CSRFProtect(app)
@@ -2133,15 +2139,10 @@ def cancel_project_application(project_id):
 
     return redirect(url_for("project_detail", project_id=project.id))
 
-if __name__ == '__main__':
-    import sys
-    if 'db' not in sys.argv:
-        with app.app_context():
-            db.create_all()
-        init_services()
 
-    # Nada de reloader
-    socketio.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=False, use_reloader=False)
+
+# Nada de reloader
+socketio.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=False, use_reloader=False)
 
 
 
