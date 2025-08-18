@@ -1174,7 +1174,9 @@ def chat_room_by_usernames(u1: str, u2: str) -> str:
     a, b = sorted([str(u1), str(u2)])
     return f"chat_{a}_{b}"
 
-@socketio.on('send_message')  # ← antes era 'message'
+# Acepta ambos nombres de evento: el viejo ('message') y el nuevo ('send_message')
+@socketio.on('message')
+@socketio.on('send_message')
 def handle_send_message(data):
     print("Recibiendo mensaje de WebSocket...")
     print("Datos recibidos:", data)
@@ -1182,44 +1184,37 @@ def handle_send_message(data):
     sender = data.get('username')
     recipient = data.get('recipient')
     message = data.get('message', '')
-    file = data.get('file')        # puede ser None/Base64/ruta
-    filename = data.get('filename')  # nombre para base64
+    file = data.get('file')
+    filename = data.get('filename')
 
     if not sender or not recipient or (not message and not file):
         print("❌ Error: Faltan datos o mensaje vacío.")
         return {'ok': False, 'error': 'missing_fields'}
 
     file_path = None
-    thumbnail_path = None  # miniatura si es vídeo
+    thumbnail_path = None
 
-    # Procesamiento del archivo si existe (igual que tenías)
+    # --- procesamiento de archivo (tu mismo código) ---
     if file:
-        print(f"📂 Tipo de archivo recibido: {type(file)}")
         try:
             if isinstance(file, str):
                 if file.startswith("static/chat_uploads/"):
-                    file_path = file  # ya guardado
-                    print(f"✅ Archivo ya guardado en: {file_path}")
+                    file_path = file
                 elif file.startswith("data:") and "," in file:
-                    print("📂 Recibiendo archivo como Base64")
                     if not filename:
-                        print("❌ Error: El archivo Base64 no tiene nombre.")
                         return {'ok': False, 'error': 'missing_filename'}
                     file_path = handle_small_file(file, filename)
                 else:
-                    print("❌ Error: Formato de archivo desconocido.")
                     return {'ok': False, 'error': 'unknown_file_format'}
             elif hasattr(file, 'filename'):
-                print(f"📂 Recibiendo archivo con nombre: {file.filename}")
                 file_path = upload_file(file, CHAT_UPLOAD_FOLDER)
         except Exception as e:
             print(f"❌ Error al procesar el archivo: {e}")
             return {'ok': False, 'error': f'file_process_error: {e}'}
 
-        # Si es video, generar miniatura
         if file_path and file_path.lower().endswith(('.mp4', '.webm', '.mov', '.avi', '.mpg')):
-            base = os.path.basename(file_path)           # ej: ejemplo.mp4
-            thumb_name = f"thumb_{base}.png"             # ej: thumb_ejemplo.mp4.png
+            base = os.path.basename(file_path)
+            thumb_name = f"thumb_{base}.png"
             thumbnail_path = os.path.join(THUMBNAIL_FOLDER, thumb_name)
             try:
                 generate_thumbnail(file_path, thumbnail_path)
@@ -1230,7 +1225,7 @@ def handle_send_message(data):
 
     print(f"📨 Mensaje de {sender} para {recipient}: {message}, Archivo: {file_path}, Miniatura: {thumbnail_path}")
 
-    # Usuarios y conversación
+    # --- usuarios / conversación (tu mismo código) ---
     sender_user = User.query.filter_by(username=sender).first()
     recipient_user = User.query.filter_by(username=recipient).first()
     if not sender_user or not recipient_user:
@@ -1248,7 +1243,6 @@ def handle_send_message(data):
         db.session.commit()
         print(f"🆕 Conversación creada entre {sender} y {recipient}")
 
-    # Guardar mensaje
     try:
         new_message = Message(
             sender_id=sender_user.id,
@@ -1266,8 +1260,9 @@ def handle_send_message(data):
 
     print(f"✅ Mensaje guardado con ID: {new_message.id}")
 
-    # Emitir a la sala (incluye al emisor)
+    # --- emitir a la sala correcta ---
     room = chat_room_by_usernames(sender, recipient)
+
     payload = {
         'username': sender,
         'message': message,
@@ -1275,60 +1270,61 @@ def handle_send_message(data):
         'file_url': file_path or "",
         'thumbnail_url': thumbnail_path or "",
     }
-    socketio.emit('receive_message', payload, room=room)
+
+    # Incluimos explícitamente include_self para que el emisor lo vea al instante
+    socketio.emit('receive_message', payload, to=room, include_self=True)
     print(f"✅ Mensaje emitido a la sala {room}")
 
-    # (Opcional) Notificación por username SOLO si unes a esa sala en el cliente
-    # socketio.emit('new_message', {'conversation_id': conversation.id, 'sender': sender}, room=recipient_user.username)
-
-    # ACK para el cliente (para reemplazar id temporal)
     return {'ok': True, 'message_id': new_message.id, 'file_url': file_path, 'thumbnail_url': thumbnail_path}
-#Editar el mensaje
+
 @socketio.on('edit_message')
 def handle_edit_message(data):
     message_id = data.get('message_id')
     new_content = data.get('new_content')
-
     if not message_id or not new_content:
         print("Error: Faltan datos para editar el mensaje.")
         return
-    
+
     message = Message.query.get(message_id)
     if message and message.sender_id == session.get('user_id'):
         message.content = new_content
         db.session.commit()
 
-        # Emitir evento para actualizar el mensaje en el frontend
+        # Construye la sala por usernames
+        conv = Conversation.query.get(message.conversation_id)
+        u1 = User.query.get(conv.user_id)
+        u2 = User.query.get(conv.recipient_id)
+        room = chat_room_by_usernames(u1.username, u2.username)
+
         socketio.emit('message_edited', {
             'message_id': message_id,
             'new_message': new_content,
-            'username': message.sender.username
-        }, to=f"chat_{message.conversation_id}")
+            'username': u1.username if u1.id == message.sender_id else u2.username
+        }, to=room)
 
         print(f"Mensaje {message_id} editado correctamente.")
     else:
         print("Error: No se encontró el mensaje o el usuario no tiene permisos.")
 
-# Evento para eliminar el mensaje
+
 @socketio.on('delete_message')
 def handle_delete_message(data):
     message_id = data.get('message_id')
-
     if not message_id:
         print("Error: Faltan datos para eliminar el mensaje.")
-        return 
-    
+        return
+
     message = Message.query.get(message_id)
     if message and message.sender_id == session.get('user_id'):
-        conversation_id = message.conversation_id
+        conv = Conversation.query.get(message.conversation_id)
+        u1 = User.query.get(conv.user_id)
+        u2 = User.query.get(conv.recipient_id)
+        room = chat_room_by_usernames(u1.username, u2.username)
+
         db.session.delete(message)
         db.session.commit()
 
-        # Emitir evento para eliminar el mensaje en el frontend
-        socketio.emit('message_deleted', {
-            'message_id': message_id
-        }, to=f"chat_{conversation_id}")
-
+        socketio.emit('message_deleted', {'message_id': message_id}, to=room)
         print(f"Mensaje {message_id} eliminado correctamente.")
     else:
         print("Error: No se encontró el mensaje o el usuario no tiene permisos.")
