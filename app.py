@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, g, url_for, flash, session, send_from_directory,jsonify
+from flask import Flask, render_template, request, redirect, g, url_for, flash, session, send_from_directory, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, join_room, leave_room, send
 from werkzeug.utils import secure_filename
@@ -29,7 +29,7 @@ from itsdangerous import URLSafeTimedSerializer
 from email.header import Header
 import stripe
 from flask_babel import Babel, get_locale 
-import json
+import json, shlex
 from sqlalchemy import or_, func, inspect, UniqueConstraint
 from eventlet import monkey_patch
 
@@ -1014,6 +1014,47 @@ def chats():
 
     return render_template('chat_list.html', username=session.get('username'), chats=chats)
 
+def _run(cmd):
+    subprocess.run(cmd, check=True)
+
+def transcode_to_streamable_mp4(src_path, out_path):
+    # MP4 H.264 + AAC + faststart (inicio rápido) + máx 1280px de ancho
+    _run([
+        "ffmpeg", "-y", "-i", src_path,
+        "-vf", "scale='min(1280,iw)':'-2'",
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "24",
+        "-c:a", "aac", "-b:a", "128k",
+        "-movflags", "+faststart",
+        out_path
+    ])
+
+def extract_thumbnail(src_path, thumb_path):
+    _run([
+        "ffmpeg", "-y", "-i", src_path,
+        "-ss", "00:00:01.000", "-vframes", "1",
+        "-vf", "scale=640:-2",
+        thumb_path
+    ])
+
+def probe_duration(src_path):
+    try:
+        out = subprocess.check_output([
+            "ffprobe", "-v", "error",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            src_path
+        ], stderr=subprocess.STDOUT).decode().strip()
+        return float(out)
+    except Exception:
+        return None
+
+def _abs_folder(base_folder):
+    # Asegura ruta absoluta basada en app.root_path
+    return base_folder if os.path.isabs(base_folder) else os.path.join(app.root_path, base_folder)
+
+def _rel_from_root(path):
+    return os.path.relpath(path, app.root_path).replace("\\", "/")
+
 @app.route('/chat/<recipient_username>')
 def chat_with_user(recipient_username):
     if 'user_id' not in session:
@@ -1047,6 +1088,56 @@ def chat_with_user(recipient_username):
 
     return render_template('chat.html', recipient=recipient, username=session.get('username'), messages=messages)
 
+def partial_response(abs_path, content_type=None, cache_seconds=60*60*24*7):
+    if not os.path.exists(abs_path):
+        abort(404)
+
+    file_size = os.path.getsize(abs_path)
+    range_header = request.headers.get('Range')
+    content_type = content_type or mimetypes.guess_type(abs_path)[0] or 'application/octet-stream'
+
+    headers = {
+        "Accept-Ranges": "bytes",
+        "Cache-Control": f"public, max-age={cache_seconds}",
+        "Last-Modified": datetime.utcfromtimestamp(os.path.getmtime(abs_path)).strftime('%a, %d %b %Y %H:%M:%S GMT')
+    }
+
+    if not range_header:
+        return Response(open(abs_path, 'rb'), 200, headers=headers, mimetype=content_type, direct_passthrough=True)
+
+    try:
+        units, rng = range_header.split("=")
+        if units != "bytes":
+            return Response(status=416)
+        start_str, end_str = rng.split("-")
+        start = int(start_str) if start_str else 0
+        end = int(end_str) if end_str else file_size - 1
+    except Exception:
+        return Response(status=416)
+
+    if start >= file_size or end >= file_size or start > end:
+        return Response(status=416)
+
+    length = end - start + 1
+    with open(abs_path, 'rb') as f:
+        f.seek(start)
+        data = f.read(length)
+
+    headers.update({
+        "Content-Range": f"bytes {start}-{end}/{file_size}",
+        "Content-Length": str(length),
+    })
+    return Response(data, 206, headers=headers, mimetype=content_type, direct_passthrough=True)
+
+@app.route('/files/<path:filename>')
+def serve_file(filename):
+    # Sirve cualquier fichero bajo tu proyecto (p.ej. 'static/...' o 'uploads/...').
+    abs_path = os.path.normpath(os.path.join(app.root_path, filename))
+    # Seguridad: evita path traversal
+    if not abs_path.startswith(app.root_path):
+        abort(403)
+    return partial_response(abs_path)
+
 def generate_thumbnail(video_path, thumbnail_path):
     """Genera una miniatura para un video usando FFmpeg"""
     try:
@@ -1059,73 +1150,98 @@ def generate_thumbnail(video_path, thumbnail_path):
 #Eventos de SocketIO
 @app.route('/upload_file', methods=['POST'])
 def upload_file():
-    """Guarda el archivo en la carpeta correspondiente si es válido."""
+    """Guarda el archivo y, si es video, lo transcodifica (faststart) y genera thumbnail."""
     file = request.files.get('file')
-    folder = request.form.get('folder', app.config['CHAT_UPLOAD_FOLDER'])  # Carpeta por defecto
+    folder = request.form.get('folder', app.config.get('CHAT_UPLOAD_FOLDER', 'static/chat_uploads'))
     filename = request.form.get('filename')
 
     if not file:
         return jsonify({"error": "No se recibió ningún archivo"}), 400
 
-    if not os.path.exists(folder):
-        os.makedirs(folder)
+    abs_folder = _abs_folder(folder)
+    os.makedirs(abs_folder, exist_ok=True)
 
-    if hasattr(file, 'filename'):
-        filename = file.filename
-
-        # Validar si la extensión es permitida
-        if allowed_file(filename):
-            ext = os.path.splitext(filename)[1].lower()
-            new_filename = secure_filename(f"file_{int(time.time())}{ext}")
-            file_url = os.path.join(folder, new_filename).replace("\\", "/")  # Normalizar la ruta
-
-            try:
-                # Verificar tamaño del archivo
-                file.seek(0, os.SEEK_END)
-                file_size = file.tell()
-                max_size = app.config['MAX_CONTENT_LENGTH']
-
-                if file_size > max_size:
-                    return jsonify({"error": f"El archivo es demasiado grande. Máximo permitido: {max_size / (1024 * 1024)} MB."}), 400
-
-                file.seek(0)
-                file.save(file_url)
-
-                thumbnail_url = None  # Solo se genera para videos
-
-                # Generar miniatura si es un video
-                if ext in ['.mp4', '.mov', '.webm']:
-                    thumbnail_folder = os.path.join(folder, 'thumbnails')
-                    if not os.path.exists(thumbnail_folder):
-                        os.makedirs(thumbnail_folder)
-
-                    thumbnail_filename = f"{os.path.splitext(new_filename)[0]}.png"
-                    thumbnail_url = os.path.join(thumbnail_folder, thumbnail_filename).replace("\\", "/")
-
-                    try:
-                        subprocess.run([
-                            'ffmpeg', '-i', file_url, '-vframes', '1', '-an', '-s', '320x240', thumbnail_url
-                        ], check=True)
-
-                        thumbnail_url = f"chat_uploads/thumbnails/{thumbnail_filename}"
-                        print(f"✅ Miniatura generada: {thumbnail_url}")
-
-                    except subprocess.CalledProcessError as e:
-                        print(f"⚠️ Error al generar miniatura con FFmpeg: {e}")
-
-                return jsonify({
-                    "success": True,
-                    "file_url": file_url,
-                    "thumbnail_url": thumbnail_url
-                }), 200
-
-            except Exception as e:
-                return jsonify({"error": f"Error al guardar archivo: {e}"}), 500
-        else:
-            return jsonify({"error": "El archivo no tiene una extensión permitida"}), 400
-    else:
+    if not hasattr(file, 'filename'):
         return jsonify({"error": "El objeto recibido no es un archivo válido"}), 400
-    
+
+    filename = file.filename
+    if not allowed_file(filename):
+        return jsonify({"error": "El archivo no tiene una extensión permitida"}), 400
+
+    # Nombre base seguro
+    ext = os.path.splitext(filename)[1].lower()
+    new_filename = secure_filename(f"file_{int(time.time())}{ext}")
+    abs_original_path = os.path.join(abs_folder, new_filename).replace("\\", "/")
+
+    try:
+        # Tamaño máximo
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        max_size = app.config.get('MAX_CONTENT_LENGTH', 50 * 1024 * 1024)  # fallback 50MB
+        if file_size > max_size:
+            return jsonify({"error": f"El archivo es demasiado grande. Máximo: {max_size / (1024*1024):.0f} MB."}), 400
+        file.seek(0)
+
+        # Guardar original
+        file.save(abs_original_path)
+
+        # Respuesta base
+        is_video = ext in ['.mp4', '.mov', '.webm']
+        abs_final_video = abs_original_path
+        thumb_abs = None
+        duration = None
+
+        if is_video:
+            # 1) Transcodificar a MP4 streamable
+            base_noext = os.path.splitext(new_filename)[0]
+            optimized_name = f"{base_noext}_stream.mp4"
+            abs_optimized_path = os.path.join(abs_folder, optimized_name).replace("\\", "/")
+            try:
+                transcode_to_streamable_mp4(abs_original_path, abs_optimized_path)
+                abs_final_video = abs_optimized_path
+            except subprocess.CalledProcessError as e:
+                # Si falla, usamos el original (no ideal)
+                print(f"⚠️ Transcodificación falló: {e}")
+
+            # 2) Thumbnail
+            thumbs_dir = os.path.join(abs_folder, "thumbnails")
+            os.makedirs(thumbs_dir, exist_ok=True)
+            thumb_name = f"{base_noext}.jpg"
+            thumb_abs = os.path.join(thumbs_dir, thumb_name).replace("\\", "/")
+            try:
+                extract_thumbnail(abs_final_video, thumb_abs)
+            except subprocess.CalledProcessError as e:
+                print(f"⚠️ Error generando thumbnail: {e}")
+                thumb_abs = None
+
+            # 3) Duración (opcional)
+            duration = probe_duration(abs_final_video)
+
+        # Rutas relativas para servir con /files/<path>
+        rel_final_video = _rel_from_root(abs_final_video)
+        rel_original = _rel_from_root(abs_original_path)
+        rel_thumb = _rel_from_root(thumb_abs) if thumb_abs else None
+
+        # URLs públicas vía la ruta con Range
+        stream_url = url_for('serve_file', filename=rel_final_video, _external=True)
+        file_url_public = url_for('serve_file', filename=rel_original if not is_video else rel_final_video, _external=True)
+        thumb_url_public = url_for('serve_file', filename=rel_thumb, _external=True) if rel_thumb else None
+
+        return jsonify({
+            "success": True,
+            # Ruta relativa útil para guardar en BD
+            "file_path": rel_final_video if is_video else rel_original,
+            # URL recomendada para reproducir/descargar
+            "stream_url": stream_url,
+            # Miniatura (si aplica)
+            "thumbnail_url": thumb_url_public,
+            # Duración en segundos (si aplica)
+            "duration": duration
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error al guardar archivo: {e}"}), 500
+
 # Función para manejar archivos pequeños en Base64
 def handle_small_file(file, filename=None):
     """Maneja archivos pequeños en formato Base64."""
