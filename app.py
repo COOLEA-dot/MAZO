@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, g, url_for, flash, session, send_from_directory, abort, jsonify
+from flask import Flask, render_template, request, redirect, g, url_for, flash, session, send_from_directory, abort, jsonify, Blueprint, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, join_room, leave_room, send
 from werkzeug.utils import secure_filename
@@ -16,7 +16,7 @@ from flask_migrate import Migrate
 from flask_login import login_required, current_user, UserMixin, LoginManager, login_user
 from flask_wtf.csrf import CSRFProtect, CSRFError, validate_csrf, generate_csrf
 from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 import logging
 from datetime import datetime
 from jinja2 import environment
@@ -31,9 +31,30 @@ import stripe
 from flask_babel import Babel, get_locale 
 import json, shlex
 from sqlalchemy import or_, func, inspect, UniqueConstraint
-from eventlet import monkey_patch
+from dotenv import load_dotenv
+from authlib.integrations.flask_client import OAuth
+from google.oauth2 import id_token
+from google.auth.transport import requests as grequests
+from pathlib import Path
+import sqlalchemy as sa
+from itsdangerous import BadSignature, SignatureExpired
+from urllib.parse import urlparse
+from requests.exceptions import RequestException
+import secrets 
 
+ENV_PATH = Path(__file__).resolve().parent / ".env"
 app = Flask(__name__)
+app.config.update(
+    SECRET_KEY="c65ChhxLvx0nFVW16ZD0cyPyTdvP1q77V5DK2lzAjfw",      # que no cambie entre peticiones
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=False,          # en http local debe ser False
+    REMEMBER_COOKIE_SAMESITE="Lax",
+    REMEMBER_COOKIE_SECURE=False,
+    SESSION_COOKIE_DOMAIN=None,           # deja que Flask escoja
+)
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
+oauth = OAuth(app)
 app.config['ENV'] = 'production'
 app.config['DEBUG'] = False
 app.config["SECRET_KEY"] = "AOM11091950"
@@ -52,7 +73,6 @@ app.config['BABEL_DEFAULT_LOCALE'] = 'es'
 app.config['BABEL_SUPPORTED_LOCALES'] = ['es', 'en', 'fr', 'de', 'it', 'pt', 'ar', 'ja'] 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///mazo.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
 UPLOAD_FOLDER = 'static/uploads/videos'
 CHAT_UPLOAD_FOLDER = 'static/chat_uploads'
 THUMBNAIL_FOLDER = "static/chat_uploads/thumbnails"
@@ -70,14 +90,31 @@ for folder in [UPLOAD_FOLDER, CHAT_UPLOAD_FOLDER, PROFILE_PICS_FOLDER]:  # <--- 
         os.makedirs(folder)
 
 db = SQLAlchemy(app)
+USE_EVENTLET = os.getenv("USE_EVENTLET", "0") == "1"
+async_mode = "eventlet" if USE_EVENTLET else "threading"
+
+GOOGLE_CLIENT_ID = (os.getenv("GOOGLE_CLIENT_ID") or "").strip()
+GOOGLE_CLIENT_SECRET = (os.getenv("GOOGLE_CLIENT_SECRET") or "").strip()
+GOOGLE_ANDROID_CLIENT_ID = (os.getenv("GOOGLE_ANDROID_CLIENT_ID") or "").strip()  # opcional
+GOOGLE_IOS_CLIENT_ID     = (os.getenv("GOOGLE_IOS_CLIENT_ID") or "").strip()      # opcional
+
+
+allowed_origins = [
+    "https://mazo-app.com",
+    "http://localhost:5000",
+]
+# si usas ngrok en local, añade EXTERNAL_BASE_URL al vuelo
+ext_base = os.environ.get("EXTERNAL_BASE_URL")
+if ext_base:
+    allowed_origins.append(ext_base)
+
 socketio = SocketIO(
     app,
-    async_mode="eventlet",
-    cors_allowed_origins=["https://mazo-app.com", "http://localhost:5000"],
-    logger=True,            # <- quítalo cuando acabes de depurar
-    engineio_logger=True    # <- quítalo cuando acabes de depurar
+    async_mode=("eventlet" if USE_EVENTLET else "threading"),
+    cors_allowed_origins=allowed_origins,  # o "*" mientras depuras
+    logger=os.getenv("SIO_LOG", "0") == "1",
+    engineio_logger=os.getenv("SIO_LOG", "0") == "1",
 )
-CORS(app)
 
 csrf = CSRFProtect(app)
 csrf.init_app(app)
@@ -85,11 +122,27 @@ csrf.init_app(app)
 logging.basicConfig(level=logging.DEBUG)
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
-migrate = Migrate(app, db)
 mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
 babel = Babel(app)
-monkey_patch() 
+
+convention = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+metadata = sa.MetaData(naming_convention=convention)
+
+migrate = Migrate(app, db)
+google = oauth.register(
+    name="google",
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
 
 def ensure_jobs_projects_tables():
     inspector = inspect(db.engine)
@@ -320,6 +373,7 @@ class User(db.Model, UserMixin):
     location = db.Column(db.String(200), nullable=True)      # Ubicación opcional
     is_verified = db.Column(db.Boolean, default=False)
     is_premium = db.Column(db.Boolean, default=False)
+    google_id = db.Column(db.String(200), unique=True, nullable=True)
 
     comments = db.relationship('Comment', back_populates='user')
 
@@ -355,6 +409,16 @@ class User(db.Model, UserMixin):
         if not self.password_hash:
             return False
         return check_password_hash(self.password_hash, password)
+
+oauth.register(
+    name="google",
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={
+        "scope": "openid email profile",  # 👈 email es imprescindible
+    },
+)
 @app.route('/api/me')
 @login_required
 def api_me():
@@ -585,32 +649,45 @@ class Profession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
 
+def _is_safe_next(next_url: str) -> bool:
+    if not next_url:
+        return False
+    return urlparse(next_url).netloc == ''  # solo rutas internas
+
+@app.before_request
+def inject_user_into_g():
+    g.user = current_user if current_user.is_authenticated else None
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST': 
-        username = request.form.get('username')
-        password = request.form.get('password')
+  
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        remember = bool(request.form.get('remember'))  # checkbox opcional
 
-        if not username or not password: 
+        if not username or not password:
             flash('Por favor completa todos los campos.', 'error')
             return render_template('login.html')
 
-        # Buscar el usuario en la base de datos
         user = User.query.filter_by(username=username).first()
-        
-        # Verifica que el hash exista antes de comprobar la contraseña
-        if user and user.password_hash and check_password_hash(user.password_hash, password):
-            login_user(user)  # Inicia sesión con Flask-Login
-            
-            session["user_id"] = user.id  
-            session["username"] = user.username
 
+        if user and getattr(user, 'password_hash', None) and check_password_hash(user.password_hash, password):
+            login_user(user, remember=remember)
             flash(f"¡Bienvenido, {user.username}!", "success")
-            return redirect(url_for("home"))
-        
+
+            # Manejo seguro de 'next'
+            next_url = request.args.get('next')
+            if next_url and urlparse(next_url).netloc == '':
+                return redirect(next_url)
+            return redirect(url_for('home'))
+
         flash("Usuario o contraseña incorrectos", "error")
 
+    # GET: muestra el formulario (conserva ?next=...)
     return render_template('login.html')
+
+
 
 def send_verification_email(user_email):
     token = serializer.dumps(user_email, salt='email-confirm')
@@ -627,24 +704,288 @@ def send_verification_email(user_email):
     )
     mail.send(msg)
 
-@app.route('/confirm/<token>', endpoint='confirm_email')
+@app.get('/confirm/<token>', endpoint='confirm_email')
 def confirm_email(token):
     try:
-        email = serializer.loads(token, salt='email-confirm', max_age=3600)
-    except:
-        flash('El enlace de verificación es inválido o ha expirado.', 'danger')
+        # amplía max_age si quieres (ej. 3 días: 60*60*24*3)
+        email = serializer.loads(token, salt='email-confirm', max_age=60*60*24*3)
+    except SignatureExpired:
+        flash('El enlace de verificación ha expirado.', 'warning')
+        return redirect(url_for('login'))
+    except BadSignature:
+        flash('El enlace de verificación no es válido.', 'danger')
         return redirect(url_for('login'))
 
     user = User.query.filter_by(email=email).first()
-    if user:
-        user.is_verified = True
+    if not user:
+        flash('Usuario no encontrado.', 'danger')
+        return redirect(url_for('login'))
+
+    # Idempotente: si ya estaba verificado, no falla
+    if getattr(user, 'is_verified', False):
+        flash('Tu correo ya estaba verificado.', 'info')
+        return redirect(url_for('login'))  # o dashboard
+
+    user.is_verified = True
+    db.session.commit()
+    app.logger.info(f"[confirm_email] {email} verificado")
+
+    flash('Correo verificado con éxito. ¡Ya puedes usar todas las funciones!', 'success')
+    return redirect(url_for('login'))  # o url_for('dashboard') si prefieres
+
+def _preferred_external_url(path: str) -> str:
+    base = os.environ.get("EXTERNAL_BASE_URL")
+    if base:
+        return base + path
+    # _external=True usa el host que ve Flask (si estás detrás de proxy, usa ProxyFix en app.py)
+    return url_for('auth_google.authorize_google', _external=True)
+
+@app.get("/login/google")
+def login_google():
+    state = secrets.token_urlsafe(32)
+    nonce = secrets.token_urlsafe(32)
+    session['oauth_state'] = state
+    session['oauth_nonce'] = nonce
+
+    redirect_uri = "http://localhost:5000/auth/google/callback"
+    return oauth.google.authorize_redirect(
+        redirect_uri,
+        state=state,
+        nonce=nonce,
+        prompt="consent",
+        include_granted_scopes="true",
+        access_type="offline",
+    )
+
+
+
+@app.get("/auth/google/callback", endpoint="google_callback")
+def google_callback():
+    # ---------- A) CSRF: validar state ----------
+    returned_state = request.args.get('state')
+    expected_state = session.pop('oauth_state', None)
+    if not returned_state or not expected_state or returned_state != expected_state:
+        app.logger.warning("[OIDC] STATE mismatch: returned=%r expected=%r", returned_state, expected_state)
+        flash("CSRF: el parámetro state no coincide. Vuelve a intentarlo.", "danger")
+        return redirect(url_for("login"))
+
+    # ---------- B) Intercambiar code por tokens ----------
+    try:
+        token = oauth.google.authorize_access_token()
+        if not token:
+            app.logger.warning("[OIDC] authorize_access_token devolvió token vacío")
+            flash("No se obtuvo token de Google", "danger")
+            return redirect(url_for("login"))
+    except Exception as e:
+        app.logger.exception("[OIDC] Error en authorize_access_token: %s", e)
+        flash(f"Error de autorización con Google: {e}", "danger")
+        return redirect(url_for("login"))
+
+    # DEBUG del token (seguro, sin imprimir secretos)
+    raw_id = token.get("id_token")
+    app.logger.warning(
+        "[OIDC][DBG] has_id_token=%s access_token_len=%s scope=%r",
+        bool(raw_id), len(token.get('access_token','')), token.get('scope')
+    )
+
+    def _b64url_decode_to_json(b64url: str):
+        try:
+            padding = '=' * (-len(b64url) % 4)
+            data = base64.urlsafe_b64decode(b64url + padding)
+            return json.loads(data.decode('utf-8'))
+        except Exception as e:
+            app.logger.warning("[OIDC][DBG] fallo al decodificar base64url: %s", e)
+            return None
+
+    # ---------- C) Intento A: ID Token (sin red) ----------
+    info = None
+    try:
+        nonce = session.pop('oauth_nonce', None)
+        claims = oauth.google.parse_id_token(token, nonce=nonce) if nonce else oauth.google.parse_id_token(token)
+        if claims:
+            app.logger.warning("[OIDC][DBG] id_token.payload(parse_id_token) = %s", json.dumps(claims, ensure_ascii=False))
+            info = {
+                "email":           claims.get("email"),
+                "name":            claims.get("name") or "",
+                "picture":         claims.get("picture") or "",
+                "sub":             claims.get("sub"),
+                "email_verified":  claims.get("email_verified"),
+            }
+    except Exception as e:
+        app.logger.warning("[OIDC] parse_id_token falló: %s", e)
+
+    # ---------- D) Intento B: userinfo OIDC (si falta email) ----------
+    if not (info and info.get("email")):
+        try:
+            resp = oauth.google.get("https://openidconnect.googleapis.com/v1/userinfo")
+            app.logger.warning("[OIDC][DBG] userinfo status=%s body=%s", getattr(resp, "status_code", None), getattr(resp, "text", None))
+            resp.raise_for_status()
+            ui = resp.json()
+            info = {
+                "email":           ui.get("email"),
+                "name":            ui.get("name") or "",
+                "picture":         ui.get("picture") or "",
+                "sub":             ui.get("sub"),
+                "email_verified":  ui.get("email_verified"),
+            }
+        except RequestException as e:
+            app.logger.exception("[OIDC] userinfo error: %s", e)
+
+    # ---------- E) Intento C: Decodificación manual del id_token (debug) ----------
+    if not (info and info.get("email")) and raw_id and raw_id.count('.') == 2:
+        h_b64, p_b64, _ = raw_id.split('.')
+        payload = _b64url_decode_to_json(p_b64) or {}
+        app.logger.warning("[OIDC][DBG] id_token.payload(manual) = %s", json.dumps(payload, ensure_ascii=False))
+        info = info or {}
+        info.setdefault("email", payload.get("email"))
+        info.setdefault("name",  payload.get("name") or "")
+        info.setdefault("picture", payload.get("picture") or "")
+        info.setdefault("sub",   payload.get("sub"))
+        info.setdefault("email_verified", payload.get("email_verified"))
+
+    # ---------- F) Modo rescate: permitir login sin email usando 'sub' ----------
+    if not info:
+        app.logger.warning("[OIDC] No se pudo construir 'info' ni siquiera con decodificación manual.")
+        flash("No se pudo obtener datos mínimos de Google. Inténtalo de nuevo.", "danger")
+        return redirect(url_for("login"))
+
+    email = info.get("email")
+    sub   = info.get("sub")
+    if not sub:
+        app.logger.warning("[OIDC] Falta 'sub' en claims; no podemos identificar la cuenta.")
+        flash("No se pudo identificar tu cuenta de Google (sin 'sub').", "danger")
+        return redirect(url_for("login"))
+
+    # Si NO hay email, seguimos adelante usando 'sub' (google_id) como clave
+    if not email:
+        app.logger.warning("[OIDC] ID Token/userinfo sin 'email'. Seguimos por 'sub' únicamente (modo rescate).")
+        # Opción: puedes inventar un email interno no real (si tu modelo requiere no-null):
+        # email = f"{sub}@google.local"
+        # o permitir email nullable en tu modelo.
+
+    # ---------- G) Crear / actualizar usuario ----------
+    user = None
+    if email:
+        user = User.query.filter_by(email=email).first()
+
+    if not user:
+        # Si no encontramos por email, probamos por google_id (sub)
+        user = User.query.filter_by(google_id=sub).first()
+
+    if not user:
+        user = User(
+            username=(email.split("@")[0] if email else f"user_{sub[:8]}"),
+            email=email,  # puede ser None si tu modelo lo permite
+            name=info.get("name"),
+            profile_pic=info.get("picture"),
+            google_id=sub,
+            password_hash=generate_password_hash(os.urandom(16).hex()),
+        )
+        db.session.add(user)
         db.session.commit()
-        flash('Correo verificado con éxito. ¡Ya puedes usar todas las funciones!', 'success')
+        app.logger.warning("[OIDC] Usuario creado: id=%s email=%r google_id=%r", user.id, user.email, user.google_id)
     else:
-        flash('Usuario no encontrado.', 'error')
+        updated = False
+        if not getattr(user, "google_id", None):
+            user.google_id = sub
+            updated = True
+        if not user.profile_pic and info.get("picture"):
+            user.profile_pic = info.get("picture")
+            updated = True
+        if updated:
+            db.session.commit()
+            app.logger.warning("[OIDC] Usuario actualizado: id=%s email=%r google_id=%r", user.id, user.email, user.google_id)
 
-    return redirect(url_for('login'))
+    # ---------- H) Login + redirect ----------
+    login_user(user, remember=True)
+    next_url = request.args.get("next") or url_for("home")
+    app.logger.warning("[OIDC][OK] Login completado para user_id=%s; redirect=%s", user.id, next_url)
+    return redirect(next_url)
 
+# ========== UTILIDAD: USERNAME ÚNICO DESDE EMAIL ==========
+def _unique_username_from_email(email: str) -> str:
+    base = email.split("@")[0]
+    name = base
+    i = 1
+    while User.query.filter_by(username=name).first() is not None:
+        name = f"{base}{i}"; i += 1
+    return name
+
+# ========== LOGIN MÓVIL (ID TOKEN) ==========
+# Si usas CSRFProtect global, probablemente necesites eximir esta ruta:
+# @csrf.exempt
+@app.post("/mobile/login/google")
+def mobile_google_login():
+    """
+    Espera JSON: {"idToken": "<token>"}
+    Devuelve: {"ok": True, "username": "...", "email": "..."}
+    """
+    data = request.get_json(silent=True) or {}
+    token = data.get("idToken") or data.get("id_token")
+    if not token:
+        return jsonify({"ok": False, "error": "missing_id_token"}), 400
+
+    # Acepta varios 'aud' válidos (web + android + ios) por si usas múltiples clientes
+    allowed_auds = [c for c in [GOOGLE_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID, GOOGLE_IOS_CLIENT_ID] if c]
+    if not allowed_auds:
+        return jsonify({"ok": False, "error": "server_not_configured"}), 500
+
+    req = grequests.Request()
+    idinfo = None
+    last_err = None
+    for aud in allowed_auds:
+        try:
+            tmp = id_token.verify_oauth2_token(token, req, aud)
+            # sanity checks
+            iss = tmp.get("iss")
+            if iss not in ("accounts.google.com", "https://accounts.google.com"):
+                continue
+            # si quieres forzar email verificado:
+            # if not tmp.get("email_verified", False): continue
+            idinfo = tmp
+            break
+        except Exception as e:
+            last_err = e
+
+    if idinfo is None:
+        return jsonify({"ok": False, "error": f"invalid_token: {last_err}"}), 401
+
+    email = idinfo.get("email")
+    google_id = idinfo.get("sub")
+    name = idinfo.get("name")
+    picture = idinfo.get("picture")
+
+    if not email:
+        return jsonify({"ok": False, "error": "no_email"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        try:
+            user = User(
+                username=_unique_username_from_email(email),
+                email=email,
+                name=name,
+                profile_pic=picture,
+                google_id=google_id,
+                password=generate_password_hash(os.urandom(16).hex())
+            )
+            db.session.add(user)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            # reintenta por google_id
+            user = User.query.filter_by(google_id=google_id).first()
+            if user is None:
+                return jsonify({"ok": False, "error": "db_integrity"}), 500
+    else:
+        if not getattr(user, "google_id", None):
+            user.google_id = google_id
+            if not user.profile_pic and picture:
+                user.profile_pic = picture
+            db.session.commit()
+
+    login_user(user)
+    return jsonify({"ok": True, "username": user.username, "email": user.email})
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_too_large(error):
     flash('El archivo es demasiado grande, por favor sube un archivo más pequeño', 'error')
@@ -2253,8 +2594,7 @@ def cancel_project_application(project_id):
 
 
 
-# Nada de reloader
-socketio.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=False, use_reloader=False)
+
 
 
 

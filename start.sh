@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # === Rutas reales (puedes sobreescribir con variables de entorno en Render) ===
 REAL_VIDEOS_DIR="${REAL_VIDEOS_DIR:-/mnt/videos}"
@@ -36,5 +36,14 @@ if [ ! -L "${PUBLIC_THUMBS_LINK}" ]; then
   ln -s "${REAL_THUMBS_DIR}" "${PUBLIC_THUMBS_LINK}"
 fi
 
-# Lanzar la aplicación (Eventlet, 1 worker para Socket.IO sin message_queue)
-gunicorn app:app --worker-class eventlet -w 1
+# --- Migraciones opcionales en arranque (desact. por defecto) ---
+# Actívalo en Render con env var: MIGRATE_ON_START=1
+if [ "${MIGRATE_ON_START:-0}" = "1" ]; then
+  echo "[start.sh] Ejecutando migraciones..."
+  USE_EVENTLET=0 flask db upgrade || { echo "Migraciones fallaron"; exit 1; }
+fi
+
+# --- Lanzar la aplicación con Eventlet ---
+# Importante: usar wsgi:app para que wsgi.py haga monkey_patch() ANTES de importar la app
+export USE_EVENTLET=1
+exec gunicorn -k eventlet -w 1 --bind 0.0.0.0:${PORT:-5000} wsgi:app

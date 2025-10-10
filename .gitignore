@@ -10,7 +10,7 @@ __pycache__/
 *.pyc
 
 # Migrations (si no querés subirlas)
-migrations/
+
 
 # Archivos de base de datos (si usás SQLite local)
 *.sqlite3
