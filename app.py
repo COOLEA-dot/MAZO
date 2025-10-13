@@ -734,20 +734,44 @@ def confirm_email(token):
     return redirect(url_for('login'))  # o url_for('dashboard') si prefieres
 
 def _preferred_external_url(path: str) -> str:
+    """
+    Devuelve una URL absoluta usando EXTERNAL_BASE_URL si existe (prod),
+    o el host real de la petición (local/prod sin variable).
+    """
     base = os.environ.get("EXTERNAL_BASE_URL")
     if base:
-        return base + path
-    # _external=True usa el host que ve Flask (si estás detrás de proxy, usa ProxyFix en app.py)
-    return url_for('auth_google.authorize_google', _external=True)
+        return base.rstrip("/") + path
+    # Sin EXTERNAL_BASE_URL: usa el host que ve Flask (asegúrate de tener ProxyFix)
+    scheme = request.headers.get("X-Forwarded-Proto", request.scheme) or "https"
+    host   = request.headers.get("Host") or request.host
+    return f"{scheme}://{host}{path}"
 
 @app.get("/login/google")
 def login_google():
+    # Comprobar que las credenciales están cargadas
+    cid = (os.getenv("GOOGLE_CLIENT_ID") or "").strip()
+    csec = (os.getenv("GOOGLE_CLIENT_SECRET") or "").strip()
+    if not cid or not csec:
+        app.logger.error("[GOAUTH] Falta GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET en el entorno")
+        flash("Config OAuth incompleta en el servidor. Avísame.", "danger")
+        return redirect(url_for("login"))
+
+    # Guardar state y nonce para CSRF/OIDC
     state = secrets.token_urlsafe(32)
     nonce = secrets.token_urlsafe(32)
     session['oauth_state'] = state
     session['oauth_nonce'] = nonce
 
-    redirect_uri = "http://localhost:5000/auth/google/callback"
+    # Construir redirect_uri que COINCIDA con lo registrado en Google
+    redirect_uri = _preferred_external_url("/auth/google/callback")
+
+    app.logger.warning(
+        "[GOAUTH] redirect_uri=%s  host=%s  client_id_prefix=%s",
+        redirect_uri,
+        request.headers.get("Host"),
+        (cid[:12] + "…")
+    )
+
     return oauth.google.authorize_redirect(
         redirect_uri,
         state=state,
@@ -756,8 +780,6 @@ def login_google():
         include_granted_scopes="true",
         access_type="offline",
     )
-
-
 
 @app.get("/auth/google/callback", endpoint="google_callback")
 def google_callback():
