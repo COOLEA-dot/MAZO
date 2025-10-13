@@ -85,3 +85,10 @@
 @media (max-width: 760px) {
   .form-grid { grid-template-columns: 1fr; }
 }
+.fieldset-price{
+  margin-top:1rem; padding:1rem;
+  border:1px solid #e5e7eb; border-radius:10px; background:#fafafa;
+}
+.fieldset-price legend{ font-weight:700; padding:0 .4rem; }
+.form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+@media (max-width:700px){ .form-grid{ grid-template-columns:1fr; } }

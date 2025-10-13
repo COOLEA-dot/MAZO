@@ -36,8 +36,23 @@
         <p class="detail-short">{{ project.short_description }}</p>
       {% endif %}
     </div>
-  </header>
 
+    {# badge de precio (opcional) #}
+    {% if project.price_min is not none or project.price_max is not none %}
+    <div class="header-right">
+      <span class="salary-badge">
+        {% set cur = project.price_currency or 'EUR' %}
+        {% if project.price_min and project.price_max %}
+          {{ cur }} {{ '%.2f'|format(project.price_min) }} – {{ '%.2f'|format(project.price_max) }}
+        {% elif project.price_min %}
+          {{ _('Desde') }} {{ cur }} {{ '%.2f'|format(project.price_min) }}
+        {% elif project.price_max %}
+          {{ _('Hasta') }} {{ cur }} {{ '%.2f'|format(project.price_max) }}
+        {% endif %}
+      </span>
+    </div>
+    {% endif %}
+  </header>
   {# ---- Información detallada ---- #}
   <article class="detail-body">
     {{ project.description }}

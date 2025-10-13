@@ -52,15 +52,14 @@
     <div class="form-grid">
       <div class="form-row">
         <label for="modality">{{ _('Modalidad') }}</label>
-        {# Si tu WTForm ya define choices, esto imprime el <select> con las opciones #}
         {% if form.modality.type == 'SelectField' %}
           {{ form.modality(id="modality") }}
         {% else %}
           <select name="modality" id="modality">
             <option value="">{{ _('Selecciona…') }}</option>
-            <option value="remoto"   {% if form.modality.data == 'remoto' %}selected{% endif %}>{{ _('Remoto') }}</option>
+            <option value="remoto"     {% if form.modality.data == 'remoto' %}selected{% endif %}>{{ _('Remoto') }}</option>
             <option value="presencial" {% if form.modality.data == 'presencial' %}selected{% endif %}>{{ _('Presencial') }}</option>
-            <option value="híbrido"  {% if form.modality.data == 'híbrido' %}selected{% endif %}>{{ _('Híbrido') }}</option>
+            <option value="híbrido"    {% if form.modality.data == 'híbrido' %}selected{% endif %}>{{ _('Híbrido') }}</option>
           </select>
         {% endif %}
         {% if form.modality.errors %}<small class="error">{{ form.modality.errors[0] }}</small>{% endif %}
@@ -73,6 +72,47 @@
       </div>
     </div>
 
+    {# ===================== #
+       Sección SALARIO (solo empleos)
+       ===================== #}
+    {% if not is_project %}
+    <fieldset class="fieldset-salary">
+      <legend>{{ _('Salario (opcional)') }}</legend>
+
+      <div class="form-grid">
+        <div class="form-row">
+          <label for="salary_min">{{ _('Mínimo') }}</label>
+          {{ form.salary_min(id="salary_min", step="0.01", min="0", placeholder="0.00") }}
+          {% if form.salary_min.errors %}<small class="error">{{ form.salary_min.errors[0] }}</small>{% endif %}
+        </div>
+
+        <div class="form-row">
+          <label for="salary_max">{{ _('Máximo') }}</label>
+          {{ form.salary_max(id="salary_max", step="0.01", min="0", placeholder="0.00") }}
+          {% if form.salary_max.errors %}<small class="error">{{ form.salary_max.errors[0] }}</small>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-row">
+          <label for="salary_currency">{{ _('Moneda') }}</label>
+          {{ form.salary_currency(id="salary_currency") }}
+          {% if form.salary_currency.errors %}<small class="error">{{ form.salary_currency.errors[0] }}</small>{% endif %}
+        </div>
+
+        <div class="form-row">
+          <label for="salary_period">{{ _('Periodo') }}</label>
+          {{ form.salary_period(id="salary_period") }}
+          {% if form.salary_period.errors %}<small class="error">{{ form.salary_period.errors[0] }}</small>{% endif %}
+        </div>
+      </div>
+
+      <small class="hint">
+        {{ _('Rellena uno o ambos (mín/máx). Si solo indicas mínimo, se mostrará “Desde X”. Si solo máximo, “Hasta X”.') }}
+      </small>
+    </fieldset>
+    {% endif %}
+
     <div class="actions">
       <button type="submit" class="btn-primary">
         {% if is_project %}{{ _('Publicar proyecto') }}{% else %}{{ _('Publicar empleo') }}{% endif %}
@@ -83,4 +123,28 @@
     </div>
   </form>
 </section>
+
+{# Validación ligera en cliente: max >= min si ambos existen #}
+{% if not is_project %}
+<script>
+  (function () {
+    const form = document.querySelector('.jobproj-form');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+      const minEl = document.getElementById('salary_min');
+      const maxEl = document.getElementById('salary_max');
+      if (!minEl || !maxEl) return;
+
+      const minVal = minEl.value ? parseFloat(minEl.value) : null;
+      const maxVal = maxEl.value ? parseFloat(maxEl.value) : null;
+
+      if (minVal !== null && maxVal !== null && maxVal < minVal) {
+        e.preventDefault();
+        alert('{{ _("El salario máximo no puede ser menor que el mínimo.") }}');
+        maxEl.focus();
+      }
+    });
+  })();
+</script>
+{% endif %}
 {% endblock %}

@@ -234,3 +234,11 @@
   }
   .btn { justify-content: center; }
 }
+.detail-header { display:flex; align-items:flex-start; gap:1rem; }
+.header-left { display:flex; align-items:center; gap:.75rem; }
+.header-main { flex:1; }
+.header-right { display:flex; align-items:flex-start; }
+.salary-badge {
+  display:inline-block; padding:6px 10px; border-radius:8px;
+  background:#f2f4f7; font-weight:600; white-space:nowrap;
+}

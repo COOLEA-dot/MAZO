@@ -37,8 +37,33 @@
         <p class="detail-short">{{ job.short_description }}</p>
       {% endif %}
     </div>
-  </header>
 
+    {# badge de salario (opcional) #}
+    {% if job.salary_min is not none or job.salary_max is not none %}
+    <div class="header-right">
+      <span class="salary-badge">
+        {% set cur = job.salary_currency or 'EUR' %}
+        {% if job.salary_min and job.salary_max %}
+          {{ cur }} {{ '%.2f'|format(job.salary_min) }} – {{ '%.2f'|format(job.salary_max) }}
+        {% elif job.salary_min %}
+          {{ _('Desde') }} {{ cur }} {{ '%.2f'|format(job.salary_min) }}
+        {% elif job.salary_max %}
+          {{ _('Hasta') }} {{ cur }} {{ '%.2f'|format(job.salary_max) }}
+        {% endif %}
+        {% if job.salary_period %}
+          / {{
+            {
+              'hour': _('hora'),
+              'day':  _('día'),
+              'month':_('mes'),
+              'year': _('año')
+            }[job.salary_period]
+          }}
+        {% endif %}
+      </span>
+    </div>
+    {% endif %}
+  </header>
   {# ---- Información detallada ---- #}
   <article class="detail-body">
     {{ job.description }}

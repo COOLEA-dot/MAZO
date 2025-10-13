@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import RequestEntityTooLarge
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, TextAreaField, IntegerField, PasswordField, SubmitField, SelectField
+from wtforms import StringField, PasswordField, TextAreaField, IntegerField, PasswordField, SubmitField, SelectField, DecimalField
 from wtforms.validators import DataRequired, Optional, NumberRange, Length, EqualTo
 from sqlalchemy.orm import backref
 import os 
@@ -30,7 +30,7 @@ from email.header import Header
 import stripe
 from flask_babel import Babel, get_locale 
 import json, shlex
-from sqlalchemy import or_, func, inspect, UniqueConstraint
+from sqlalchemy import or_, func, inspect, UniqueConstraint, Numeric
 from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from google.oauth2 import id_token
@@ -2363,6 +2363,11 @@ def jobs_view():
     # importante: envia active_tab para que el template marque la pestaña
     return render_template("jobs.html", results=results, active_tab=tab)
 
+
+CURRENCY_CHOICES = [("EUR","EUR"),("USD","USD"),("GBP","GBP"),("MXN","MXN")]
+PERIOD_CHOICES   = [("hour","Hora"),("day","Día"),("month","Mes"),("year","Año")]
+
+
 class ProjectForm(FlaskForm):
     title = StringField('Título', validators=[DataRequired(), Length(max=150)])
     short_description = StringField('Descripción corta', validators=[DataRequired(), Length(max=180)])
@@ -2373,6 +2378,11 @@ class ProjectForm(FlaskForm):
         choices=[('', '— Selecciona —'), ('remoto', 'Remoto'), ('presencial', 'Presencial'), ('hibrido', 'Híbrido')],
         validators=[Optional()]
     )
+    # --- NUEVO ---
+    price_min = DecimalField('Precio (mín.)', places=2, validators=[Optional(), NumberRange(min=0)])
+    price_max = DecimalField('Precio (máx.)', places=2, validators=[Optional(), NumberRange(min=0)])
+    price_currency = SelectField('Moneda', choices=[("", "—")] + CURRENCY_CHOICES, validators=[Optional()])
+
     submit = SubmitField('Publicar proyecto')
 
 class JobForm(FlaskForm):
@@ -2385,7 +2395,14 @@ class JobForm(FlaskForm):
         choices=[('', '— Selecciona —'), ('remoto', 'Remoto'), ('presencial', 'Presencial'), ('hibrido', 'Híbrido')],
         validators=[Optional()]
     )
+    salary_min = DecimalField('Salario (mín.)', places=2, rounding=None, validators=[Optional(), NumberRange(min=0)])
+    salary_max = DecimalField('Salario (máx.)', places=2, rounding=None, validators=[Optional(), NumberRange(min=0)])
+    salary_currency = SelectField('Moneda', choices=[("", "—")] + CURRENCY_CHOICES, validators=[Optional()])
+    salary_period = SelectField('Periodo', choices=[("", "—")] + PERIOD_CHOICES, validators=[Optional()])
+    
     submit = SubmitField('Publicar empleo')
+
+
 
 class Project(db.Model):
     __tablename__ = "project"
@@ -2398,6 +2415,10 @@ class Project(db.Model):
     location = db.Column(db.String(120), index=True)
     modality = db.Column(db.String(20), index=True)  # 'remoto', 'presencial', 'híbrido'
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    price_min = db.Column(Numeric(10,2), nullable=True, index=True)
+    price_max = db.Column(Numeric(10,2), nullable=True, index=True)
+    price_currency = db.Column(db.String(10), nullable=True, index=True)
+
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('projects', lazy='dynamic'))
@@ -2413,6 +2434,11 @@ class Job(db.Model):
     location = db.Column(db.String(120), index=True)
     modality = db.Column(db.String(20), index=True)  # 'remoto', 'presencial', 'híbrido'
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    salary_min = db.Column(Numeric(10,2), nullable=True, index=True)
+    salary_max = db.Column(Numeric(10,2), nullable=True, index=True)
+    salary_currency = db.Column(db.String(10), nullable=True, index=True)
+    salary_period = db.Column(db.String(10), nullable=True, index=True)  # hour/day/month/year
+
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('jobs', lazy='dynamic'))
@@ -2431,15 +2457,24 @@ def new_project():
                 modality=form.modality.data or None,
                 user_id=current_user.id
             )
+            # set opcional del precio
+            pmin, pmax = form.price_min.data, form.price_max.data
+            if pmin is not None or pmax is not None:
+                if pmin is not None and pmax is not None and pmax < pmin:
+                    flash('El precio máximo no puede ser menor que el mínimo.', 'error')
+                    return render_template('projects_form.html', form=form)  # <-- aquí
+                p.price_min = pmin
+                p.price_max = pmax
+                p.price_currency = form.price_currency.data or None
+
             db.session.add(p)
             db.session.commit()
             flash('Proyecto publicado 🎉', 'success')
             return redirect(url_for('jobs', tab='proyectos'))
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            # opcional: current_app.logger.exception("Error publicando proyecto")
             flash('No se pudo publicar el proyecto. Inténtalo de nuevo.', 'error')
-    return render_template('jobs_form.html', form=form, kind='proyecto')
+    return render_template('projects_form.html', form=form)  # <-- y aquí
 
 
 @app.route('/jobs/new-job', methods=['GET', 'POST'])
@@ -2447,6 +2482,12 @@ def new_project():
 def new_job():
     form = JobForm()
     if form.validate_on_submit():
+        # ---- Validación de rango opcional ----
+        smin, smax = form.salary_min.data, form.salary_max.data
+        if smin is not None and smax is not None and smax < smin:
+            flash('El salario máximo no puede ser menor que el mínimo.', 'error')
+            return render_template('jobs_form.html', form=form, kind='empleo')
+
         try:
             j = Job(
                 title=form.title.data.strip(),
@@ -2456,13 +2497,21 @@ def new_job():
                 modality=form.modality.data or None,
                 user_id=current_user.id
             )
+
+            # ---- Seteo condicional (opcional) ----
+            if smin is not None or smax is not None:
+                j.salary_min = smin
+                j.salary_max = smax
+                j.salary_currency = form.salary_currency.data or None
+                j.salary_period = form.salary_period.data or None  # 'hour'/'day'/'month'/'year'
+
             db.session.add(j)
             db.session.commit()
             flash('Oferta de empleo publicada 🎉', 'success')
             return redirect(url_for('jobs', tab='empleos'))
         except Exception as e:
             db.session.rollback()
-            # opcional: current_app.logger.exception("Error publicando empleo")
+            # current_app.logger.exception("Error publicando empleo")
             flash('No se pudo publicar la oferta. Inténtalo de nuevo.', 'error')
     return render_template('jobs_form.html', form=form, kind='empleo')
 

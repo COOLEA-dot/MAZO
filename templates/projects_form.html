@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html" %} 
 {% block title %}{{ _('Añadir proyecto') }}{% endblock %}
 
 {% block content %}
@@ -66,10 +66,65 @@
       </div>
     </div>
 
+    {# ===================== #
+       Sección PRECIO (opcional)
+       ===================== #}
+    <fieldset class="fieldset-price">
+      <legend>{{ _('Precio (opcional)') }}</legend>
+
+      <div class="form-grid">
+        <div class="form-row">
+          <label for="price_min">{{ _('Mínimo') }}</label>
+          {{ form.price_min(id="price_min", step="0.01", min="0", placeholder="0.00") }}
+          {% if form.price_min.errors %}<small class="error">{{ form.price_min.errors[0] }}</small>{% endif %}
+        </div>
+
+        <div class="form-row">
+          <label for="price_max">{{ _('Máximo') }}</label>
+          {{ form.price_max(id="price_max", step="0.01", min="0", placeholder="0.00") }}
+          {% if form.price_max.errors %}<small class="error">{{ form.price_max.errors[0] }}</small>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-row">
+          <label for="price_currency">{{ _('Moneda') }}</label>
+          {{ form.price_currency(id="price_currency") }}
+          {% if form.price_currency.errors %}<small class="error">{{ form.price_currency.errors[0] }}</small>{% endif %}
+        </div>
+      </div>
+
+      <small class="hint">
+        {{ _('Rellena uno o ambos (mín/máx). Si solo indicas mínimo, se mostrará “Desde X”. Si solo máximo, “Hasta X”.') }}
+      </small>
+    </fieldset>
+
     <div class="actions">
       <button type="submit" class="btn-primary">{{ _('Publicar proyecto') }}</button>
       <a class="btn-secondary" href="{{ url_for('jobs') }}?tab=proyectos">{{ _('Cancelar') }}</a>
     </div>
   </form>
 </section>
+
+{# Validación ligera en cliente: max >= min si ambos existen #}
+<script>
+  (function () {
+    const form = document.querySelector('.jobproj-form');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+      const minEl = document.getElementById('price_min');
+      const maxEl = document.getElementById('price_max');
+      if (!minEl || !maxEl) return;
+
+      const minVal = minEl.value ? parseFloat(minEl.value) : null;
+      const maxVal = maxEl.value ? parseFloat(maxEl.value) : null;
+
+      if (minVal !== null && maxVal !== null && maxVal < minVal) {
+        e.preventDefault();
+        alert('{{ _("El precio máximo no puede ser menor que el mínimo.") }}');
+        maxEl.focus();
+      }
+    });
+  })();
+</script>
 {% endblock %}
