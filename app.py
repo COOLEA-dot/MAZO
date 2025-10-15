@@ -41,6 +41,7 @@ from itsdangerous import BadSignature, SignatureExpired
 from urllib.parse import urlparse
 from requests.exceptions import RequestException
 import secrets 
+from slugify import slugify 
 
 ENV_PATH = Path(__file__).resolve().parent / ".env"
 app = Flask(__name__)
@@ -357,26 +358,79 @@ followers = db.Table('followers',
 def privacy_policy():
     return render_template('privacy.html', current_date="4 de junio de 2025")
 
+user_professions = db.Table(
+    'user_professions',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('profession_id', db.Integer, db.ForeignKey('profession.id', ondelete='CASCADE'), primary_key=True),
+    db.UniqueConstraint('user_id', 'profession_id', name='uq_user_profession')
+)
+
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))   
+    password_hash = db.Column(db.String(128))
     profile_pic = db.Column(db.String(100), nullable=True)
     name = db.Column(db.String(100))
     phone = db.Column(db.String(20), nullable=True)
     company = db.Column(db.String(100), nullable=True)
+
+    # ⚠️ (Deprecated) mantenla temporalmente para no romper formularios antiguos
     profession = db.Column(db.String(100), nullable=True)
-    description = db.Column(db.String(300), nullable=True)  # Descripción personal opcional (máx 300)
-    location = db.Column(db.String(200), nullable=True)      # Ubicación opcional
+
+    description = db.Column(db.String(300), nullable=True)
+    location = db.Column(db.String(200), nullable=True)
     is_verified = db.Column(db.Boolean, default=False)
     is_premium = db.Column(db.Boolean, default=False)
     google_id = db.Column(db.String(200), unique=True, nullable=True)
 
     comments = db.relationship('Comment', back_populates='user')
 
+    # Nueva relación many-to-many
+    professions = db.relationship(
+        'Profession',
+        secondary=user_professions,
+        lazy='joined',
+        backref=db.backref('users', lazy='dynamic')
+    )
+
+    # ---- Helpers cómodos ----
+    def set_professions_from_list(self, names: list[str]):
+        """Asigna una lista de nombres (strings). Crea las profesiones si no existen."""
+        cleaned = {n.strip() for n in names if n and n.strip()}
+        if not cleaned:
+            self.professions = []
+            return
+        existing = {p.name.lower(): p for p in Profession.query.filter(
+            func.lower(Profession.name).in_([n.lower() for n in cleaned])
+        ).all()}
+        result = []
+        for n in cleaned:
+            key = n.lower()
+            if key in existing:
+                result.append(existing[key])
+            else:
+                p = Profession(name=n.strip())
+                db.session.add(p)
+                result.append(p)
+        self.professions = result
+
+    def add_profession_by_name(self, name: str):
+        if not name or not name.strip():
+            return
+        name = name.strip()
+        p = Profession.query.filter(func.lower(Profession.name) == name.lower()).first()
+        if not p:
+            p = Profession(name=name)
+            db.session.add(p)
+        if p not in self.professions:
+            self.professions.append(p)
+
+    @property
+    def profession_names(self) -> list[str]:
+        return [p.name for p in (self.professions or [])]
     # Seguidores y seguidos
     followed = db.relationship(
         'User', secondary=followers,
@@ -645,9 +699,35 @@ class ChangePasswordForm(FlaskForm):
     submit = SubmitField('Cambiar contraseña')
 
 
+
 class Profession(db.Model):
+    __tablename__ = 'profession'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(120), nullable=False)
+    slug = db.Column(db.String(140), nullable=False, unique=True)
+    popularity = db.Column(db.Integer, nullable=False, default=0)
+    
+    @staticmethod
+    def get_or_create(name: str):
+        clean = name.strip()
+        if not clean:
+            return None
+        existing = Profession.query.filter(db.func.lower(Profession.name)==clean.lower()).first()
+        if existing:
+            return existing
+        p = Profession(name=clean, slug=slugify(clean))
+        db.session.add(p)
+        return p
+
+@app.route("/api/professions")
+def profession_suggestions():
+    q = request.args.get("q", "").strip()
+    base = Profession.query
+    if q:
+        base = base.filter(func.lower(Profession.name).like(func.lower(f"%{q}%")))
+    items = base.order_by(Profession.name.asc()).limit(10).all()
+    return jsonify([p.name for p in items])
+
 
 def _is_safe_next(next_url: str) -> bool:
     if not next_url:
@@ -1988,30 +2068,58 @@ def edit_profile():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         company = request.form.get("company", "").strip() or None
-        profession = request.form.get("profession", "").strip() or None
+        # Nuevo: múltiples profesiones (coma-separado)
+        raw_multi = request.form.get("professions", "").strip()
+        # Compat: por si aún llega el campo antiguo
+        single_legacy = request.form.get("profession", "").strip()
+
         description = request.form.get("description", "").strip() or None
         location = request.form.get("location", "").strip() or None
         profile_pic = request.files.get("profile_pic")
-        email = request.form.get("email", "").strip()
+        email = request.form.get("email", "").strip() or None
 
+        # Campos básicos
         current_user.name = name
         current_user.company = company
-        current_user.profession = profession
         current_user.description = description
         current_user.location = location
         current_user.email = email
 
-        if profile_pic and profile_pic.filename != "":
+        # Profesiones (múltiples)
+        if raw_multi:
+            names = [x.strip() for x in raw_multi.split(",") if x.strip()]
+        elif single_legacy:
+            names = [single_legacy]
+        else:
+            names = []
+
+        current_user.set_professions_from_list(names)
+        # (opcional) sincroniza temporalmente la vieja columna
+        current_user.profession = names[0] if names else None
+
+        # Foto de perfil (guarda con nombre único para evitar colisiones)
+        if profile_pic and profile_pic.filename:
             filename = secure_filename(profile_pic.filename)
-            path = os.path.join(app.config["PROFILE_PICS_FOLDER"], filename)
+            name_part, ext = os.path.splitext(filename)
+            unique_name = f"{name_part}_{int(time.time())}{ext}"
+            path = os.path.join(app.config["PROFILE_PICS_FOLDER"], unique_name)
+            os.makedirs(app.config["PROFILE_PICS_FOLDER"], exist_ok=True)
             profile_pic.save(path)
-            current_user.profile_pic = f"profile_pics/{filename}"
+            current_user.profile_pic = f"profile_pics/{unique_name}"
 
         db.session.commit()
         flash("Perfil actualizado con éxito.", "success")
         return redirect(url_for("profile", username=current_user.username))
 
-    return render_template("edit_profile.html", user=current_user)
+    # GET: precarga profesiones y sugerencias
+    professions_prefill = ", ".join(current_user.profession_names)
+    profession_options = [p.name for p in Profession.query.order_by(Profession.name.asc()).limit(20)]
+    return render_template(
+        "edit_profile.html",
+        user=current_user,
+        professions_prefill=professions_prefill,
+        profession_options=profession_options
+    )
 
 @app.after_request
 def add_security_headers(response):
