@@ -73,6 +73,7 @@ app.config["STRIPE_PUBLIC_KEY"] = os.getenv("STRIPE_PUBLIC_KEY")
 app.config['BABEL_DEFAULT_LOCALE'] = 'es' 
 app.config['BABEL_SUPPORTED_LOCALES'] = ['es', 'en', 'fr', 'de', 'it', 'pt', 'ar', 'ja'] 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///mazo.db")
+app.config['CV_UPLOAD_FOLDER'] = os.path.join('static', 'cv')
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 UPLOAD_FOLDER = 'static/uploads/videos'
 CHAT_UPLOAD_FOLDER = 'static/chat_uploads'
@@ -99,6 +100,10 @@ GOOGLE_CLIENT_SECRET = (os.getenv("GOOGLE_CLIENT_SECRET") or "").strip()
 GOOGLE_ANDROID_CLIENT_ID = (os.getenv("GOOGLE_ANDROID_CLIENT_ID") or "").strip()  # opcional
 GOOGLE_IOS_CLIENT_ID     = (os.getenv("GOOGLE_IOS_CLIENT_ID") or "").strip()      # opcional
 
+os.makedirs(app.config['CV_UPLOAD_FOLDER'], exist_ok=True)
+
+# Extensiones permitidas para CV
+ALLOWED_CV_EXTENSIONS = {'pdf', 'doc', 'docx'}
 
 allowed_origins = [
     "https://mazo-app.com",
@@ -145,6 +150,9 @@ google = oauth.register(
     client_kwargs={"scope": "openid email profile"},
 )
 
+def allowed_cv(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_CV_EXTENSIONS
+    
 def ensure_jobs_projects_tables():
     inspector = inspect(db.engine)
     db.create_all()  # crea todas las tablas de todos los modelos
@@ -385,6 +393,8 @@ class User(db.Model, UserMixin):
     is_verified = db.Column(db.Boolean, default=False)
     is_premium = db.Column(db.Boolean, default=False)
     google_id = db.Column(db.String(200), unique=True, nullable=True)
+    cv_file = db.Column(db.String(255), nullable=True)
+
 
     comments = db.relationship('Comment', back_populates='user')
 
@@ -2121,6 +2131,55 @@ def edit_profile():
         profession_options=profession_options
     )
 
+@app.route('/upload_cv', methods=['POST'])
+@login_required
+def upload_cv():
+    file = request.files.get('cv')
+    if not file or file.filename.strip() == '':
+        flash('No seleccionaste ningún archivo.', 'error')
+        return redirect(request.referrer or url_for('profile', username=current_user.username))
+
+    if not allowed_cv(file.filename):
+        flash('Formato no permitido. Usa PDF, DOC o DOCX.', 'error')
+        return redirect(request.referrer or url_for('profile', username=current_user.username))
+
+    # Nombre único seguro: <username>_<timestamp>.<ext>
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    filename = secure_filename(f"{current_user.username}_{int(time.time())}.{ext}")
+
+    save_path = os.path.join(app.config['CV_UPLOAD_FOLDER'], filename)
+    file.save(save_path)
+
+    # Si ya tenía un CV, opcional: borra el anterior
+    try:
+        if getattr(current_user, 'cv_file', None):
+            old_path = os.path.join(app.config['CV_UPLOAD_FOLDER'], current_user.cv_file)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+    except Exception:
+        pass  # Silencioso para no romper el flujo
+
+    # Guarda referencia en BD
+    current_user.cv_file = filename
+    db.session.commit()
+
+    flash('CV subido correctamente.', 'success')
+    return redirect(request.referrer or url_for('profile', username=current_user.username))
+
+@app.route('/cv/<username>')
+@login_required
+def view_cv(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    if not user.cv_file:
+        flash('Este usuario no tiene CV subido.', 'error')
+        return redirect(url_for('profile', username=username))
+
+    # Devuelve el archivo directamente desde /static/cv
+    return send_from_directory(
+        app.config['CV_UPLOAD_FOLDER'],
+        user.cv_file,
+        as_attachment=False  # mostrar en navegador si es PDF
+    )
 @app.after_request
 def add_security_headers(response):
     # No aplicar estas cabeceras si la ruta es estática o importante para recursos externos

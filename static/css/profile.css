@@ -780,3 +780,24 @@ video {
         background-color: #0056b3;
     } 
 }
+.cv-actions { display: flex; gap: .5rem; align-items: center; margin-top: .75rem; position: relative; z-index: 5;  }
+.cv-form-inline { display: inline-block !important; }
+.cv-upload-btn { 
+  display: inline-flex !important; 
+  align-items: center; 
+  justify-content: center; 
+  visibility: visible !important; 
+  opacity: 1 !important; 
+  pointer-events: auto !important; 
+  border: 2px dashed #000 !important;
+}
+.cv-actions .btn { 
+  display: inline-flex !important; 
+  padding: .5rem .8rem; 
+  border-radius: .5rem; 
+  cursor: pointer; 
+}
+.btn-primary { background: #007bff; color: #fff; border: none; }
+.btn-secondary { background: #e9ecef; color: #333; border: none; }
+.hidden { display: none; } /* Solo el input file debe estar hidden */
+
