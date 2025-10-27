@@ -11,7 +11,28 @@
     <div class="settings-section">
         <h3>💎 MAZO Premium</h3>
         <p>{{ _('Disfruta de beneficios exclusivos con MAZO Premium.') }}</p>
-        <a href="{{ url_for('premium') }}" class="btn primary">{{ _('Ir a MAZO Premium') }}</a>
+
+        <!-- Stripe Checkout simplificado -->
+        <div id="premium-checkout" style="border:1px solid #eee; padding:16px; border-radius:8px; max-width:520px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div>
+                    <strong>Suscripción mensual</strong>
+                    <div style="font-size:0.9rem; color:#666;">Acceso completo a MAZO Premium</div>
+                </div>
+                <div>
+                    <span>9.99 € / mes</span>
+                </div>
+            </div>
+
+            <div style="margin-top:12px;">
+                <button id="checkout-btn" class="btn primary">Activar Premium</button>
+                <div id="payment-error" style="color:#c22; margin-top:8px;"></div>
+            </div>
+        </div>
+
+        <div style="margin-top:12px;">
+            <a href="{{ url_for('premium') }}" class="btn secondary">Ir a MAZO Premium (panel)</a>
+        </div>
     </div>
 
     <div class="settings-section">
@@ -39,7 +60,7 @@
         </button>
     </div>
 
-    <!-- Modal para cerrar sesión -->
+    <!-- Modal de logout -->
     <div id="logoutModal" class="logout-modal">
         <div class="logout-modal-content">
             <p>{{ _('¿Estás seguro de que quieres cerrar sesión?') }}</p>
@@ -108,6 +129,32 @@ document.getElementById('language').addEventListener('change', function () {
             alert("Error al cambiar el idioma.");
         }
     });
+});
+</script>
+
+<!-- Stripe Checkout -->
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+document.getElementById("checkout-btn").addEventListener("click", async () => {
+    try {
+        const response = await fetch("{{ url_for('create_checkout_session') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token() }}"
+            }
+        });
+        const session = await response.json();
+        if (session.id) {
+            const stripe = Stripe("{{ stripe_publishable_key }}");
+            await stripe.redirectToCheckout({ sessionId: session.id });
+        } else {
+            document.getElementById("payment-error").textContent = "Error creando la sesión de pago.";
+        }
+    } catch (error) {
+        document.getElementById("payment-error").textContent = "Error conectando con Stripe.";
+        console.error(error);
+    }
 });
 </script>
 

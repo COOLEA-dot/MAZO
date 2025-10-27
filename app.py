@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, g, url_for, flash, session, send_from_directory, abort, jsonify, Blueprint, g
+from flask import Flask, render_template, request, redirect, g, url_for, flash, session, send_from_directory, abort, jsonify, Blueprint, current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, join_room, leave_room, send
 from werkzeug.utils import secure_filename
@@ -101,6 +101,15 @@ GOOGLE_ANDROID_CLIENT_ID = (os.getenv("GOOGLE_ANDROID_CLIENT_ID") or "").strip()
 GOOGLE_IOS_CLIENT_ID     = (os.getenv("GOOGLE_IOS_CLIENT_ID") or "").strip()      # opcional
 
 os.makedirs(app.config['CV_UPLOAD_FOLDER'], exist_ok=True)
+
+stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
+PRICE_ID = os.getenv("STRIPE_PRICE_ID")
+bp = Blueprint("admin_offers", __name__, url_prefix="/admin/offers")
+offers_public = Blueprint("offers_public", __name__, url_prefix='/offers')
+# register blueprints
+app.register_blueprint(offers_public)   # tendrá la URL /offers/validate
+app.register_blueprint(bp)              # admin_offers -> /admin/offers/...
+
 
 # Extensiones permitidas para CV
 ALLOWED_CV_EXTENSIONS = {'pdf', 'doc', 'docx'}
@@ -244,10 +253,320 @@ def set_language():
         return jsonify(success=True)
     return redirect(request.referrer or url_for('settings'))
 
+class Offer(db.Model):
+    __tablename__ = "offer"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    slug = db.Column(db.String(150), unique=True, nullable=False)
+    description = db.Column(db.Text)
+    kind = db.Column(db.String(30), nullable=False)  # 'percent', 'fixed', 'first_month_free', 'stripe_coupon'
+    value = db.Column(db.Integer, nullable=True)  # percentage (0-100) or fixed cents
+    max_uses = db.Column(db.Integer, nullable=True)  # null = ilimitado
+    uses = db.Column(db.Integer, default=0)
+    starts_at = db.Column(db.DateTime, default=datetime.utcnow)
+    ends_at = db.Column(db.DateTime, nullable=True)
+    active = db.Column(db.Boolean, default=True)
+    combinable = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    stripe_coupon_id = db.Column(db.String(255), nullable=True)  # si creamos coupon en Stripe
+    stripe_promotion_code = db.Column(db.String(255), nullable=True)  # opcion: promotion code id
+
+class OfferUsage(db.Model):
+    __tablename__ = "offer_usage"
+    id = db.Column(db.Integer, primary_key=True)
+    offer_id = db.Column(db.Integer, db.ForeignKey("offer.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+@app.route("/admin/offers/stripe/subscribe", methods=["POST"])
+@login_required
+def subscribe():
+    data = request.json or {}
+    payment_method = data.get("payment_method")
+    promo_code_text = data.get("promo_code")  # opcional, enviado por el usuario
+
+    # 1) Crear o obtener el cliente
+    if not current_user.stripe_customer_id:
+        customer = stripe.Customer.create(
+            email=current_user.email,
+            name=current_user.username,
+            metadata={"user_id": current_user.id}
+        )
+        current_user.stripe_customer_id = customer.id
+        db.session.commit()
+
+    customer_id = current_user.stripe_customer_id
+
+    # 2) Asociar el método de pago
+    stripe.PaymentMethod.attach(payment_method, customer=customer_id)
+    stripe.Customer.modify(customer_id, invoice_settings={"default_payment_method": payment_method})
+
+    # 3) Preparar los argumentos de la suscripción
+    sub_kwargs = {
+        "customer": customer_id,
+        "items": [{"price": PRICE_ID}],
+        "payment_behavior": "default_incomplete",
+        "expand": ["latest_invoice.payment_intent"],
+        "trial_period_days": 30  # 👈 primer mes gratis universal
+    }
+
+    # 4) Si el usuario introduce un código promocional, Stripe lo valida
+    if promo_code_text:
+        promo_list = stripe.PromotionCode.list(code=promo_code_text, limit=1)
+        if promo_list.data:
+            sub_kwargs["promotion_code"] = promo_list.data[0].id
+
+    # 5) Crear la suscripción
+    sub = stripe.Subscription.create(**sub_kwargs)
+
+    current_user.stripe_subscription_id = sub.id
+    db.session.commit()
+
+    return jsonify({
+        "subscriptionId": sub.id,
+        "clientSecret": sub.latest_invoice.payment_intent.client_secret
+    }), 201
+
+def apply_coupon_to_subscription(subscription_id, coupon_id):
+    stripe.Subscription.modify(
+        subscription_id,
+        discounts=[{"coupon": coupon_id}],
+        proration_behavior="none"
+    )
+
+def remove_all_discounts(subscription_id):
+    stripe.Subscription.modify(
+        subscription_id,
+        discounts=[],
+        proration_behavior="none"
+    )
+
+@app.route("/admin/offers/create", methods=["POST"])
+@login_required  # valida admin
+def create_offer():
+    data = request.json
+    name = data["name"]
+    slug = data.get("slug") or slugify.slugify(name)
+    kind = data["kind"]
+    value = data.get("value")
+    starts_at = data.get("starts_at")
+    ends_at = data.get("ends_at")
+    max_uses = data.get("max_uses")
+    use_stripe = data.get("use_stripe", False)
+    stripe_coupon_id = None
+    stripe_promotion_code = None
+
+    # Si pides crear coupon en Stripe
+    if use_stripe:
+        if kind == "percent":
+            coupon = stripe.Coupon.create(percent_off=value, duration="once")
+        elif kind == "first_month_free":
+            coupon = stripe.Coupon.create(percent_off=100, duration="repeating", duration_in_months=1)
+        elif kind == "fixed":
+            # Stripe fixed amount for invoices needs currency & amount_off in cents
+            coupon = stripe.Coupon.create(amount_off=value, currency="eur", duration="once")
+        else:
+            coupon = None
+
+        if coupon:
+            stripe_coupon_id = coupon.id
+            # Crear promotion code asociado (opcional — facilita que el usuario use un código legible)
+            promo = stripe.PromotionCode.create(coupon=coupon.id, code=slug.upper())
+            stripe_promotion_code = promo.id
+
+    offer = Offer(
+        name=name, slug=slug, kind=kind, value=value,
+        starts_at=starts_at, ends_at=ends_at, max_uses=max_uses,
+        stripe_coupon_id=stripe_coupon_id, stripe_promotion_code=stripe_promotion_code
+    )
+    db.session.add(offer)
+    db.session.commit()
+    return jsonify({"ok": True, "offer_id": offer.id})
+
+@app.route("/admin/offers/list", methods=["GET"])
+def list_offers():
+    now = datetime.utcnow()
+    offers = Offer.query.filter(Offer.active==True, Offer.starts_at<=now).filter(
+        (Offer.ends_at==None) | (Offer.ends_at>=now)
+    ).all()
+    return jsonify([{
+        "id": o.id, "name": o.name, "slug": o.slug, "kind": o.kind,
+        "value": o.value, "stripe_promo": o.stripe_promotion_code
+    } for o in offers])
+
+@app.route("/offers/validate", methods=["POST"])
+def validate_offer():
+    """
+    Espera JSON: { "code": "MAZO50" }
+    Devuelve JSON: { ok: True/False, type, id, code, percent, new_price_display, msg }
+    """
+    data = request.get_json(silent=True) or {}
+    code = (data.get("code") or "").strip()
+    if not code:
+        return jsonify({"ok": False, "msg": "Código vacío"}), 400
+
+    # Asegúrate de haber configurado stripe.api_key en tu app (sk_test) antes de llamar aquí
+    try:
+        # 1) Intentar encontrar promotion_code en Stripe (devuelve promo id y coupon)
+        res = stripe.PromotionCode.list(code=code, limit=1)
+        if res and getattr(res, "data", None):
+            promo = res.data[0]
+            coupon = promo.coupon
+            percent = getattr(coupon, "percent_off", None)
+            # Puedes calcular new_price_display leyendo tu precio real; aquí uso ejemplo:
+            try:
+                price_amount = float(current_app.config.get("FRONTEND_BASE_PRICE", 9.99))
+            except Exception:
+                price_amount = 9.99
+            new_price = None
+            if percent is not None:
+                new_price = round(price_amount * (100 - percent) / 100, 2)
+            new_price_display = f"{new_price:.2f} €" if new_price is not None else None
+
+            return jsonify({
+                "ok": True,
+                "type": "promotion_code",
+                "id": promo.id,          # promo_...
+                "code": promo.code,      # texto legible
+                "percent": percent,
+                "new_price_display": new_price_display
+            })
+
+    except Exception as e:
+        # no matar la petición por un fallo con Stripe — solo loguear y seguir
+        current_app.logger.debug("Stripe PromotionCode lookup error: %s", e)
+
+    # 2) Alternativa: busca en tu propia tabla Offer si tienes una (opcional)
+    try:
+        offer = Offer.query.filter((Offer.slug == code) | (Offer.name == code)).first()
+        if offer and offer.active:
+            percent = offer.value if offer.kind == "percent" else None
+            price_amount = float(current_app.config.get("FRONTEND_BASE_PRICE", 9.99))
+            new_price = None
+            if percent is not None:
+                new_price = round(price_amount * (100 - percent) / 100, 2)
+            return jsonify({
+                "ok": True,
+                "type": "offer",
+                "id": offer.id,
+                "code": offer.slug,
+                "percent": percent,
+                "new_price_display": f"{new_price:.2f} €" if new_price is not None else None
+            })
+    except Exception:
+        # si no tienes modelo Offer, ignora esto
+        pass
+
+    return jsonify({"ok": False, "msg": "Código no válido"}), 404
+
 @app.route('/settings')
 @login_required
 def settings():
-    return render_template('settings.html')
+    stripe_key = current_app.config.get("STRIPE_PUBLISHABLE_KEY") or current_app.config.get("STRIPE_PUBLIC_KEY") or ""
+    price_display = "9.99 €"
+
+    # URL de redirección
+    try:
+        redirect_url = url_for('billing_success')
+    except Exception:
+        redirect_url = url_for('profile', username=current_user.username)
+
+    return render_template(
+        "settings.html",
+        stripe_publishable_key=stripe_key,
+        validate_url=url_for('validate_offer'),
+        subscribe_url=url_for('subscribe'),
+        price_display=price_display,
+        redirect_url=redirect_url
+    )
+
+@app.route('/create-checkout-session', methods=['POST'])
+@login_required
+def create_checkout_session():
+    import stripe
+    stripe.api_key = current_app.config['STRIPE_SECRET_KEY']
+
+    try:
+        # 🔹 Lógica para decidir qué cupón aplicar
+        coupon_id = None
+
+        # Ejemplo: condiciones dinámicas
+        if not current_user.is_premium:  # Primer mes gratis
+            coupon_id = "6Yv3IfUM"
+        elif current_user.has_referred_3_users:
+            coupon_id = "XUVigsdb"
+        elif current_user.has_uploaded_10_videos:
+            coupon_id = "k3XAmNSH"
+
+        # 🔹 Crear sesión de checkout
+        params = {
+            "payment_method_types": ["card"],
+            "mode": "subscription",
+            "line_items": [
+                {
+                    "price": 'price_1SJHheIDZoLGPA1zjcpIpgqt',  # tu ID real del precio
+                    "quantity": 1,
+                }
+            ],
+            "success_url": url_for('activate_premium', _external=True),
+            "cancel_url": url_for('premium', _external=True),
+            "metadata": {
+                "user_id": current_user.id
+            },
+        }
+
+        # 🔹 Aplicar cupón si existe
+        if coupon_id:
+            params["discounts"] = [{"coupon": coupon_id}]
+
+        checkout_session = stripe.checkout.Session.create(**params)
+
+        return jsonify({"id": checkout_session.id})
+
+    except Exception as e:
+        print("ERROR STRIPE:", e)
+        return jsonify({"error": str(e)}), 403
+
+
+@app.route('/pay-with-elements', methods=['POST'])
+@login_required
+def pay_with_elements():
+    try:
+        data = request.get_json()
+        payment_method_id = data.get('payment_method_id')
+
+        # Crear el intento de pago
+        intent = stripe.PaymentIntent.create(
+            amount=999,  # en céntimos
+            currency='eur',
+            payment_method=payment_method_id,
+            confirmation_method='manual',
+            confirm=True,
+        )
+
+        if intent.status == 'requires_action' and intent.next_action.type == 'use_stripe_sdk':
+            return jsonify({'requires_action': True, 'payment_intent_client_secret': intent.client_secret})
+        elif intent.status == 'succeeded':
+            current_user.is_premium = True
+            db.session.commit()
+            return jsonify({'success': True})
+        else:
+            return jsonify({'error': 'Pago no completado.'}), 400
+    except Exception as e:
+        print("❌ ERROR EN PAGO CON ELEMENTS:", e)
+        return jsonify({'error': str(e)}), 400  
+
+@app.route("/stripe/webhook", methods=["POST"])
+def stripe_webhook():
+    payload = request.data
+    sig = request.headers.get("Stripe-Signature")
+    endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+    try:
+        event = stripe.Webhook.construct_event(payload, sig, endpoint_secret)
+    except Exception as e:
+        abort(400)
+    # procesar evento...
+    return {"ok": True}
 
 @app.route('/security')
 def seguridad():
@@ -473,6 +792,7 @@ class User(db.Model, UserMixin):
         if not self.password_hash:
             return False
         return check_password_hash(self.password_hash, password)
+
 
 oauth.register(
     name="google",
@@ -2439,61 +2759,6 @@ def activate_premium():
     flash('¡Felicidades! Ahora eres usuario premium 🎉', 'success')
     return redirect(url_for('profile', username=current_user.username))
 
-@app.route('/create-checkout-session', methods=['POST'])
-@login_required
-def create_checkout_session():
-    try:
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'eur',
-                    'product_data': {
-                        'name': 'MAZO Premium',
-                    },
-                    'unit_amount': 999,
-                },
-                'quantity': 1,
-            }],
-            mode='payment',
-            success_url=url_for('activate_premium', _external=True),
-            cancel_url=url_for('premium', _external=True),
-            metadata={
-                'user_id': current_user.id
-            }
-        )
-        return jsonify({'id': checkout_session.id})
-    except Exception as e:
-        print("ERROR STRIPE:", e)  # 👈 esto te va a ayudar
-        return jsonify({'error': str(e)}), 403
-
-@app.route('/pay-with-elements', methods=['POST'])
-@login_required
-def pay_with_elements():
-    try:
-        data = request.get_json()
-        payment_method_id = data.get('payment_method_id')
-
-        # Crear el intento de pago
-        intent = stripe.PaymentIntent.create(
-            amount=999,  # en céntimos
-            currency='eur',
-            payment_method=payment_method_id,
-            confirmation_method='manual',
-            confirm=True,
-        )
-
-        if intent.status == 'requires_action' and intent.next_action.type == 'use_stripe_sdk':
-            return jsonify({'requires_action': True, 'payment_intent_client_secret': intent.client_secret})
-        elif intent.status == 'succeeded':
-            current_user.is_premium = True
-            db.session.commit()
-            return jsonify({'success': True})
-        else:
-            return jsonify({'error': 'Pago no completado.'}), 400
-    except Exception as e:
-        print("❌ ERROR EN PAGO CON ELEMENTS:", e)
-        return jsonify({'error': str(e)}), 400   
 @app.route('/logout')
 def logout():
     session.pop("user_id", None)  # Elimina al usuario de la sesión
