@@ -493,53 +493,54 @@ def settings():
         redirect_url=redirect_url
     )
 
+from flask import current_app, jsonify, url_for
+import stripe
+from flask_login import login_required, current_user
+
 @app.route('/create-checkout-session', methods=['POST'])
 @login_required
 def create_checkout_session():
-    import stripe
-    stripe.api_key = current_app.config['STRIPE_SECRET_KEY']
+    # Asegúrate de haber configurado STRIPE_SECRET_KEY en current_app.config
+    stripe.api_key = current_app.config.get('STRIPE_SECRET_KEY') or os.getenv('STRIPE_SECRET_KEY')
 
     try:
-        # 🔹 Lógica para decidir qué cupón aplicar
+        # Lógica de selección de cupón (igual a la tuya)
         coupon_id = None
-
-        # Ejemplo: condiciones dinámicas
-        if not current_user.is_premium:  # Primer mes gratis
+        if not current_user.is_premium:
             coupon_id = "6Yv3IfUM"
-        elif current_user.has_referred_3_users:
+        elif getattr(current_user, "has_referred_3_users", False):
             coupon_id = "XUVigsdb"
-        elif current_user.has_uploaded_10_videos:
+        elif getattr(current_user, "has_uploaded_10_videos", False):
             coupon_id = "k3XAmNSH"
 
-        # 🔹 Crear sesión de checkout
         params = {
             "payment_method_types": ["card"],
             "mode": "subscription",
             "line_items": [
                 {
-                    "price": 'price_1SJHheIDZoLGPA1zjcpIpgqt',  # tu ID real del precio
+                    "price": os.getenv('STRIPE_PRICE_ID', 'price_1SJHheIDZoLGPA1zjcpIpgqt'),
                     "quantity": 1,
                 }
             ],
-            "success_url": url_for('activate_premium', _external=True),
+            "success_url": url_for('premium_success', _external=True),  # o activate_premium si es tu ruta
             "cancel_url": url_for('premium', _external=True),
-            "metadata": {
-                "user_id": current_user.id
-            },
+            "metadata": {"user_id": str(current_user.id)},
         }
 
-        # 🔹 Aplicar cupón si existe
         if coupon_id:
             params["discounts"] = [{"coupon": coupon_id}]
 
         checkout_session = stripe.checkout.Session.create(**params)
 
-        return jsonify({"id": checkout_session.id})
+        # Devuelve ID y URL para máxima compatibilidad con distintos clientes
+        return jsonify({"id": checkout_session.id, "url": checkout_session.url})
 
+    except stripe.error.StripeError as e:
+        current_app.logger.error("Stripe API error: %s", e)
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
-        print("ERROR STRIPE:", e)
-        return jsonify({"error": str(e)}), 403
-
+        current_app.logger.exception("Error creando checkout session")
+        return jsonify({"error": "Error interno del servidor"}), 500
 
 @app.route('/pay-with-elements', methods=['POST'])
 @login_required

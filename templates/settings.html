@@ -133,28 +133,77 @@ document.getElementById('language').addEventListener('change', function () {
 </script>
 
 <!-- Stripe Checkout -->
+<!-- incluir Stripe.js -->
 <script src="https://js.stripe.com/v3/"></script>
+
+<!-- meta CSRF: añade esto en <head> del template -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
 <script>
-document.getElementById("checkout-btn").addEventListener("click", async () => {
-    try {
-        const response = await fetch("{{ url_for('create_checkout_session') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": "{{ csrf_token() }}"
-            }
-        });
-        const session = await response.json();
-        if (session.id) {
-            const stripe = Stripe("{{ stripe_publishable_key }}");
-            await stripe.redirectToCheckout({ sessionId: session.id });
-        } else {
-            document.getElementById("payment-error").textContent = "Error creando la sesión de pago.";
-        }
-    } catch (error) {
-        document.getElementById("payment-error").textContent = "Error conectando con Stripe.";
-        console.error(error);
+async function getCsrfToken() {
+  const el = document.querySelector('meta[name="csrf-token"]');
+  return el ? el.content : '';
+}
+
+document.getElementById("checkout-btn").addEventListener("click", async (e) => {
+  e.preventDefault();
+  const errEl = document.getElementById("payment-error");
+  if (errEl) errEl.textContent = "";
+
+  try {
+    const csrf = await getCsrfToken();
+
+    const res = await fetch("{{ url_for('create_checkout_session') }}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrf
+      },
+      body: JSON.stringify({}) // si necesitas enviar campos, ponlos aquí
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Error creando sesión:", res.status, text);
+      if (errEl) errEl.textContent = "Error creando la sesión de pago.";
+      return;
     }
+
+    const data = await res.json();
+    console.log("create-checkout-session response:", data);
+
+    // Si el backend devuelve directamente la URL -> redirige
+    if (data.url) {
+      window.location.href = data.url;
+      return;
+    }
+
+    // Si devuelve id -> usa Stripe.js
+    const sessionId = data.id || data.sessionId || (data.session && data.session.id);
+    if (sessionId) {
+      const publishableKey = "{{ stripe_publishable_key or '' }}";
+      if (!publishableKey) {
+        console.error("Falta STRIPE_PUBLIC_KEY en el template.");
+        if (errEl) errEl.textContent = "Error de configuración de Stripe (clave pública faltante).";
+        return;
+      }
+      const stripe = Stripe(publishableKey);
+      const result = await stripe.redirectToCheckout({ sessionId: sessionId });
+      if (result && result.error) {
+        console.error("Stripe redirectToCheckout error:", result.error);
+        if (errEl) errEl.textContent = result.error.message || "Error redirigiendo a Stripe.";
+      }
+      return;
+    }
+
+    // Si no viene ni id ni url:
+    console.error("Respuesta inesperada del servidor:", data);
+    if (errEl) errEl.textContent = "Respuesta inesperada al crear la sesión.";
+  } catch (err) {
+    console.error("Error en applyPremium:", err);
+    const errEl = document.getElementById("payment-error");
+    if (errEl) errEl.textContent = "Error conectando con Stripe.";
+  }
 });
 </script>
 
