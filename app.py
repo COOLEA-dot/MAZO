@@ -102,17 +102,25 @@ GOOGLE_IOS_CLIENT_ID     = (os.getenv("GOOGLE_IOS_CLIENT_ID") or "").strip()    
 
 os.makedirs(app.config['CV_UPLOAD_FOLDER'], exist_ok=True)
 
-stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
+# Lee la config sin fallar al importar
 PRICE_ID = os.getenv("STRIPE_PRICE_ID")
+
 bp = Blueprint("admin_offers", __name__, url_prefix="/admin/offers")
 offers_public = Blueprint("offers_public", __name__, url_prefix='/offers')
+
 # register blueprints
-app.register_blueprint(offers_public)   # tendrá la URL /offers/validate
-app.register_blueprint(bp)              # admin_offers -> /admin/offers/...
+app.register_blueprint(offers_public)
+app.register_blueprint(bp)
+
+# Configuración de Stripe (segura)
 stripe_key = os.environ.get("STRIPE_SECRET_KEY")
 if not stripe_key:
-    raise RuntimeError("Falta STRIPE_SECRET_KEY. Configúrala en las env vars.")
-stripe.api_key = stripe_key
+    # En producción quizá prefieras raise RuntimeError para forzar configuración.
+    # Para permitir arranque en entornos de test/dev usa logging.warning:
+    import logging
+    logging.warning("STRIPE_SECRET_KEY no encontrada. Stripe no funcionará hasta que se configure.")
+else:
+    stripe.api_key = stripe_key
 
 
 
