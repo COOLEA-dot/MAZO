@@ -109,6 +109,11 @@ offers_public = Blueprint("offers_public", __name__, url_prefix='/offers')
 # register blueprints
 app.register_blueprint(offers_public)   # tendrá la URL /offers/validate
 app.register_blueprint(bp)              # admin_offers -> /admin/offers/...
+stripe_key = os.environ.get("STRIPE_SECRET_KEY")
+if not stripe_key:
+    raise RuntimeError("Falta STRIPE_SECRET_KEY. Configúrala en las env vars.")
+stripe.api_key = stripe_key
+
 
 
 # Extensiones permitidas para CV
