@@ -522,7 +522,7 @@ def create_checkout_session():
                     "quantity": 1,
                 }
             ],
-            "success_url": url_for('premium_success', _external=True),  # o activate_premium si es tu ruta
+            "success_url": url_for('activate_premium', _external=True),  # o activate_premium si es tu ruta
             "cancel_url": url_for('premium', _external=True),
             "metadata": {"user_id": str(current_user.id)},
         }
