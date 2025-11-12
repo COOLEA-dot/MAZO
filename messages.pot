@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-08-14 18:13+0200\n"
+"POT-Creation-Date: 2025-11-12 18:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,7 +33,7 @@ msgstr ""
 msgid "Entrar"
 msgstr ""
 
-#: templates/base.html:59 templates/register.html:114
+#: templates/base.html:59 templates/register.html:264
 msgid "Registrarse"
 msgstr ""
 
@@ -69,52 +69,60 @@ msgstr ""
 msgid "Editar Perfil"
 msgstr ""
 
-#: templates/edit_profile.html:22 templates/profile.html:47
+#: templates/edit_profile.html:22 templates/profile.html:66
 msgid "Nombre:"
 msgstr ""
 
-#: templates/edit_profile.html:27 templates/profile.html:55
+#: templates/edit_profile.html:27 templates/profile.html:74
 msgid "Empresa:"
 msgstr ""
 
-#: templates/edit_profile.html:32 templates/profile.html:59
-msgid "Profesión:"
+#: templates/edit_profile.html:33
+msgid "Profesiones (opcional):"
 msgstr ""
 
-#: templates/edit_profile.html:37 templates/upload.html:17
+#: templates/edit_profile.html:37 templates/register.html:92
+msgid "Escribe y pulsa Enter…"
+msgstr ""
+
+#: templates/edit_profile.html:54 templates/upload.html:17
 msgid "Descripción:"
 msgstr ""
 
-#: templates/edit_profile.html:42
+#: templates/edit_profile.html:59
 msgid "Ubicación:"
 msgstr ""
 
-#: templates/edit_profile.html:47
+#: templates/edit_profile.html:64
 msgid "Nombre de usuario:"
 msgstr ""
 
-#: templates/edit_profile.html:52 templates/register.html:77
+#: templates/edit_profile.html:69 templates/register.html:77
 msgid "Teléfono:"
 msgstr ""
 
-#: templates/edit_profile.html:57
+#: templates/edit_profile.html:74
 msgid "Correo electrónico:"
 msgstr ""
 
-#: templates/edit_profile.html:61
+#: templates/edit_profile.html:78
 msgid "Guardar cambios"
 msgstr ""
 
-#: templates/edit_profile.html:62 templates/jobs_form.html:81
-#: templates/projects_form.html:71
+#: templates/edit_profile.html:79 templates/jobs_form.html:121
+#: templates/projects_form.html:104
 msgid "Cancelar"
+msgstr ""
+
+#: templates/edit_profile.html:128 templates/register.html:136
+msgid "Quitar"
 msgstr ""
 
 #: templates/home.html:3
 msgid "Página Principal"
 msgstr ""
 
-#: templates/home.html:34 templates/profile.html:104
+#: templates/home.html:34 templates/profile.html:122
 msgid "Usuario desconocido"
 msgstr ""
 
@@ -178,34 +186,58 @@ msgstr ""
 msgid "2025 MAZO · Todos los derechos reservados"
 msgstr ""
 
-#: templates/job_detail.html:12 templates/job_detail.html:105
+#: templates/job_detail.html:12 templates/job_detail.html:130
 #: templates/jobs.html:57 templates/jobs.html:128
-#: templates/project_detail.html:12 templates/project_detail.html:103
+#: templates/project_detail.html:12 templates/project_detail.html:118
 msgid "Usuario"
 msgstr ""
 
-#: templates/job_detail.html:61 templates/project_detail.html:60
+#: templates/job_detail.html:49 templates/project_detail.html:48
+msgid "Desde"
+msgstr ""
+
+#: templates/job_detail.html:51 templates/project_detail.html:50
+msgid "Hasta"
+msgstr ""
+
+#: templates/job_detail.html:56
+msgid "hora"
+msgstr ""
+
+#: templates/job_detail.html:57
+msgid "día"
+msgstr ""
+
+#: templates/job_detail.html:58
+msgid "mes"
+msgstr ""
+
+#: templates/job_detail.html:59
+msgid "año"
+msgstr ""
+
+#: templates/job_detail.html:86 templates/project_detail.html:75
 msgid "Inicia sesión para contactar"
 msgstr ""
 
-#: templates/job_detail.html:64 templates/job_detail.html:87
+#: templates/job_detail.html:89 templates/job_detail.html:112
 msgid "Solicitar empleo"
 msgstr ""
 
-#: templates/job_detail.html:70 templates/job_detail.html:127
-#: templates/project_detail.html:68 templates/project_detail.html:124
+#: templates/job_detail.html:95 templates/job_detail.html:152
+#: templates/project_detail.html:83 templates/project_detail.html:139
 msgid "Contactar"
 msgstr ""
 
-#: templates/job_detail.html:83 templates/project_detail.html:81
+#: templates/job_detail.html:108 templates/project_detail.html:96
 msgid "Cancelar solicitud"
 msgstr ""
 
-#: templates/job_detail.html:99 templates/project_detail.html:97
+#: templates/job_detail.html:124 templates/project_detail.html:112
 msgid "Solicitudes"
 msgstr ""
 
-#: templates/job_detail.html:136 templates/project_detail.html:132
+#: templates/job_detail.html:161 templates/project_detail.html:147
 msgid "Aún no hay solicitudes."
 msgstr ""
 
@@ -229,17 +261,17 @@ msgstr ""
 msgid "Modalidad (todas)"
 msgstr ""
 
-#: templates/jobs.html:39 templates/jobs.html:110 templates/jobs_form.html:61
+#: templates/jobs.html:39 templates/jobs.html:110 templates/jobs_form.html:60
 #: templates/projects_form.html:54
 msgid "Remoto"
 msgstr ""
 
-#: templates/jobs.html:40 templates/jobs.html:111 templates/jobs_form.html:62
+#: templates/jobs.html:40 templates/jobs.html:111 templates/jobs_form.html:61
 #: templates/projects_form.html:55
 msgid "Presencial"
 msgstr ""
 
-#: templates/jobs.html:41 templates/jobs.html:112 templates/jobs_form.html:63
+#: templates/jobs.html:41 templates/jobs.html:112 templates/jobs_form.html:62
 #: templates/projects_form.html:56
 msgid "Híbrido"
 msgstr ""
@@ -306,47 +338,89 @@ msgstr ""
 msgid "Modalidad"
 msgstr ""
 
-#: templates/jobs_form.html:60 templates/projects_form.html:53
+#: templates/jobs_form.html:59 templates/projects_form.html:53
 msgid "Selecciona…"
 msgstr ""
 
-#: templates/jobs_form.html:70 templates/projects_form.html:63
+#: templates/jobs_form.html:69 templates/projects_form.html:63
 msgid "Localización"
 msgstr ""
 
-#: templates/jobs_form.html:71 templates/projects_form.html:64
+#: templates/jobs_form.html:70 templates/projects_form.html:64
 msgid "Ciudad / País o Remoto"
 msgstr ""
 
-#: templates/jobs_form.html:78 templates/projects_form.html:70
+#: templates/jobs_form.html:80
+msgid "Salario (opcional)"
+msgstr ""
+
+#: templates/jobs_form.html:84 templates/projects_form.html:77
+msgid "Mínimo"
+msgstr ""
+
+#: templates/jobs_form.html:90 templates/projects_form.html:83
+msgid "Máximo"
+msgstr ""
+
+#: templates/jobs_form.html:98 templates/projects_form.html:91
+msgid "Moneda"
+msgstr ""
+
+#: templates/jobs_form.html:104
+msgid "Periodo"
+msgstr ""
+
+#: templates/jobs_form.html:111 templates/projects_form.html:98
+msgid ""
+"Rellena uno o ambos (mín/máx). Si solo indicas mínimo, se mostrará “Desde"
+" X”. Si solo máximo, “Hasta X”."
+msgstr ""
+
+#: templates/jobs_form.html:118 templates/projects_form.html:103
 msgid "Publicar proyecto"
 msgstr ""
 
-#: templates/jobs_form.html:78
+#: templates/jobs_form.html:118
 msgid "Publicar empleo"
+msgstr ""
+
+#: templates/jobs_form.html:143
+msgid "El salario máximo no puede ser menor que el mínimo."
 msgstr ""
 
 #: templates/login.html:7 templates/login.html:12
 msgid "Inicio de Sesión"
 msgstr ""
 
-#: templates/login.html:29
+#: templates/login.html:27
 msgid "Usuario:"
 msgstr ""
 
-#: templates/login.html:33 templates/register.html:108
+#: templates/login.html:30 templates/register.html:258
 msgid "Contraseña:"
 msgstr ""
 
-#: templates/login.html:37
+#: templates/login.html:35
+msgid "Recuérdame"
+msgstr ""
+
+#: templates/login.html:38
 msgid "Iniciar Sesión"
 msgstr ""
 
-#: templates/login.html:40
+#: templates/login.html:41
+msgid "o"
+msgstr ""
+
+#: templates/login.html:51
+msgid "Entrar con Google"
+msgstr ""
+
+#: templates/login.html:54
 msgid "¿No tienes cuenta?"
 msgstr ""
 
-#: templates/login.html:40
+#: templates/login.html:54
 msgid "Regístrate aquí"
 msgstr ""
 
@@ -355,29 +429,65 @@ msgid "Impulsa tu perfil por solo"
 msgstr ""
 
 #: templates/premium.html:11
-msgid "9,99 €/mes"
+msgid "9,99 €/mes"
 msgstr ""
 
 #: templates/premium.html:14
-msgid "🔝 Tu perfil aparece primero en la página principal y en búsquedas."
+msgid "Tu perfil aparece primero en la página principal y en búsquedas."
 msgstr ""
 
 #: templates/premium.html:15
-msgid "✅ Verificación como empresa titular."
+msgid "Verificación como empresa titular."
 msgstr ""
 
 #: templates/premium.html:16
-msgid "💬 Acceso exclusivo al grupo privado de Telegram (invitación manual)."
+msgid "Acceso exclusivo al grupo privado de Telegram (invitación manual)."
 msgstr ""
 
 #: templates/premium.html:20
-msgid "Ya eres usuario premium ✔"
+msgid "✔ Ya eres usuario Premium"
+msgstr ""
+
+#: templates/premium.html:24
+msgid "💳 Activar suscripción"
+msgstr ""
+
+#: templates/premium.html:28
+msgid "Suscripción mensual"
+msgstr ""
+
+#: templates/premium.html:29
+msgid "Acceso MAZO Premium"
+msgstr ""
+
+#: templates/premium.html:31
+msgid "9,99 € / mes"
 msgstr ""
 
 #: templates/premium.html:35
+msgid "Activar Premium"
+msgstr ""
+
+#: templates/premium.html:39
 msgid ""
 "Este es un pago mensual. Deberás renovarlo manualmente cada mes para "
 "mantener tu cuenta premium."
+msgstr ""
+
+#: templates/premium.html:45
+msgid "🤝 Programa de Referidos"
+msgstr ""
+
+#: templates/premium.html:46
+msgid "Invita a tus amigos a MAZO. Si 3 se suscriben, obtienes"
+msgstr ""
+
+#: templates/premium.html:46
+msgid "3 meses gratis"
+msgstr ""
+
+#: templates/premium.html:51
+msgid "Comparte tu enlace por WhatsApp, correo o redes sociales."
 msgstr ""
 
 #: templates/privacy.html:6
@@ -519,56 +629,81 @@ msgstr ""
 msgid "Perfil de Usuario"
 msgstr ""
 
-#: templates/profile.html:27
+#: templates/profile.html:32
+msgid "Subir CV"
+msgstr ""
+
+#: templates/profile.html:39
+msgid "Ver CV"
+msgstr ""
+
+#: templates/profile.html:46
 msgid "seguidores"
 msgstr ""
 
-#: templates/profile.html:28
+#: templates/profile.html:47
 msgid "siguiendo"
 msgstr ""
 
-#: templates/profile.html:35
+#: templates/profile.html:54
 msgid "Dejar de seguir"
 msgstr ""
 
-#: templates/profile.html:40
+#: templates/profile.html:59
 msgid "Seguir"
 msgstr ""
 
-#: templates/profile.html:52
+#: templates/profile.html:71
 msgid "Correo:"
 msgstr ""
 
-#: templates/profile.html:82
+#: templates/profile.html:78
+msgid "Profesión:"
+msgstr ""
+
+#: templates/profile.html:100
 msgid "Opiniones de"
 msgstr ""
 
-#: templates/profile.html:92 templates/profile.html:181
+#: templates/profile.html:110 templates/profile.html:198
 msgid "Eliminar"
 msgstr ""
 
-#: templates/profile.html:114
+#: templates/profile.html:132
 msgid "Mostrar respuestas"
 msgstr ""
 
-#: templates/profile.html:148
+#: templates/profile.html:166
 msgid "No hay opiniones aún."
 msgstr ""
 
-#: templates/profile.html:168
+#: templates/profile.html:185
 msgid "Videos Subidos"
 msgstr ""
 
-#: templates/profile.html:175 templates/search.html:45
+#: templates/profile.html:192 templates/search.html:45
+#: templates/test_video.html:23
 msgid "Tu navegador no soporta el video."
 msgstr ""
 
-#: templates/project_detail.html:63 templates/project_detail.html:85
+#: templates/profile.html:206
+msgid "Subir video"
+msgstr ""
+
+#: templates/project_detail.html:78 templates/project_detail.html:100
 msgid "Solicitar proyecto"
 msgstr ""
 
 #: templates/projects_form.html:42
 msgid "Describe requisitos, alcance, entregables…"
+msgstr ""
+
+#: templates/projects_form.html:73
+msgid "Precio (opcional)"
+msgstr ""
+
+#: templates/projects_form.html:124
+msgid "El precio máximo no puede ser menor que el mínimo."
 msgstr ""
 
 #: templates/register.html:7 templates/register.html:44
@@ -595,35 +730,31 @@ msgstr ""
 msgid "Empresa (Opcional):"
 msgstr ""
 
-#: templates/register.html:87
-msgid "Profesión (Opcional):"
-msgstr ""
-
 #: templates/register.html:88
-msgid "Escribe o elige una profesión"
+msgid "Profesiones (opcional)"
 msgstr ""
 
-#: templates/register.html:95
+#: templates/register.html:245
 msgid "Sobre ti (Opcional):"
 msgstr ""
 
-#: templates/register.html:98
+#: templates/register.html:248
 msgid "Ubicación (Opcional):"
 msgstr ""
 
-#: templates/register.html:106
+#: templates/register.html:256
 msgid "📍 Usar mi ubicación actual"
 msgstr ""
 
-#: templates/register.html:111
+#: templates/register.html:261
 msgid "Repite la Contraseña:"
 msgstr ""
 
-#: templates/register.html:117
+#: templates/register.html:267
 msgid "¿Ya tienes una cuenta?"
 msgstr ""
 
-#: templates/register.html:117
+#: templates/register.html:267
 msgid "Inicia sesión aquí"
 msgstr ""
 
@@ -689,20 +820,8 @@ msgstr ""
 msgid "Si detectas alguna actividad sospechosa, por favor contáctanos en:"
 msgstr ""
 
-#: templates/settings.html:13
-msgid "Disfruta de beneficios exclusivos con MAZO Premium."
-msgstr ""
-
-#: templates/settings.html:14
-msgid "Ir a MAZO Premium"
-msgstr ""
-
-#: templates/settings.html:45
-msgid "¿Estás seguro de que quieres cerrar sesión?"
-msgstr ""
-
-#: templates/settings.html:75
-msgid "Idioma de la Aplicación"
+#: templates/test_video.html:5
+msgid "Prueba Video"
 msgstr ""
 
 #: templates/upload.html:3 templates/upload.html:26

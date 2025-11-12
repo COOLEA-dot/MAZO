@@ -955,9 +955,46 @@ class RegisterForm(FlaskForm):
     location = StringField('Ubicación (Opcional)', validators=[Optional()])
     profile_pic = FileField('Foto de perfil (opcional)', validators=[FileAllowed(['jpg', 'png', 'jpeg', 'webp'])])
 
+from flask_mail import Message
+import stripe
+
+def send_referral_reward_email(email):
+    """Envía el correo con el cupón de 3 meses gratis al usuario referido."""
+    stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
+    # Crear cupón de Stripe (3 meses gratis)
+    coupon = stripe.Coupon.create(
+        duration="repeating",
+        duration_in_months=3,
+        percent_off=100,
+        name="3 meses gratis por referidos"
+    )
+
+    msg = Message(
+        "🎁 ¡Has ganado 3 meses gratis en MAZO!",
+        recipients=[email]
+    )
+    msg.body = f"""
+    ¡Felicidades! Has invitado a 3 nuevos usuarios a MAZO.
+
+    Usa este código promocional en tu próxima renovación:
+    {coupon.id}
+
+    🎉 Este cupón te da 3 meses adicionales totalmente gratis.
+
+    ¡Gracias por ayudar a crecer la comunidad MAZO!
+    """
+    try:
+        mail.send(msg)
+        print(f"Correo enviado a {email} con cupón {coupon.id}")
+    except Exception as e:
+        print("Error enviando correo de referidos:", e)
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     form = RegisterForm()
+    referral_code = request.args.get("ref")  # 👈 Captura del link de referido
+
     if form.validate_on_submit():
         name = request.form.get("name", "").strip()
         username = form.username.data.strip()
@@ -997,7 +1034,7 @@ def register():
             picture_path = os.path.join(app.config["PROFILE_PICS_FOLDER"], filename)
             profile_picture.save(picture_path)
 
-        # Crear nuevo usuario (sin password directo)
+        # Crear nuevo usuario
         new_user = User(
             name=name,
             username=username,
@@ -1009,7 +1046,19 @@ def register():
             location=location,
             profile_pic=f"profile_pics/{filename}" if filename else "profile_pics/default.jpg"
         )
-        new_user.set_password(password)  # Usar método seguro
+        new_user.set_password(password)
+
+        # 🔥 Si viene desde un link de referido
+        if referral_code:
+            referrer = User.query.filter_by(referral_code=referral_code).first()
+            if referrer:
+                referrer.referred_count += 1
+                db.session.add(referrer)
+                db.session.commit()
+
+                # 🎁 Si alcanzó 3 referidos → enviar correo con promoción
+                if referrer.referred_count == 3:
+                    send_referral_reward_email(referrer.email)
 
         db.session.add(new_user)
         db.session.commit()

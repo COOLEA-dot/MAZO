@@ -5,36 +5,62 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/premium.css') }}">
 
-<div class="container mt-5">
-  <div class="card p-4 shadow-sm">
-    <h1 class="mb-3">💼 MAZO Premium</h1>
-    <p class="lead">{{ _('Impulsa tu perfil por solo') }} <strong>{{ _('9,99 €/mes') }}</strong></p>
+<div class="premium-container">
+  <div class="premium-card">
+    <h1>💼 MAZO Premium</h1>
+    <p class="lead">{{ _('Impulsa tu perfil por solo') }} <strong>{{ _('9,99 €/mes') }}</strong></p>
 
-    <ul class="list-group list-group-flush mb-4">
-      <li class="list-group-item">{{ _('🔝 Tu perfil aparece primero en la página principal y en búsquedas.') }}</li>
-      <li class="list-group-item">{{ _('✅ Verificación como empresa titular.') }}</li>
-      <li class="list-group-item">{{ _('💬 Acceso exclusivo al grupo privado de Telegram (invitación manual).') }}</li>
+    <ul class="premium-benefits">
+      <li>🔝 {{ _('Tu perfil aparece primero en la página principal y en búsquedas.') }}</li>
+      <li>✅ {{ _('Verificación como empresa titular.') }}</li>
+      <li>💬 {{ _('Acceso exclusivo al grupo privado de Telegram (invitación manual).') }}</li>
     </ul>
 
     {% if current_user.is_premium %}
-      <div class="alert alert-success">{{ _('Ya eres usuario premium ✔') }}</div>
+      <div class="alert-success">{{ _('✔ Ya eres usuario Premium') }}</div>
     {% else %}
-      <div class="d-flex gap-3 flex-wrap mt-3">
-        <!-- Botón Stripe -->
-        <a href="https://buy.stripe.com/aFabJ06lWavIerzfeo1Nu00" class="btn-premium" target="_blank" role="button">
-          💳 Pagar con tarjeta
+      <!-- Bloque de checkout -->
+      <div id="premium-checkout">
+        <h3>{{ _('💳 Activar suscripción') }}</h3>
+
+        <div class="checkout-plan">
+          <div class="plan-info">
+            <strong>{{ _('Suscripción mensual') }}</strong>
+            <div class="plan-subtext">{{ _('Acceso MAZO Premium') }}</div>
+          </div>
+          <div class="plan-price">{{ _('9,99 € / mes') }}</div>
+        </div>
+
+        <a href="https://buy.stripe.com/fZu3cvaUU2ym0iJfoHdfG00" class="btn-premium">
+          💳 {{ _('Activar Premium') }}
         </a>
 
-        <!-- Botón PayPal -->
-        <a href= "https://www.paypal.com/paypalme/MAZOAPP/9.99" class="btn-paypal" target="_blank" role="button">
-          🅿️ Pagar con PayPal
-        </a>
+        <p class="note">
+          {{ _('Este es un pago mensual. Deberás renovarlo manualmente cada mes para mantener tu cuenta premium.') }}
+        </p>
       </div>
-       <!-- Nota aclaratoria -->
-      <p class="text-muted mt-3" style="font-size: 0.95rem;">
-        {{ _('Este es un pago mensual. Deberás renovarlo manualmente cada mes para mantener tu cuenta premium.') }}'
-      </p>
+
+      <!-- Programa de referidos -->
+      <div class="referral-box">
+        <h3>{{ _('🤝 Programa de Referidos') }}</h3>
+        <p>{{ _('Invita a tus amigos a MAZO. Si 3 se suscriben, obtienes') }}<strong>{{ _('3 meses gratis') }}</strong>.</p>
+        <div class="referral-link">
+          <input type="text" id="referral-link" readonly value="{{ referral_link }}" class="referral-input">
+          <button class="copy-btn" onclick="copyReferralLink()">Copiar</button>
+        </div>
+        <p class="referral-note">{{ _('Comparte tu enlace por WhatsApp, correo o redes sociales.') }}</p>
+      </div>
     {% endif %}
   </div>
 </div>
+
+<script>
+function copyReferralLink() {
+  const input = document.getElementById("referral-link");
+  input.select();
+  document.execCommand("copy");
+  alert("✅ Enlace copiado al portapapeles");
+}
+</script>
+
 {% endblock %}

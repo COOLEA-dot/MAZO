@@ -29,14 +29,14 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input id="cv-input" type="file" name="cv" accept=".pdf,.doc,.docx" class="hidden" onchange="this.form.submit()">
       <label for="cv-input" class="btn btn-primary cv-upload-btn">
-        <span>Subir CV</span>
+        <span>{{ _('Subir CV') }}</span>
       </label>
     </form>
   {% endif %}
 
   {% if user.cv_file %}
     <a class="btn btn-secondary" href="{{ url_for('view_cv', username=user.username) }}" target="_blank" rel="noopener">
-      Ver CV
+      {{ _('Ver CV') }}
     </a>
   {% endif %}
 </div>
@@ -203,7 +203,7 @@
 </div>
 {% if current_user.id == user.id %}
     <a href="{{ url_for('upload') }}" class="upload-button">
-        <i class="fas fa-upload"></i> Subir video
+        <i class="fas fa-upload"></i> {{ _('Subir video') }}
     </a>
 {% endif %}
 

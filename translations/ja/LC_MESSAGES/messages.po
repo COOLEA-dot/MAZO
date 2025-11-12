@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-08-14 18:13+0200\n"
+"POT-Creation-Date: 2025-11-12 18:02+0100\n"
 "PO-Revision-Date: 2025-06-18 12:51+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -34,7 +34,7 @@ msgstr "プロジェクトと求人"
 msgid "Entrar"
 msgstr "ログイン"
 
-#: templates/base.html:59 templates/register.html:114
+#: templates/base.html:59 templates/register.html:264
 msgid "Registrarse"
 msgstr "登録する"
 
@@ -70,52 +70,61 @@ msgstr "以前のチャットはありません。"
 msgid "Editar Perfil"
 msgstr "プロフィールを編集"
 
-#: templates/edit_profile.html:22 templates/profile.html:47
+#: templates/edit_profile.html:22 templates/profile.html:66
 msgid "Nombre:"
 msgstr "名前："
 
-#: templates/edit_profile.html:27 templates/profile.html:55
+#: templates/edit_profile.html:27 templates/profile.html:74
 msgid "Empresa:"
 msgstr "会社："
 
-#: templates/edit_profile.html:32 templates/profile.html:59
-msgid "Profesión:"
-msgstr "職業："
+#: templates/edit_profile.html:33
+#, fuzzy
+msgid "Profesiones (opcional):"
+msgstr "職業（任意）："
 
-#: templates/edit_profile.html:37 templates/upload.html:17
+#: templates/edit_profile.html:37 templates/register.html:92
+msgid "Escribe y pulsa Enter…"
+msgstr "入力して Enter を押してください…"
+
+#: templates/edit_profile.html:54 templates/upload.html:17
 msgid "Descripción:"
 msgstr "自己紹介："
 
-#: templates/edit_profile.html:42
+#: templates/edit_profile.html:59
 msgid "Ubicación:"
 msgstr "場所："
 
-#: templates/edit_profile.html:47
+#: templates/edit_profile.html:64
 msgid "Nombre de usuario:"
 msgstr "ユーザー名："
 
-#: templates/edit_profile.html:52 templates/register.html:77
+#: templates/edit_profile.html:69 templates/register.html:77
 msgid "Teléfono:"
 msgstr "電話番号："
 
-#: templates/edit_profile.html:57
+#: templates/edit_profile.html:74
 msgid "Correo electrónico:"
 msgstr "メールアドレス："
 
-#: templates/edit_profile.html:61
+#: templates/edit_profile.html:78
 msgid "Guardar cambios"
 msgstr "変更を保存"
 
-#: templates/edit_profile.html:62 templates/jobs_form.html:81
-#: templates/projects_form.html:71
+#: templates/edit_profile.html:79 templates/jobs_form.html:121
+#: templates/projects_form.html:104
 msgid "Cancelar"
 msgstr "キャンセル"
+
+#: templates/edit_profile.html:128 templates/register.html:136
+msgid "Quitar"
+msgstr "削除"
 
 #: templates/home.html:3
 msgid "Página Principal"
 msgstr "ホームページ"
 
-#: templates/home.html:34 templates/profile.html:104
+#: templates/home.html:34 templates/profile.html:122
 msgid "Usuario desconocido"
 msgstr "不明なユーザー"
 
@@ -179,38 +188,62 @@ msgstr "使い方をチェック"
 msgid "2025 MAZO · Todos los derechos reservados"
 msgstr "2025 MAZO · 無断転載を禁じます"
 
-#: templates/job_detail.html:12 templates/job_detail.html:105
+#: templates/job_detail.html:12 templates/job_detail.html:130
 #: templates/jobs.html:57 templates/jobs.html:128
-#: templates/project_detail.html:12 templates/project_detail.html:103
+#: templates/project_detail.html:12 templates/project_detail.html:118
 #, fuzzy
 msgid "Usuario"
 msgstr "ユーザー名："
 
-#: templates/job_detail.html:61 templates/project_detail.html:60
+#: templates/job_detail.html:49 templates/project_detail.html:48
+msgid "Desde"
+msgstr "開始"
+
+#: templates/job_detail.html:51 templates/project_detail.html:50
+msgid "Hasta"
+msgstr "終了"
+
+#: templates/job_detail.html:56
+msgid "hora"
+msgstr "時間"
+
+#: templates/job_detail.html:57
+msgid "día"
+msgstr "日"
+
+#: templates/job_detail.html:58
+msgid "mes"
+msgstr "月"
+
+#: templates/job_detail.html:59
+msgid "año"
+msgstr "年"
+
+#: templates/job_detail.html:86 templates/project_detail.html:75
 #, fuzzy
 msgid "Inicia sesión para contactar"
 msgstr "こちらからログイン"
 
-#: templates/job_detail.html:64 templates/job_detail.html:87
+#: templates/job_detail.html:89 templates/job_detail.html:112
 msgid "Solicitar empleo"
 msgstr "求人に応募する"
 
-#: templates/job_detail.html:70 templates/job_detail.html:127
-#: templates/project_detail.html:68 templates/project_detail.html:124
+#: templates/job_detail.html:95 templates/job_detail.html:152
+#: templates/project_detail.html:83 templates/project_detail.html:139
 #, fuzzy
 msgid "Contactar"
 msgstr "お問い合わせ"
 
-#: templates/job_detail.html:83 templates/project_detail.html:81
+#: templates/job_detail.html:108 templates/project_detail.html:96
 #, fuzzy
 msgid "Cancelar solicitud"
 msgstr "キャンセル"
 
-#: templates/job_detail.html:99 templates/project_detail.html:97
+#: templates/job_detail.html:124 templates/project_detail.html:112
 msgid "Solicitudes"
 msgstr "応募"
 
-#: templates/job_detail.html:136 templates/project_detail.html:132
+#: templates/job_detail.html:161 templates/project_detail.html:147
 msgid "Aún no hay solicitudes."
 msgstr "まだ応募はありません。"
 
@@ -236,17 +269,17 @@ msgstr "場所："
 msgid "Modalidad (todas)"
 msgstr "形態（すべて）"
 
-#: templates/jobs.html:39 templates/jobs.html:110 templates/jobs_form.html:61
+#: templates/jobs.html:39 templates/jobs.html:110 templates/jobs_form.html:60
 #: templates/projects_form.html:54
 msgid "Remoto"
 msgstr "リモート"
 
-#: templates/jobs.html:40 templates/jobs.html:111 templates/jobs_form.html:62
+#: templates/jobs.html:40 templates/jobs.html:111 templates/jobs_form.html:61
 #: templates/projects_form.html:55
 msgid "Presencial"
 msgstr "出社"
 
-#: templates/jobs.html:41 templates/jobs.html:112 templates/jobs_form.html:63
+#: templates/jobs.html:41 templates/jobs.html:112 templates/jobs_form.html:62
 #: templates/projects_form.html:56
 msgid "Híbrido"
 msgstr "ハイブリッド"
@@ -313,48 +346,92 @@ msgstr "要件、範囲、責任などを記述してください…"
 msgid "Modalidad"
 msgstr "形態"
 
-#: templates/jobs_form.html:60 templates/projects_form.html:53
+#: templates/jobs_form.html:59 templates/projects_form.html:53
 #, fuzzy
 msgid "Selecciona…"
 msgstr "動画を選択："
 
-#: templates/jobs_form.html:70 templates/projects_form.html:63
+#: templates/jobs_form.html:69 templates/projects_form.html:63
 msgid "Localización"
 msgstr "所在地"
 
-#: templates/jobs_form.html:71 templates/projects_form.html:64
+#: templates/jobs_form.html:70 templates/projects_form.html:64
 msgid "Ciudad / País o Remoto"
 msgstr "都市 / 国 または リモート"
 
-#: templates/jobs_form.html:78 templates/projects_form.html:70
+#: templates/jobs_form.html:80
+#, fuzzy
+msgid "Salario (opcional)"
+msgstr "会社名（任意）："
+
+#: templates/jobs_form.html:84 templates/projects_form.html:77
+msgid "Mínimo"
+msgstr "最小"
+
+#: templates/jobs_form.html:90 templates/projects_form.html:83
+msgid "Máximo"
+msgstr "最大"
+
+#: templates/jobs_form.html:98 templates/projects_form.html:91
+msgid "Moneda"
+msgstr "通貨"
+
+#: templates/jobs_form.html:104
+#, fuzzy
+msgid "Periodo"
+msgstr "プロフィール"
+
+#: templates/jobs_form.html:111 templates/projects_form.html:98
+msgid ""
+"Rellena uno o ambos (mín/máx). Si solo indicas mínimo, se mostrará “Desde"
+" X”. Si solo máximo, “Hasta X”."
+msgstr "最小値または最大値（またはその両方）を入力してください。最小値のみを入力した場合は「Xから」、最大値のみを入力した場合は「Xまで」と表示されます。"
+
+#: templates/jobs_form.html:118 templates/projects_form.html:103
 msgid "Publicar proyecto"
 msgstr "プロジェクトを公開"
 
-#: templates/jobs_form.html:78
+#: templates/jobs_form.html:118
 msgid "Publicar empleo"
 msgstr "求人を公開"
+
+#: templates/jobs_form.html:143
+msgid "El salario máximo no puede ser menor que el mínimo."
+msgstr "最大給与は最小給与より低くすることはできません。"
 
 #: templates/login.html:7 templates/login.html:12
 msgid "Inicio de Sesión"
 msgstr "ログイン"
 
-#: templates/login.html:29
+#: templates/login.html:27
 msgid "Usuario:"
 msgstr "ユーザー名："
 
-#: templates/login.html:33 templates/register.html:108
+#: templates/login.html:30 templates/register.html:258
 msgid "Contraseña:"
 msgstr "パスワード："
 
-#: templates/login.html:37
+#: templates/login.html:35
+msgid "Recuérdame"
+msgstr "ログイン状態を保持"
+
+#: templates/login.html:38
 msgid "Iniciar Sesión"
 msgstr "ログイン"
 
-#: templates/login.html:40
+#: templates/login.html:41
+msgid "o"
+msgstr "ログイン状態を保持"
+
+#: templates/login.html:51
+msgid "Entrar con Google"
+msgstr "Googleでログイン"
+
+#: templates/login.html:54
 msgid "¿No tienes cuenta?"
 msgstr "アカウントをお持ちでないですか？"
 
-#: templates/login.html:40
+#: templates/login.html:54
 msgid "Regístrate aquí"
 msgstr "こちらで登録"
 
@@ -363,30 +440,74 @@ msgid "Impulsa tu perfil por solo"
 msgstr "たった"
 
 #: templates/premium.html:11
-msgid "9,99 €/mes"
+#, fuzzy
+msgid "9,99 €/mes"
 msgstr "月額9.99ユーロ"
 
 #: templates/premium.html:14
-msgid "🔝 Tu perfil aparece primero en la página principal y en búsquedas."
+#, fuzzy
+msgid "Tu perfil aparece primero en la página principal y en búsquedas."
 msgstr "🔝 あなたのプロフィールはホームページと検索結果の最上位に表示されます。"
 
 #: templates/premium.html:15
-msgid "✅ Verificación como empresa titular."
+#, fuzzy
+msgid "Verificación como empresa titular."
 msgstr "✅ 企業アカウントとして認証されます。"
 
 #: templates/premium.html:16
-msgid "💬 Acceso exclusivo al grupo privado de Telegram (invitación manual)."
+#, fuzzy
+msgid "Acceso exclusivo al grupo privado de Telegram (invitación manual)."
 msgstr "💬 招待制のTelegram非公開グループへの限定アクセス。"
 
 #: templates/premium.html:20
-msgid "Ya eres usuario premium ✔"
+#, fuzzy
+msgid "✔ Ya eres usuario Premium"
 msgstr "すでにプレミアムユーザーです ✔"
 
+#: templates/premium.html:24
+msgid "💳 Activar suscripción"
+msgstr "💳 サブスクリプションを有効化"
+
+#: templates/premium.html:28
+msgid "Suscripción mensual"
+msgstr "月額サブスクリプション"
+
+#: templates/premium.html:29
+#, fuzzy
+msgid "Acceso MAZO Premium"
+msgstr "MAZO Premiumへ"
+
+#: templates/premium.html:31
+#, fuzzy
+msgid "9,99 € / mes"
+msgstr "月額9.99ユーロ"
+
 #: templates/premium.html:35
+#, fuzzy
+msgid "Activar Premium"
+msgstr "MAZO Premiumへ"
+
+#: templates/premium.html:39
 msgid ""
 "Este es un pago mensual. Deberás renovarlo manualmente cada mes para "
 "mantener tu cuenta premium."
 msgstr "これは月額料金です。プレミアムアカウントを維持するには毎月手動で更新する必要があります。"
+
+#: templates/premium.html:45
+msgid "🤝 Programa de Referidos"
+msgstr "🤝 紹介プログラム"
+
+#: templates/premium.html:46
+msgid "Invita a tus amigos a MAZO. Si 3 se suscriben, obtienes"
+msgstr "友達をMAZOに招待しましょう。3人が登録すると、あなたに"
+
+#: templates/premium.html:46
+msgid "3 meses gratis"
+msgstr "3ヶ月間の無料期間がプレゼントされます"
+
+#: templates/premium.html:51
+msgid "Comparte tu enlace por WhatsApp, correo o redes sociales."
+msgstr "WhatsApp、メール、またはSNSでリンクを共有してください。"
 
 #: templates/privacy.html:6
 msgid "Política de Privacidad"
@@ -527,57 +648,85 @@ msgstr "ウェブサイト："
 msgid "Perfil de Usuario"
 msgstr "ユーザープロフィール"
 
-#: templates/profile.html:27
+#: templates/profile.html:32
+#, fuzzy
+msgid "Subir CV"
+msgstr "動画をアップロード"
+
+#: templates/profile.html:39
+msgid "Ver CV"
+msgstr "履歴書を見る"
+
+#: templates/profile.html:46
 msgid "seguidores"
 msgstr "フォロワー"
 
-#: templates/profile.html:28
+#: templates/profile.html:47
 msgid "siguiendo"
 msgstr "フォロー中"
 
-#: templates/profile.html:35
+#: templates/profile.html:54
 msgid "Dejar de seguir"
 msgstr "フォローをやめる"
 
-#: templates/profile.html:40
+#: templates/profile.html:59
 msgid "Seguir"
 msgstr "フォローする"
 
-#: templates/profile.html:52
+#: templates/profile.html:71
 msgid "Correo:"
 msgstr "メール："
 
-#: templates/profile.html:82
+#: templates/profile.html:78
+msgid "Profesión:"
+msgstr "職業："
+
+#: templates/profile.html:100
 msgid "Opiniones de"
 msgstr "のレビュー"
 
-#: templates/profile.html:92 templates/profile.html:181
+#: templates/profile.html:110 templates/profile.html:198
 msgid "Eliminar"
 msgstr "削除"
 
-#: templates/profile.html:114
+#: templates/profile.html:132
 msgid "Mostrar respuestas"
 msgstr "返信を表示"
 
-#: templates/profile.html:148
+#: templates/profile.html:166
 msgid "No hay opiniones aún."
 msgstr "まだレビューがありません。"
 
-#: templates/profile.html:168
+#: templates/profile.html:185
 msgid "Videos Subidos"
 msgstr "アップロードされた動画"
 
-#: templates/profile.html:175 templates/search.html:45
+#: templates/profile.html:192 templates/search.html:45
+#: templates/test_video.html:23
 msgid "Tu navegador no soporta el video."
 msgstr "お使いのブラウザはこのビデオをサポートしていません。"
 
-#: templates/project_detail.html:63 templates/project_detail.html:85
+#: templates/profile.html:206
+#, fuzzy
+msgid "Subir video"
+msgstr "動画をアップロード"
+
+#: templates/project_detail.html:78 templates/project_detail.html:100
 msgid "Solicitar proyecto"
 msgstr "プロジェクトに応募する"
 
 #: templates/projects_form.html:42
 msgid "Describe requisitos, alcance, entregables…"
 msgstr "要件、範囲、成果物などを記述してください…"
+
+#: templates/projects_form.html:73
+#, fuzzy
+msgid "Precio (opcional)"
+msgstr "会社名（任意）："
+
+#: templates/projects_form.html:124
+msgid "El precio máximo no puede ser menor que el mínimo."
+msgstr "最大価格は最小価格より低くすることはできません。"
 
 #: templates/register.html:7 templates/register.html:44
 msgid "Registro"
@@ -603,35 +752,32 @@ msgstr "メールアドレス："
 msgid "Empresa (Opcional):"
 msgstr "会社名（任意）："
 
-#: templates/register.html:87
-msgid "Profesión (Opcional):"
+#: templates/register.html:88
+#, fuzzy
+msgid "Profesiones (opcional)"
 msgstr "職業（任意）："
 
-#: templates/register.html:88
-msgid "Escribe o elige una profesión"
-msgstr "職業を入力または選択してください"
-
-#: templates/register.html:95
+#: templates/register.html:245
 msgid "Sobre ti (Opcional):"
 msgstr "自己紹介（任意）："
 
-#: templates/register.html:98
+#: templates/register.html:248
 msgid "Ubicación (Opcional):"
 msgstr "所在地（任意）："
 
-#: templates/register.html:106
+#: templates/register.html:256
 msgid "📍 Usar mi ubicación actual"
 msgstr "📍 現在の位置情報を使用"
 
-#: templates/register.html:111
+#: templates/register.html:261
 msgid "Repite la Contraseña:"
 msgstr "パスワードの確認："
 
-#: templates/register.html:117
+#: templates/register.html:267
 msgid "¿Ya tienes una cuenta?"
 msgstr "すでにアカウントをお持ちですか？"
 
-#: templates/register.html:117
+#: templates/register.html:267
 msgid "Inicia sesión aquí"
 msgstr "こちらからログイン"
 
@@ -697,21 +843,10 @@ msgstr "お問い合わせ"
 msgid "Si detectas alguna actividad sospechosa, por favor contáctanos en:"
 msgstr "不審な活動を発見した場合は、以下までご連絡ください："
 
-#: templates/settings.html:13
-msgid "Disfruta de beneficios exclusivos con MAZO Premium."
-msgstr "MAZO Premiumで特別な特典をお楽しみください。"
-
-#: templates/settings.html:14
-msgid "Ir a MAZO Premium"
-msgstr "MAZO Premiumへ"
-
-#: templates/settings.html:45
-msgid "¿Estás seguro de que quieres cerrar sesión?"
-msgstr "本当にログアウトしますか？"
-
-#: templates/settings.html:75
-msgid "Idioma de la Aplicación"
-msgstr "アプリの言語"
+#: templates/test_video.html:5
+#, fuzzy
+msgid "Prueba Video"
+msgstr "動画をアップロード"
 
 #: templates/upload.html:3 templates/upload.html:26
 msgid "Subir Video"
@@ -743,4 +878,16 @@ msgstr "送信済み"
 
 #~ msgid "Subir un nuevo video"
 #~ msgstr "新しい動画をアップロードする"
+
+#~ msgid "Escribe o elige una profesión"
+#~ msgstr "職業を入力または選択してください"
+
+#~ msgid "Disfruta de beneficios exclusivos con MAZO Premium."
+#~ msgstr "MAZO Premiumで特別な特典をお楽しみください。"
+
+#~ msgid "¿Estás seguro de que quieres cerrar sesión?"
+#~ msgstr "本当にログアウトしますか？"
+
+#~ msgid "Idioma de la Aplicación"
+#~ msgstr "アプリの言語"
 

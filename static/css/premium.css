@@ -1,28 +1,31 @@
 /* static/css/premium.css */
 
+/* ======== CONTENEDOR PRINCIPAL ======== */
 .premium-container {
-  max-width: 600px;
+  max-width: 650px;
   margin: 40px auto;
   background: #ffffff;
-  padding: 30px;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 35px;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
   font-family: 'Segoe UI', sans-serif;
   text-align: center;
 }
 
 .premium-container h1 {
   font-size: 2.2rem;
-  margin-bottom: 10px;
-  color: #2c3e50;
+  margin-bottom: 12px;
+  color: #1e293b;
+  font-weight: 700;
 }
 
 .premium-container p.lead {
   font-size: 1.2rem;
-  margin-bottom: 20px;
-  color: #34495e;
+  margin-bottom: 24px;
+  color: #475569;
 }
 
+/* ======== LISTA DE BENEFICIOS ======== */
 .premium-container ul {
   list-style: none;
   padding: 0;
@@ -32,13 +35,14 @@
 
 .premium-container ul li {
   padding: 10px 0;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   border-bottom: 1px solid #eee;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
+/* ======== BOTONES GENERALES ======== */
 .premium-container .btn {
   background: #007bff;
   color: white;
@@ -47,33 +51,75 @@
   font-size: 1rem;
   border-radius: 8px;
   text-decoration: none;
-  transition: background 0.3s;
+  transition: background 0.3s, transform 0.2s;
+  cursor: pointer;
 }
 
 .premium-container .btn:hover {
   background: #0056b3;
+  transform: translateY(-2px);
 }
 
+/* ======== ALERTA PREMIUM ACTIVO ======== */
 .alert-success {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: #e6f8ea;
+  color: #157347;
   padding: 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   margin-top: 20px;
   font-weight: 500;
+  border: 1px solid #a4e1b0;
 }
 
+/* ======== BLOQUE DE CHECKOUT ======== */
+#premium-checkout {
+  border: 1px solid #eee;
+  padding: 18px;
+  border-radius: 12px;
+  background: #fafafa;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+#premium-checkout:hover {
+  transform: translateY(-2px);
+}
+
+/* ======== INPUT DE PROMOCIÓN ======== */
+#promo-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  transition: all 0.2s ease-in-out;
+}
+
+#promo-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+#payment-error {
+  color: #c22;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+/* ======== BOTONES DE PAGO EXTERNOS ======== */
 .btn-premium {
   display: inline-block;
-  background-color: #635bff; /* color Stripe */
+  background-color: #635bff;
   color: white;
-  font-size: 1.2rem;
-  font-weight: bold;
-  padding: 12px 24px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 12px 22px;
   border-radius: 8px;
   text-decoration: none;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.25s ease-in-out;
+  box-shadow: 0 4px 14px rgba(99, 91, 255, 0.3);
 }
 
 .btn-premium:hover {
@@ -85,63 +131,98 @@
   display: inline-block;
   background-color: #ffc439;
   color: #111;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  padding: 12px 28px;
+  padding: 12px 24px;
   border-radius: 10px;
-  text-align: center;
   text-decoration: none;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.25s ease-in-out;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
 .btn-paypal:hover {
   background-color: #e0ac00;
   transform: scale(1.03);
-  text-decoration: none;
 }
 
+/* ======== NUEVA SECCIÓN: REFERIDOS ======== */
+.referral-box {
+  margin-top: 30px;
+  background: #f8fafc;
+  padding: 20px 25px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.referral-box h3 {
+  font-size: 1.3rem;
+  color: #1d4ed8;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.referral-box p {
+  color: #475569;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.referral-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  word-break: break-all;
+}
+
+.copy-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s;
+}
+
+.copy-btn:hover {
+  background: #0056b3;
+}
+
+/* ======== RESPONSIVE ======== */
 @media (max-width: 600px) {
-  .card {
-    padding: 1rem;
+  .premium-container {
+    padding: 20px;
   }
 
-  .card h1 {
-    font-size: 1.4rem;
-    text-align: center;
+  .premium-container h1 {
+    font-size: 1.6rem;
   }
 
-  .card .lead {
+  .premium-container p.lead {
     font-size: 1rem;
-    text-align: center;
-  }
-
-  .list-group-item {
-    font-size: 0.9rem;
-    padding: 0.6rem 0.9rem;
-  }
-
-  .btn.btn-lg {
-    font-size: 1rem;
-    padding: 0.6rem 1rem;
-  }
-
-  .alert-success {
-    font-size: 0.95rem;
-    text-align: center;
   }
 
   .btn-premium,
   .btn-paypal {
-    font-size: 0.7rem;           /* Texto más pequeño */
-    padding: 0.3rem 0.9rem;      /* Menos espacio interior */
-    white-space: nowrap;         /* Evita que se dividan en dos líneas */
-    flex: 0 1 auto;              /* Permite que compartan espacio sin romper fila */
+    font-size: 0.9rem;
+    padding: 10px 18px;
   }
 
-  .d-flex.gap-3.flex-wrap {
-    gap: 0.5rem;                 /* Reduce el espacio entre los botones */
-    justify-content: center;    /* Centra los botones en móvil */
+  .referral-box h3 {
+    font-size: 1.1rem;
+  }
+
+  .referral-box p {
+    font-size: 0.9rem;
   }
 }
 

@@ -6,57 +6,36 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
 
 <div class="settings-container">
-    <h2>⚙️ Configuración</h2>
+    <h2>{{ _('⚙️ Configuración') }}</h2>
 
     <div class="settings-section">
         <h3>💎 MAZO Premium</h3>
         <p>{{ _('Disfruta de beneficios exclusivos con MAZO Premium.') }}</p>
-
-        <!-- Stripe Checkout simplificado -->
-        <div id="premium-checkout" style="border:1px solid #eee; padding:16px; border-radius:8px; max-width:520px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <div>
-                    <strong>Suscripción mensual</strong>
-                    <div style="font-size:0.9rem; color:#666;">Acceso a premium gratuito el primer mes</div>
-                </div>
-                <div>
-                    <span>0.00 € / mes</span>
-                </div>
-            </div>
-
-            <div style="margin-top:12px;">
-                <button id="checkout-btn" class="btn primary">Activar Premium</button>
-                <div id="payment-error" style="color:#c22; margin-top:8px;"></div>
-            </div>
-        </div>
-
-        <div style="margin-top:12px;">
-            <a href="{{ url_for('premium') }}" class="btn secondary">Ir a MAZO Premium (panel)</a>
-        </div>
+        <a href="{{ url_for('premium') }}" class="btn secondary">Ir a MAZO Premium</a>
     </div>
 
     <div class="settings-section">
-        <h3>🔐 Seguridad</h3>
+        <h3>{{ _('🔐 Seguridad') }}</h3>
         <ul>
-            <li><a href="{{ url_for('edit_profile') }}">Editar perfil</a></li>
-            <li><a href="{{ url_for('change_password') }}">Cambiar contraseña</a></li>
+            <li><a href="{{ url_for('edit_profile') }}">{{ _('Editar perfil') }}</a></li>
+            <li><a href="{{ url_for('change_password') }}">{{ _('Cambiar contraseña') }}</a></li>
         </ul>
     </div>
 
     <div class="settings-section">
-        <h3>🔔 Notificaciones</h3>
-        <p><em>(Próximamente podrás ajustar notificaciones por email o push)</em></p>
+        <h3>{{ _('🔔 Notificaciones') }}</h3>
+        <p><em>{{ _('Próximamente podrás ajustar notificaciones por email o push') }}</em></p>
     </div>
 
     <div class="settings-section">
-        <h3>🗑️ Cuenta</h3>
-        <p>¿Quieres eliminar tu cuenta? <a href="#">Haz clic aquí</a>.</p>
+        <h3>{{ _('🗑️ Cuenta') }}</h3>
+        <p>{{ _('¿Quieres eliminar tu cuenta?') }} <a href="#">{{ _('Haz clic aquí') }}</a>.</p>
     </div>
 
     <div class="logout-container">
         <button class="logout-trigger" onclick="openLogoutModal(event)">
             <i class="fas fa-sign-out-alt"></i>
-            Cerrar sesión: haz clic aquí
+            {{ _('Cerrar sesión: haz clic aquí') }}
         </button>
     </div>
 
@@ -87,7 +66,7 @@
     </script>
 
     <div style="margin-top: 2em;">
-        <a href="{{ url_for('profile', username=current_user.username) }}" class="btn-back">← Volver al perfil</a>
+        <a href="{{ url_for('profile', username=current_user.username) }}" class="btn-back">{{ _('← Volver al perfil') }}</a>
     </div>
 </div>
 
@@ -129,81 +108,6 @@ document.getElementById('language').addEventListener('change', function () {
             alert("Error al cambiar el idioma.");
         }
     });
-});
-</script>
-
-<!-- Stripe Checkout -->
-<!-- incluir Stripe.js -->
-<script src="https://js.stripe.com/v3/"></script>
-
-<!-- meta CSRF: añade esto en <head> del template -->
-<meta name="csrf-token" content="{{ csrf_token() }}">
-
-<script>
-async function getCsrfToken() {
-  const el = document.querySelector('meta[name="csrf-token"]');
-  return el ? el.content : '';
-}
-
-document.getElementById("checkout-btn").addEventListener("click", async (e) => {
-  e.preventDefault();
-  const errEl = document.getElementById("payment-error");
-  if (errEl) errEl.textContent = "";
-
-  try {
-    const csrf = await getCsrfToken();
-
-    const res = await fetch("{{ url_for('create_checkout_session') }}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrf
-      },
-      body: JSON.stringify({}) // si necesitas enviar campos, ponlos aquí
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("Error creando sesión:", res.status, text);
-      if (errEl) errEl.textContent = "Error creando la sesión de pago.";
-      return;
-    }
-
-    const data = await res.json();
-    console.log("create-checkout-session response:", data);
-
-    // Si el backend devuelve directamente la URL -> redirige
-    if (data.url) {
-      window.location.href = data.url;
-      return;
-    }
-
-    // Si devuelve id -> usa Stripe.js
-    const sessionId = data.id || data.sessionId || (data.session && data.session.id);
-    if (sessionId) {
-      const publishableKey = "{{ stripe_publishable_key or '' }}";
-      if (!publishableKey) {
-        console.error("Falta STRIPE_PUBLIC_KEY en el template.");
-        if (errEl) errEl.textContent = "Error de configuración de Stripe (clave pública faltante).";
-        return;
-      }
-      const stripe = Stripe(publishableKey);
-      const result = await stripe.redirectToCheckout({ sessionId: sessionId });
-      if (result && result.error) {
-        console.error("Stripe redirectToCheckout error:", result.error);
-        if (errEl) errEl.textContent = result.error.message || "Error redirigiendo a Stripe.";
-      }
-      return;
-    }
-
-    // Si no viene ni id ni url:
-    console.error("Respuesta inesperada del servidor:", data);
-    if (errEl) errEl.textContent = "Respuesta inesperada al crear la sesión.";
-  } catch (err) {
-    console.error("Error en applyPremium:", err);
-    const errEl = document.getElementById("payment-error");
-    if (errEl) errEl.textContent = "Error conectando con Stripe.";
-  }
 });
 </script>
 
