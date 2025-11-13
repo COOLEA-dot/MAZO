@@ -43,6 +43,11 @@ from requests.exceptions import RequestException
 import secrets 
 from slugify import slugify 
 
+# Helper seguro para hacer strip sin fallar si value es None
+def _safe_strip(value):
+    """Devuelve value.strip() si value no es None, sino cadena vacía."""
+    return (value or "").strip()
+
 ENV_PATH = Path(__file__).resolve().parent / ".env"
 app = Flask(__name__)
 app.config.update(
@@ -993,21 +998,32 @@ def send_referral_reward_email(email):
 @app.route("/register", methods=["GET", "POST"])
 def register():
     form = RegisterForm()
-    referral_code = request.args.get("ref")  # 👈 Captura del link de referido
+    referral_code = request.args.get("ref")  # captura link de referido
 
+    # Si se envió el formulario y pasó la validación de WTForms
     if form.validate_on_submit():
-        name = request.form.get("name", "").strip()
-        username = form.username.data.strip()
-        phone = request.form.get("phone", "").strip()
-        email = form.email.data.strip()
-        password = form.password.data.strip()
-        confirm_password = form.confirm_password.data.strip()
-        company = form.company.data.strip() or None
-        profession = form.profession.data.strip() or None
-        description = form.description.data.strip() or None
-        location = form.location.data.strip() or None
+        # Extraer datos de forma segura (evita AttributeError por None)
+        name = _safe_strip(request.form.get("name") or getattr(form, "name", None) and getattr(form.name, "data", ""))
+        username = _safe_strip(getattr(form.username, "data", ""))
+        phone = _safe_strip(request.form.get("phone") or getattr(form, "phone", None) and getattr(form.phone, "data", ""))
+        email = _safe_strip(getattr(form.email, "data", ""))
+        password = (getattr(form.password, "data", "") or "").strip()
+        confirm_password = (getattr(form.confirm_password, "data", "") or "").strip()
+        company = (_safe_strip(getattr(form, "company", None) and getattr(form.company, "data", ""))) or None
+        profession = (_safe_strip(getattr(form, "profession", None) and getattr(form.profession, "data", ""))) or None
+        description = (_safe_strip(getattr(form, "description", None) and getattr(form.description, "data", ""))) or None
+        location = (_safe_strip(getattr(form, "location", None) and getattr(form.location, "data", ""))) or None
 
-        # Crear profesión si es nueva
+        # Validación de contraseñas (por si alguien omite el campo)
+        if not password:
+            flash("Introduce una contraseña.", "error")
+            return render_template("register.html", form=form)
+
+        if password != confirm_password:
+            flash("Las contraseñas no coinciden", "error")
+            return render_template("register.html", form=form)
+
+        # Crear profesión si es nueva (si viene rellenada)
         if profession:
             existing_prof = Profession.query.filter_by(name=profession).first()
             if not existing_prof:
@@ -1015,44 +1031,63 @@ def register():
                 db.session.add(new_prof)
                 db.session.commit()
 
-        # Verificar contraseñas
-        if password != confirm_password:
-            flash("Las contraseñas no coinciden", "error")
-            return render_template("register.html", form=form)
-
         # Verificar usuario o email existentes
         existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
         if existing_user:
             flash("El nombre de usuario o correo ya está en uso.", "error")
             return render_template("register.html", form=form)
 
-        # Guardar foto de perfil
-        profile_picture = form.profile_pic.data
+        # Guardar foto de perfil (si se subió)
+        profile_picture = None
         filename = None
-        if profile_picture:
-            filename = secure_filename(profile_picture.filename)
-            picture_path = os.path.join(app.config["PROFILE_PICS_FOLDER"], filename)
-            profile_picture.save(picture_path)
+        try:
+            if getattr(form, "profile_pic", None) and getattr(form.profile_pic, "data", None):
+                profile_picture = form.profile_pic.data
+            else:
+                # fallback si usas request.files directamente
+                profile_picture = request.files.get("profile_pic")
+        except Exception:
+            profile_picture = None
+
+        if profile_picture and getattr(profile_picture, "filename", None):
+            safe_name = secure_filename(profile_picture.filename)
+            # generar nombre único para evitar colisiones
+            ext = safe_name.rsplit(".", 1)[-1] if "." in safe_name else ""
+            filename = f"{uuid.uuid4().hex}.{ext}" if ext else uuid.uuid4().hex
+            picture_folder = app.config.get("PROFILE_PICS_FOLDER", os.path.join("static", "profile_pics"))
+            os.makedirs(picture_folder, exist_ok=True)
+            picture_path = os.path.join(picture_folder, filename)
+            try:
+                profile_picture.save(picture_path)
+                # Guardaremos la ruta relativa en el modelo
+                profile_pic_db_value = f"profile_pics/{filename}"
+            except Exception as e:
+                print("Error guardando foto de perfil:", e)
+                profile_pic_db_value = "profile_pics/default.jpg"
+        else:
+            profile_pic_db_value = "profile_pics/default.jpg"
 
         # Crear nuevo usuario
         new_user = User(
-            name=name,
-            username=username,
-            phone=phone,
-            email=email,
+            name=name or None,
+            username=username or None,
+            phone=phone or None,
+            email=email or None,
             company=company,
             profession=profession,
             description=description,
             location=location,
-            profile_pic=f"profile_pics/{filename}" if filename else "profile_pics/default.jpg"
+            profile_pic=profile_pic_db_value
         )
+
+        # Guardar la contraseña (tu método set_password)
         new_user.set_password(password)
 
-        # 🔥 Si viene desde un link de referido
+        # 🔥 Lógica de referido (si existe)
         if referral_code:
             referrer = User.query.filter_by(referral_code=referral_code).first()
             if referrer:
-                referrer.referred_count += 1
+                referrer.referred_count = (referrer.referred_count or 0) + 1
                 db.session.add(referrer)
                 db.session.commit()
 
@@ -1060,14 +1095,20 @@ def register():
                 if referrer.referred_count == 3:
                     send_referral_reward_email(referrer.email)
 
+        # Guardar nuevo usuario en BD
         db.session.add(new_user)
         db.session.commit()
 
-        send_verification_email(new_user.email)
-        flash('Registro exitoso. Verifica tu email para activar tu cuenta.', 'info')
+        # Enviar verificación por email (si lo tienes)
+        try:
+            send_verification_email(new_user.email)
+        except Exception as e:
+            print("Error enviando email de verificación:", e)
 
+        flash("Registro exitoso. Verifica tu email para activar tu cuenta.", "info")
         return redirect(url_for("login"))
 
+    # Si no es POST o la validación falló, mostrar formulario
     professions = [p.name for p in Profession.query.order_by(Profession.name).all()]
     return render_template("register.html", form=form, user=None, professions=professions)
 
@@ -1793,6 +1834,7 @@ class Message(db.Model):
     sender = db.relationship('User', foreign_keys=[sender_id])
 
 @socketio.on('join')
+@login_required
 def handle_join(data):
     room = data.get('room')
     if room:
@@ -1840,15 +1882,17 @@ def get_user_chats(user_id):
     return chat_data
 
 @app.route('/chats')
+@login_required
 def chats():
-    if 'user_id' not in session:
-        flash('Por favor inicia sesión para acceder a tus chats', 'error')
-        return redirect(url_for('login'))
-    
-    user_id = session['user_id']
+    # current_user ya está disponible y autenticado gracias a @login_required
+    print("CHATS VIEW - current_user:", current_user, "is_authenticated:", current_user.is_authenticated, "id:", getattr(current_user, 'id', None))
+
+    user_id = current_user.id
+    # get_user_chats debe devolver una lista de objetos/dicts con los campos que usas en la plantilla
     chats = get_user_chats(user_id)
 
-    return render_template('chat_list.html', username=session.get('username'), chats=chats)
+    # Pasamos current_user.username para consistencia (aunque en plantilla también podemos usar current_user)
+    return render_template('chat_list.html', username=current_user.username, chats=chats)
 
 def _run(cmd):
     subprocess.run(cmd, check=True)
@@ -1892,37 +1936,50 @@ def _rel_from_root(path):
     return os.path.relpath(path, app.root_path).replace("\\", "/")
 
 @app.route('/chat/<recipient_username>')
+@login_required
 def chat_with_user(recipient_username):
-    if 'user_id' not in session:
-        flash('Debes iniciar sesión para acceder al chat', 'error')
-        return redirect(url_for('login'))
+    # DEBUG - confirma que Flask detecta la sesión (misma filosofía que upload view)
+    print("CHAT VIEW - current_user:", current_user, "is_authenticated:", current_user.is_authenticated, "id:", getattr(current_user, 'id', None))
 
-    sender = User.query.get(session['user_id'])
+    sender = current_user
     recipient = User.query.filter_by(username=recipient_username).first()
 
     if not recipient:
+        # si no encuentra al usuario, redirige al home con flash (igual que en upload)
         flash('Usuario no encontrado', 'error')
         return redirect(url_for('home'))
 
-    # Buscar la conversación entre los dos usuarios
+    # Buscar conversación (independiente del orden)
     conversation = Conversation.query.filter(
         ((Conversation.user_id == sender.id) & (Conversation.recipient_id == recipient.id)) |
         ((Conversation.user_id == recipient.id) & (Conversation.recipient_id == sender.id))
     ).first()
 
-    if conversation:
-        # Marcar como leídos los mensajes del otro usuario
-        Message.query.filter(
-            Message.conversation_id == conversation.id,
-            Message.sender_id != sender.id,  # Solo marcar los mensajes del otro usuario
-            Message.is_read == False
-        ).update({'is_read': True})
-        
-        db.session.commit()  # Guardar cambios en la base de datos
+    # Si no existe, crearla (evita None y facilita la lógica)
+    if not conversation:
+        conversation = Conversation(user_id=sender.id, recipient_id=recipient.id)
+        db.session.add(conversation)
+        db.session.commit()
+
+    # Marcar mensajes del otro usuario como leídos
+    Message.query.filter(
+        Message.conversation_id == conversation.id,
+        Message.sender_id != sender.id,
+        Message.is_read == False
+    ).update({'is_read': True})
+    db.session.commit()
 
     messages = Message.query.filter_by(conversation_id=conversation.id).order_by(Message.timestamp).all()
 
-    return render_template('chat.html', recipient=recipient, username=session.get('username'), messages=messages)
+    # Calculamos room y pasamos username usando current_user para consistencia
+    room = f"chat_{'_'.join(sorted([sender.username, recipient.username]))}"
+
+    return render_template('chat.html',
+                           recipient=recipient,
+                           username=sender.username,
+                           messages=messages,
+                           room=room)
+
 
 def partial_response(abs_path, content_type=None, cache_seconds=60*60*24*7):
     if not os.path.exists(abs_path):
@@ -2122,33 +2179,44 @@ def clean_base64(file_str):
     return file_str
 
 # helpers/salas.py (o en el mismo archivo si prefieres)
-def chat_room_by_usernames(u1: str, u2: str) -> str:
-    a, b = sorted([str(u1), str(u2)])
-    return f"chat_{a}_{b}"
+@socketio.on('connect')
+def socket_connect():
+    print("---- SOCKET CONNECT ----")
+    print("request.cookies:", dict(request.cookies))
+    print("current_user:", getattr(current_user, "username", None),
+          "is_authenticated:", current_user.is_authenticated)
+    if not current_user.is_authenticated:
+        print("-> conexión rechazada: usuario no autenticado")
+        return False
+    print("-> conexión aceptada para", current_user.username)
 
-# Acepta ambos nombres de evento: el viejo ('message') y el nuevo ('send_message')
-@socketio.on('message')
+# send_message (reemplaza handle_send_message): usa current_user en vez de 'sender' del cliente
 @socketio.on('send_message')
 def handle_send_message(data):
     print("Recibiendo mensaje de WebSocket...")
-    print("Datos recibidos:", data)
+    print("Datos recibidos (raw):", data)
 
-    sender = data.get('username')
-    recipient = data.get('recipient')
-    message = data.get('message', '')
+    # ------ identidad segura: no confiar en 'username' enviado por cliente ------
+    sender_user = current_user
+    if not sender_user or not sender_user.is_authenticated:
+        print("❌ Envío rechazado: usuario no autenticado")
+        return {'ok': False, 'error': 'not_authenticated'}
+
+    recipient_username = data.get('recipient') or data.get('to')  # aceptar varios nombres
+    message_text = (data.get('message') or '').strip()
     file = data.get('file')
     filename = data.get('filename')
 
-    if not sender or not recipient or (not message and not file):
-        print("❌ Error: Faltan datos o mensaje vacío.")
+    if not recipient_username or (not message_text and not file):
+        print("❌ Error: datos faltantes o mensaje vacío.")
         return {'ok': False, 'error': 'missing_fields'}
 
+    # Procesar archivo si viene (tu lógica)
     file_path = None
     thumbnail_path = None
-
-    # --- procesamiento de archivo (tu mismo código) ---
     if file:
         try:
+            # tu lógica existente para procesar base64 o file object
             if isinstance(file, str):
                 if file.startswith("static/chat_uploads/"):
                     file_path = file
@@ -2161,28 +2229,26 @@ def handle_send_message(data):
             elif hasattr(file, 'filename'):
                 file_path = upload_file(file, CHAT_UPLOAD_FOLDER)
         except Exception as e:
-            print(f"❌ Error al procesar el archivo: {e}")
-            return {'ok': False, 'error': f'file_process_error: {e}'}
+            print(f"❌ Error al procesar archivo: {e}")
+            return {'ok': False, 'error': 'file_process_error'}
 
+        # Generar thumbnail si corresponde
         if file_path and file_path.lower().endswith(('.mp4', '.webm', '.mov', '.avi', '.mpg')):
-            base = os.path.basename(file_path)
-            thumb_name = f"thumb_{base}.png"
-            thumbnail_path = os.path.join(THUMBNAIL_FOLDER, thumb_name)
             try:
+                base = os.path.basename(file_path)
+                thumb_name = f"thumb_{base}.png"
+                thumbnail_path = os.path.join(THUMBNAIL_FOLDER, thumb_name)
                 generate_thumbnail(file_path, thumbnail_path)
                 thumbnail_path = thumbnail_path.replace("\\", "/")
             except Exception as e:
                 print(f"⚠️ No se pudo generar miniatura: {e}")
                 thumbnail_path = None
 
-    print(f"📨 Mensaje de {sender} para {recipient}: {message}, Archivo: {file_path}, Miniatura: {thumbnail_path}")
-
-    # --- usuarios / conversación (tu mismo código) ---
-    sender_user = User.query.filter_by(username=sender).first()
-    recipient_user = User.query.filter_by(username=recipient).first()
-    if not sender_user or not recipient_user:
-        print(f"❌ Error: Usuario {sender} o {recipient} no encontrado.")
-        return {'ok': False, 'error': 'user_not_found'}
+    # Buscar destinatario y conversación
+    recipient_user = User.query.filter_by(username=recipient_username).first()
+    if not recipient_user:
+        print(f"❌ Error: recipient {recipient_username} no encontrado.")
+        return {'ok': False, 'error': 'recipient_not_found'}
 
     conversation = Conversation.query.filter(
         ((Conversation.user_id == sender_user.id) & (Conversation.recipient_id == recipient_user.id)) |
@@ -2193,95 +2259,108 @@ def handle_send_message(data):
         conversation = Conversation(user_id=sender_user.id, recipient_id=recipient_user.id)
         db.session.add(conversation)
         db.session.commit()
-        print(f"🆕 Conversación creada entre {sender} y {recipient}")
+        print(f"🆕 Conversación creada entre {sender_user.username} y {recipient_user.username}")
 
+    # Guardar mensaje en BD
     try:
         new_message = Message(
             sender_id=sender_user.id,
             conversation_id=conversation.id,
-            content=message if message else None,
+            content=message_text if message_text else None,
             file_url=file_path,
             thumbnail_url=thumbnail_path
         )
         db.session.add(new_message)
         db.session.commit()
     except Exception as e:
-        print(f"❌ Error guardando mensaje en DB: {e}")
         db.session.rollback()
+        print(f"❌ Error guardando mensaje en DB: {e}")
         return {'ok': False, 'error': 'db_error'}
 
     print(f"✅ Mensaje guardado con ID: {new_message.id}")
 
-    # --- emitir a la sala correcta ---
-    room = chat_room_by_usernames(sender, recipient)
-
+    # Emitir a la sala correcta (construida desde usernames para ser consistente)
+    room = chat_room_by_username(sender_user.username, recipient_user.username)
     payload = {
-        'username': sender,
-        'message': message,
+        'username': sender_user.username,
+        'message': message_text,
         'message_id': new_message.id,
         'file_url': file_path or "",
         'thumbnail_url': thumbnail_path or "",
+        'timestamp': new_message.timestamp.isoformat()
     }
 
-    # Incluimos explícitamente include_self para que el emisor lo vea al instante
     socketio.emit('receive_message', payload, to=room, include_self=True)
     print(f"✅ Mensaje emitido a la sala {room}")
 
     return {'ok': True, 'message_id': new_message.id, 'file_url': file_path, 'thumbnail_url': thumbnail_path}
 
+
+# Edit message: usar current_user.id para comprobar permisos
 @socketio.on('edit_message')
 def handle_edit_message(data):
     message_id = data.get('message_id')
     new_content = data.get('new_content')
-    if not message_id or not new_content:
+    if not message_id or new_content is None:
         print("Error: Faltan datos para editar el mensaje.")
-        return
+        return {'ok': False, 'error': 'missing_fields'}
 
-    message = Message.query.get(message_id)
-    if message and message.sender_id == session.get('user_id'):
-        message.content = new_content
-        db.session.commit()
+    msg = Message.query.get(message_id)
+    if not msg:
+        print("Error: mensaje no encontrado")
+        return {'ok': False, 'error': 'not_found'}
 
-        # Construye la sala por usernames
-        conv = Conversation.query.get(message.conversation_id)
-        u1 = User.query.get(conv.user_id)
-        u2 = User.query.get(conv.recipient_id)
-        room = chat_room_by_usernames(u1.username, u2.username)
+    if msg.sender_id != current_user.id:
+        print("Error: el usuario no tiene permisos para editar este mensaje")
+        return {'ok': False, 'error': 'forbidden'}
 
-        socketio.emit('message_edited', {
-            'message_id': message_id,
-            'new_message': new_content,
-            'username': u1.username if u1.id == message.sender_id else u2.username
-        }, to=room)
+    msg.content = new_content
+    db.session.commit()
 
-        print(f"Mensaje {message_id} editado correctamente.")
-    else:
-        print("Error: No se encontró el mensaje o el usuario no tiene permisos.")
+    conv = Conversation.query.get(msg.conversation_id)
+    u1 = User.query.get(conv.user_id)
+    u2 = User.query.get(conv.recipient_id)
+    room = chat_room_by_username(u1.username, u2.username)
+
+    socketio.emit('message_edited', {
+        'message_id': message_id,
+        'new_message': new_content,
+        'username': current_user.username
+    }, to=room)
+
+    print(f"Mensaje {message_id} editado correctamente.")
+    return {'ok': True}
 
 
+# Delete message: usar current_user.id para comprobar permisos
 @socketio.on('delete_message')
 def handle_delete_message(data):
     message_id = data.get('message_id')
     if not message_id:
         print("Error: Faltan datos para eliminar el mensaje.")
-        return
+        return {'ok': False, 'error': 'missing_fields'}
 
-    message = Message.query.get(message_id)
-    if message and message.sender_id == session.get('user_id'):
-        conv = Conversation.query.get(message.conversation_id)
-        u1 = User.query.get(conv.user_id)
-        u2 = User.query.get(conv.recipient_id)
-        room = chat_room_by_usernames(u1.username, u2.username)
+    msg = Message.query.get(message_id)
+    if not msg:
+        print("Error: mensaje no encontrado")
+        return {'ok': False, 'error': 'not_found'}
 
-        db.session.delete(message)
-        db.session.commit()
+    if msg.sender_id != current_user.id:
+        print("Error: el usuario no tiene permisos para eliminar este mensaje")
+        return {'ok': False, 'error': 'forbidden'}
 
-        socketio.emit('message_deleted', {'message_id': message_id}, to=room)
-        print(f"Mensaje {message_id} eliminado correctamente.")
-    else:
-        print("Error: No se encontró el mensaje o el usuario no tiene permisos.")
+    conv = Conversation.query.get(msg.conversation_id)
+    u1 = User.query.get(conv.user_id)
+    u2 = User.query.get(conv.recipient_id)
+    room = chat_room_by_username(u1.username, u2.username)
 
-@socketio.on('share_video')
+    db.session.delete(msg)
+    db.session.commit()
+
+    socketio.emit('message_deleted', {'message_id': message_id}, to=room)
+    print(f"Mensaje {message_id} eliminado correctamente.")
+    return {'ok': True}@socketio.on('share_video')
+
 def handle_share_video(data):
     sender_id = session.get('user_id')
     recipient_username = data.get('recipient_username')
@@ -2581,70 +2660,79 @@ def add_security_headers(response):
 def uploaded_file(filename):
     return send_from_directory('static/uploads/videos', filename)
 
-@app.route('/upload', methods=['POST', 'GET'])
+@app.route('/upload', methods=['GET', 'POST'])
+@login_required
 def upload():
-    if 'user_id' not in session:
-        flash('Debes iniciar sesión para subir videos.', 'error')
-        return redirect(url_for('login'))
+    # DEBUG - confirma que Flask detecta la sesión
+    print("UPLOAD VIEW - current_user:", current_user, "is_authenticated:", current_user.is_authenticated, "id:", getattr(current_user, 'id', None))
 
     if request.method == 'GET':
         return render_template('upload.html')
 
-    if request.method == 'POST':
-        print("➡️ Iniciando proceso de subida...")
+    # POST
+    try:
+        # Si usas Flask-WTF: validate_csrf recibirá el token
+        validate_csrf(request.form.get('csrf_token'))
+    except Exception as e:
+        print("❌ CSRF inválido:", e)
+        flash('CSRF inválido', 'error')
+        return redirect(url_for('upload'))
 
+    video_file = request.files.get('video_file')
+    title = (request.form.get('title') or '').strip()
+    description = (request.form.get('description') or '').strip()
+    hashtags = (request.form.get('hashtags') or '').strip()
+
+    if not video_file:
+        print("❌ No se recibió ningún archivo")
+        flash('Selecciona un video válido.', 'error')
+        return redirect(url_for('upload'))
+
+    if not allowed_file(video_file.filename):
+        print("❌ Tipo de archivo no permitido:", video_file.filename)
+        flash('Tipo de archivo no permitido.', 'error')
+        return redirect(url_for('upload'))
+
+    try:
+        # Carpeta configurable desde config (recomendado)
+        upload_folder = current_app.config.get('UPLOAD_FOLDER', 'static/uploads/videos')
+        os.makedirs(upload_folder, exist_ok=True)
+
+        # Nombre seguro y único
+        filename = secure_filename(video_file.filename)
+        ext = filename.rsplit('.', 1)[1].lower()
+        unique_filename = f"{uuid.uuid4().hex}.{ext}"
+        file_path = os.path.join(upload_folder, unique_filename)
+
+        # Guardar archivo
+        video_file.save(file_path)
+        print(f"✅ Video guardado localmente en {file_path}")
+
+        # Guardar en BD: usa current_user.id (consistente)
+        new_video = Video(
+            video_url=unique_filename,  # guarda el nombre/Path relativo
+            title=title,
+            description=description,
+            hashtags=hashtags,
+            user_id=current_user.id
+        )
+        db.session.add(new_video)
+        db.session.commit()
+        print("✅ Video registrado en la base de datos (id:", new_video.id, ")")
+
+    except Exception as e:
+        print("❌ Error guardando el archivo o en BD:", e)
+        # opcional: borrar archivo si se creó pero hubo error DB
         try:
-            validate_csrf(request.form.get('csrf_token'))
-        except Exception as e:
-            print("❌ CSRF inválido:", e)
-            flash('CSRF inválido', 'error')
-            return redirect(url_for('upload'))
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except Exception:
+            pass
+        flash('Error al subir el video.', 'error')
+        return redirect(url_for('upload'))
 
-        video_file = request.files.get('video_file')
-        title = request.form.get('title', '').strip()
-        description = request.form.get('description', '').strip()
-        hashtags = request.form.get('hashtags', '').strip()
-
-        if not video_file:
-            print("❌ No se recibió ningún archivo")
-            flash('Selecciona un video válido.', 'error')
-            return redirect(url_for('upload'))
-
-        if not allowed_file(video_file.filename):
-            print("❌ Tipo de archivo no permitido")
-            flash('Tipo de archivo no permitido.', 'error')
-            return redirect(url_for('upload'))
-
-        try:
-            # Crear un nombre único
-            file_extension = video_file.filename.rsplit('.', 1)[1].lower()
-            unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
-            file_path = os.path.join('static/uploads/videos', unique_filename)
-
-            # Guardar archivo local
-            video_file.save(file_path)
-            print(f"✅ Video guardado localmente en {file_path}")
-
-            # Guardar en base de datos
-            new_video = Video(
-                video_url=unique_filename,  # Solo el nombre del archivo
-                title=title,
-                description=description,
-                hashtags=hashtags,
-                user_id=session['user_id']
-            )
-            db.session.add(new_video)
-            db.session.commit()
-            print("✅ Video registrado en la base de datos")
-
-        except Exception as e:
-            print("❌ Error guardando el archivo:", e)
-            flash('Error al subir el video.', 'error')
-            return redirect(url_for('upload'))
-
-        flash('¡Video subido con éxito!', 'success')
-        return redirect(url_for('home'))
-
+    flash('¡Video subido con éxito!', 'success')
+    return redirect(url_for('profile', username=current_user.username))
 @app.route('/api/videos', methods=['GET'])
 def get_videos():
     videos = Video.query.all()
@@ -2897,8 +2985,6 @@ class JobForm(FlaskForm):
     
     submit = SubmitField('Publicar empleo')
 
-
-
 class Project(db.Model):
     __tablename__ = "project"
     __table_args__ = {'extend_existing': True}
@@ -3021,7 +3107,6 @@ def project_detail(project_id):
                 .order_by(ProjectApplication.created_at.desc())
                 .all())
     return render_template("project_detail.html", project=project, apps=apps)
-
 
 @app.route("/jobs/<int:job_id>", endpoint="job_detail")
 def job_detail(job_id):

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ _('Chat con') }}{{ recipient.username }}{% endblock %}
+{% block title %}{{ _('Chat con') }} {{ recipient.username }}{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -9,39 +9,57 @@
 <h2 class="chat-header">
     <a href="{{ url_for('profile', username=recipient.username) }}" class="chat-profile-link">
         <div class="chat-avatar">
-            <img src="{{ url_for('static', filename=(recipient.profile_pic if recipient.profile_pic else 'profile_pics/default.jpg')) }}" alt="{{ recipient.username }}">
+            {# Si profile_pic es una URL externa, úsala tal cual; si es una ruta local, usa static #}
+            {% if recipient.profile_pic %}
+                {% if recipient.profile_pic.startswith('http') %}
+                    <img src="{{ recipient.profile_pic }}" alt="{{ recipient.username }}">
+                {% else %}
+                    <img src="{{ url_for('static', filename=recipient.profile_pic) }}" alt="{{ recipient.username }}">
+                {% endif %}
+            {% else %}
+                <img src="{{ url_for('static', filename='profile_pics/default.jpg') }}" alt="{{ recipient.username }}">
+            {% endif %}
         </div>
         <div class="chat-info">
             <h3>{{ recipient.company if recipient.company else recipient.username }}</h3>
         </div>
-    </a>    
+    </a>
 </h2>
 
-<div id="chat-box" 
-     data-username="{{ username }}" 
-     data-recipient="{{ recipient.username }}" 
-     data-room="chat_{{ [username, recipient.username] | sort | join('_') }}">
+<div id="chat-box"
+     data-username="{{ username }}"
+     data-recipient="{{ recipient.username }}"
+     data-room="{{ room }}">
 
     {% for message in messages %}
-        <div class="chat-message {% if message.sender.username == username %}my-message{% else %}other-message{% endif %}" 
+        <div class="chat-message {% if message.sender.username == username %}my-message{% else %}other-message{% endif %}"
              data-message-id="{{ message.id }}">
 
             <div class="message-content">
                 {% if message.file_url %}
-                    {% set file_url = '/' + message.file_url.lstrip('/') %}
+                    {# Determina file_url: si es absoluta (http) úsala tal cual, si no añade '/' delante #}
+                    {% if message.file_url.startswith('http') %}
+                        {% set file_url = message.file_url %}
+                    {% else %}
+                        {% set file_url = '/' + message.file_url.lstrip('/') %}
+                    {% endif %}
                     {% set file_extension = file_url.split('.')[-1].lower() %}
 
-                    {% if file_extension in ['mp4', 'webm', 'mov'] %}
+                    {% if file_extension in ['mp4', 'webm', 'mov', 'avi', 'mpg'] %}
                         <div class="video-thumbnail" onclick="openVideoModal('{{ file_url }}')">
                             {% if message.thumbnail_url %}
-                                <img src="{{ url_for('static', filename='chat_uploads/thumbnails/' + message.thumbnail_url.split('/')[-1]) }}" class="chat-thumbnail" alt="Miniatura de video">
+                                {% if message.thumbnail_url.startswith('http') %}
+                                    <img src="{{ message.thumbnail_url }}" class="chat-thumbnail" alt="Miniatura de video">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='chat_uploads/thumbnails/' + message.thumbnail_url.split('/')[-1]) }}" class="chat-thumbnail" alt="Miniatura de video">
+                                {% endif %}
                             {% else %}
                                 <img src="{{ url_for('static', filename='chat_uploads/thumbnails/default-thumbnail.jpg') }}" class="chat-thumbnail" alt="Miniatura de video">
                             {% endif %}
                             <i class="fa fa-play play-icon"></i>
                         </div>
 
-                    {% elif file_extension in ['jpg', 'jpeg', 'png', 'gif'] %}
+                    {% elif file_extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
                         <img src="{{ file_url }}" class="chat-thumbnail" alt="Imagen enviada" onclick="openImageModal('{{ file_url }}')">
 
                     {% elif file_extension == 'pdf' %}
@@ -65,7 +83,7 @@
                         </div>
 
                     {% else %}
-                        <i class="fas fa-file file-icon"></i> 
+                        <i class="fas fa-file file-icon"></i>
                         <a href="{{ file_url }}" target="_blank">Descargar archivo</a>
                     {% endif %}
                 {% else %}
@@ -90,13 +108,13 @@
 <form id="message-form" enctype="multipart/form-data">
     <div id="chat-input">
         <label for="file-input" class="file-label"><i class="fas fa-paperclip"></i></label>
-        <input type="file" id="file-input" multiple accept="image/*,video/*,.pdf,.docx,.pptx,.xls,.xlsx,.avi,.mpg,.mov,.webm" style="display: none;">
+        <input type="file" id="file-input" name="file_input" multiple accept="image/*,video/*,.pdf,.docx,.pptx,.xls,.xlsx,.avi,.mpg,.mov,.webm" style="display: none;" autocomplete="off">
 
         <!-- Vista previa visual de archivos -->
         <div id="file-preview-container"></div>
 
-        <textarea id="message" placeholder="Escribe un mensaje..." rows="2"></textarea>
-        <button id="send-btn" type="submit"></button>      
+        <textarea id="message" name="message" placeholder="Escribe un mensaje..." rows="2" autocomplete="off"></textarea>
+        <button id="send-btn" type="submit"></button>
     </div>
     <input type="hidden" id="csrf-token" value="{{ csrf_token() }}">
 </form>
@@ -122,5 +140,27 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
+
+{# Línea mínima para emitir join al cargar la página. No rompe si ya tienes chat.js; es un fallback ligero. #}
+<script>
+  (function(){
+    try {
+      const cb = document.getElementById('chat-box');
+      if (!cb) return;
+      const room = cb.dataset.room;
+      const username = cb.dataset.username;
+      // Con withCredentials para que la cookie de sesión viaje si hace falta
+      const socket = io('/', { path: '/socket.io', transports: ['websocket','polling'], withCredentials: true });
+      socket.on('connect', () => {
+        console.log('Socket conectado, emitiendo join ->', room);
+        socket.emit('join', { room, username });
+      });
+      socket.on('connect_error', (err) => console.error('Socket connect_error', err));
+    } catch (e) {
+      console.error('Error init minimal chat join:', e);
+    }
+  })();
+</script>
+
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}

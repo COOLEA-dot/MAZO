@@ -1,22 +1,44 @@
-// Conexión al servidor Socket.IO (no usar ws:// ni wss:// manualmente)
-const socket = io("/", {
-  path: "/socket.io",
-  transports: ["websocket", "polling"], // deja ambas para entorno cloud
-  withCredentials: true                 // si usas sesión por cookies
-});
-
-// Variables globales (como ya tenías)
-const chatBox = document.getElementById('chat-box');
-let usernames = [chatBox.dataset.username, chatBox.dataset.recipient];
-let room = `chat_${usernames.sort().join('_')}`;
-let username = chatBox.dataset.username;
-let recipient = chatBox.dataset.recipient;
-console.log(room, username, recipient);
-
-// Gestión de selección de archivos (igual que tenías)
-let selectedFiles = [];
-
+/ static/js/chat.js
 document.addEventListener('DOMContentLoaded', () => {
+  const chatBox = document.getElementById('chat-box');
+  if (!chatBox) {
+    console.error('chat.js: #chat-box no encontrado');
+    return;
+  }
+
+  const room = chatBox.dataset.room;
+  const username = chatBox.dataset.username;
+  const recipient = chatBox.dataset.recipient;
+  const messageForm = document.getElementById('message-form');
+  const messageInput = document.getElementById('message');
+  const csrfToken = document.getElementById('csrf-token')?.value;
+
+  if (!room || !username) {
+    console.error('chat.js: falta data-room o data-username en la plantilla.');
+    return;
+  }
+
+  // Inicializa socket.io (coincidir path/versión con el servidor)
+  const socket = io('/', {
+    path: '/socket.io',
+    transports: ['websocket', 'polling'],
+    withCredentials: true
+  });
+
+  // Conexión abierta -> emitir join
+  socket.on('connect', () => {
+    console.log('Socket conectado:', socket.id);
+    socket.emit('join', { room, username }, (ack) => {
+      console.log('Join ack:', ack);
+    });
+  });
+
+  socket.on('connect_error', (err) => {
+    console.error('Socket connect_error:', err);
+  });
+  
+  // --- Gestión de archivos (tu código existente) ---
+  let selectedFiles = [];
   const fileInput = document.getElementById('file-input');
   const messageTextarea = document.getElementById('message');
   const previewContainer = document.getElementById('file-preview-container');
@@ -51,6 +73,13 @@ document.addEventListener('DOMContentLoaded', () => {
       previewContainer.appendChild(preview);
     });
   }
+
+  // Exponer socket y room en window para debugging desde consola si hace falta
+  window._mazo_socket = socket;
+  window._mazo_room = room;
+  window._mazo_username = username;
+  window._mazo_recipient = recipient;
+});
 
   // ⬇️ Enviar mensaje (con append optimista)
   const form = document.getElementById('message-form');
@@ -95,7 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedFiles = [];
     renderFilePreview();
   });
-});
 
 // Conexión inicial
 socket.on('connect', function () {

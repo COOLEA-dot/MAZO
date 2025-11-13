@@ -3,23 +3,29 @@
 {% block title %}{{ _('Lista de chats') }}{% endblock %}
 
 {% block content %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat_list.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat_list.css') }}">
 
-    <!-- Cargar Socket.IO antes del script de mensajes -->
-    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='js/new_messages.js') }}"></script>
+<!-- Cargar Socket.IO antes del script de mensajes -->
+<script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/new_messages.js') }}"></script>
 
-    <h2>{{ _('Tus Chats') }}</h2>
+<h2>{{ _('Tus Chats') }}</h2>
 
-    <div class="chat-list">
+<div class="chat-list">
+    {% if chats %}
         {% for chat in chats %}
             <a href="{{ url_for('chat_with_user', recipient_username=chat.username) }}" 
                class="chat-item {% if chat.has_unread %}unread{% endif %}" 
                data-username="{{ chat.username }}">
                
                 <div class="chat-avatar">
-                    <img src="{{ url_for('static', filename='profile_pics/' + chat.profile_pic) }}" 
-                        alt="{{ chat.username }}">
+                    {% if chat.profile_pic %}
+                        <img src="{{ url_for('static', filename='profile_pics/' ~ chat.profile_pic) }}" alt="{{ chat.username }}">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='profile_pics/default.jpg') }}" alt="{{ chat.username }}">
+                    {% endif %}
+                </div>
+
                 <div class="chat-info">
                     <h3>{{ chat.username }}</h3>
                     
@@ -39,11 +45,9 @@
                     <span class="unread-badge">{{ _('¡Nuevo!') }}</span>
                 {% endif %}
             </a>
-        {% else %}
-            <p class="no-chats">{{ _('No tienes chats previos.') }}</p>
         {% endfor %}
-    </div>
+    {% else %}
+        <p class="no-chats">{{ _('No tienes chats previos.') }}</p>
+    {% endif %}
+</div>
 {% endblock %}
-
-
-
