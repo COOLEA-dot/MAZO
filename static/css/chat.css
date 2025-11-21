@@ -31,50 +31,41 @@
     display: none;
 }
 
-/* Mensajes del usuario actual */
 .my-message {
-    align-self: flex-end;
-    background-color: #007bff;
-    color: white;
-    text-align: left;
-    border-radius: 10px;
-    padding: 5px 0px 0px;  /* Ajuste de padding para un fondo más pequeño */
-    max-width: 40%;
-    display: 0px;  /* Ajustar el tamaño del fondo al contenido */
-    position: relative;
-    border: none;  /* Eliminar el borde para evitar la línea blanca */
-    margin-bottom: 10px;  /* Añadir margen inferior entre mensajes */
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+    width: 100%;
 }
+
+/* Mensajes del usuario actual */
+.my-message .message-content {
+    background: #007bff;
+    color: white;
+    border-radius: 10px;
+    padding: 8px 12px;
+    max-width: 60%;
+    word-wrap: break-word;
+    position: relative;
+}
+
 
 /* Mensajes del otro usuario */
 .other-message {
-    align-self: flex-start;
-    background-color: #e0e0e0;
-    color: black;
-    text-align: left;
-    border-radius: 10px;
-    padding: 0px 0px;  /* Ajuste de padding para un fondo más pequeño */
-    max-width: 40%;
-    display: 0px;  /* Ajustar el tamaño del fondo al contenido */
-    position: relative;
-    border: none;  /* Eliminar el borde para evitar la línea blanca */
-    margin-bottom: 10px;  /* Añadir margen inferior entre mensajes */
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 10px;
+    width: 100%;
 }
 
-/* Mensajes (contenedor) */
-.message-content {
-    position: relative;
-    display: flex;
-    max-width: 100%;
-    padding: 0px 0px;
-    margin-bottom: 10px;  /* Ajustar margen entre mensajes */
-    border-radius: 8px;
-    font-size: 14px;
+.other-message .message-content {
+    background: #e0e0e0;
+    color: black;
+    border-radius: 10px;
+    padding: 8px 12px;
+    max-width: 60%;
     word-wrap: break-word;
-    overflow-wrap: break-word;
-    white-space: normal;
-    line-height: 1.5;
-    border: none;  /* Eliminar borde */
+    position: relative;
 }
 
 /* Tres puntos (opciones) */
@@ -378,101 +369,146 @@
     background: rgba(0, 0, 0, 0.8);
 }
 
-/* Estilos del modal de video */
-#video-modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    align-items: center;
-    justify-content: center;
+/* Overlay modal común */
+.modal {
+  position: fixed;
+  inset: 0; /* top/right/bottom/left: 0 */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
-/* Reducir el tamaño del modal */
-#video-modal .modal-content {
-    max-width: 100%; /* Antes 90%, ahora 70% */
-    max-height: 100%; /* Antes 90%, ahora 70% */
-    border-radius: 10px;
-    background: black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+/* Inner evita cierre al clicar dentro */
+.modal .modal-inner {
+  position: relative;
+  max-width: 96vw;
+  max-height: 96vh;
+  background: transparent;
+  border-radius: 10px;
+  overflow: visible;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Ajustar tamaño del video dentro del modal */
-#video-modal video {
-    max-width: auto;
-    max-height: 90%; /* Antes ocupaba toda la pantalla, ahora máximo 60% de la altura */
-    border-radius: 8px;
+/* Controles (descargar + cerrar) */
+.modal .modal-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 3;
 }
 
-#video-modal .download-link {
-    position: absolute;
-    top: 10px;
-    right: 20px;
+/* Botones en controles */
+.modal .modal-controls a,
+.modal .modal-controls button {
+  background: rgba(255,255,255,0.95);
+  border: none;
+  color: #111;
+  padding: 6px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 
-#video-modal .download-link a {
-    color: white;
-    text-decoration: none;
-    font-size: 16px;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 8px 15px;
-    border-radius: 5px;
-    transition: 0.3s;
+/* Close más destacado */
+.modal .modal-controls .close-modal {
+  background: rgba(0,0,0,0.6);
+  color: #fff;
 }
 
-#video-modal .download-link a:hover {
-    background: rgba(255, 255, 255, 0.4);
+/* Imagen en modal: contener y no salirse de pantalla */
+.modal .modal-content {
+  display: block;
+  max-width: 92vw;
+  max-height: 82vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.45);
 }
 
+/* Video dentro del modal */
+.modal-video {
+  max-width: 92vw;
+  max-height: 82vh;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+  background: #000;
+}
+
+/* Play icon (si lo usas) mantiene posición en miniatura */
+.play-icon {
+  position: absolute;
+  font-size: 32px;
+  color: white;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* File preview container (mantener tus reglas) */
+#file-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0;
+}
 
 #file-preview-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 6px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .file-preview {
-    background: #f0f0f0;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    border: 1px solid #ccc;
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  max-width: 250px;
 }
 
 .file-preview span {
-    margin-right: 6px;
+  margin-right: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-preview-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 8px;
 }
 
 .file-preview .remove-file {
-    color: red;
-    cursor: pointer;
-    font-weight: bold;
+  margin-left: auto;
+  color: red;
+  cursor: pointer;
+  font-weight: bold;
 }
 
-.edited-tag {
-    font-size: 12px;
-    color: gray;
-    margin-left: 5px;
-}
-
-.play-icon {
-    position: absolute;
-    font-size: 32px;
-    color: white;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-}
 #send-btn {
     width: 36px;
     height: 36px;

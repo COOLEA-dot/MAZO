@@ -13,7 +13,7 @@ import mimetypes
 from flask_cors import CORS
 import subprocess
 from flask_migrate import Migrate
-from flask_login import login_required, current_user, UserMixin, LoginManager, login_user
+from flask_login import login_required, current_user, UserMixin, login_user, LoginManager
 from flask_wtf.csrf import CSRFProtect, CSRFError, validate_csrf, generate_csrf
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -27,6 +27,8 @@ from flask_wtf.file import FileField, FileAllowed
 from flask_mail import Mail, Message as Mailmessage
 from itsdangerous import URLSafeTimedSerializer
 from email.header import Header
+from flask_socketio import join_room, emit
+from flask import request
 import stripe
 from flask_babel import Babel, get_locale 
 import json, shlex
@@ -42,6 +44,7 @@ from urllib.parse import urlparse
 from requests.exceptions import RequestException
 import secrets 
 from slugify import slugify 
+import sys
 
 # Helper seguro para hacer strip sin fallar si value es None
 def _safe_strip(value):
@@ -58,6 +61,10 @@ app.config.update(
     REMEMBER_COOKIE_SECURE=False,
     SESSION_COOKIE_DOMAIN=None,           # deja que Flask escoja
 )
+
+# ====== DEBUG: listar before_request funcs y login manager info (temporal) ======
+
+
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
 oauth = OAuth(app)
@@ -127,8 +134,6 @@ if not stripe_key:
 else:
     stripe.api_key = stripe_key
 
-
-
 # Extensiones permitidas para CV
 ALLOWED_CV_EXTENSIONS = {'pdf', 'doc', 'docx'}
 
@@ -141,13 +146,7 @@ ext_base = os.environ.get("EXTERNAL_BASE_URL")
 if ext_base:
     allowed_origins.append(ext_base)
 
-socketio = SocketIO(
-    app,
-    async_mode=("eventlet" if USE_EVENTLET else "threading"),
-    cors_allowed_origins=allowed_origins,  # o "*" mientras depuras
-    logger=os.getenv("SIO_LOG", "0") == "1",
-    engineio_logger=os.getenv("SIO_LOG", "0") == "1",
-)
+socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)  # permite orígenes y logging
 
 csrf = CSRFProtect(app)
 csrf.init_app(app)
@@ -176,6 +175,70 @@ google = oauth.register(
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={"scope": "openid email profile"},
 )
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'         # función de login
+login_manager.login_message_category = 'info'
+
+app.logger.info('[DBG-LM] login_manager instance id=%s repr=%s login_view=%s', id(login_manager), repr(login_manager), getattr(login_manager, 'login_view', None))
+
+def _dump_before_request_funcs():
+    try:
+        funcs = app.before_request_funcs or {}
+        # funcs is a dict: {None: [fn,...], 'blueprint': [fn,...], ...}
+        for bp, flist in funcs.items():
+            names = []
+            for f in flist:
+                try:
+                    names.append(f"{getattr(f,'__module__','?')}.{getattr(f,'__name__','<lambda>')}")
+                except Exception:
+                    names.append(repr(f))
+            app.logger.info('[DBG-DUMP] before_request_funcs for %s: %s', bp or 'None', names)
+    except Exception as e:
+        app.logger.exception('[DBG-DUMP] error dumping before_request_funcs: %s', e)
+
+_dump_before_request_funcs()
+
+# Info del login_manager
+try:
+    app.logger.info('[DBG-LM] login_manager id=%s repr=%s login_view=%s', id(login_manager), repr(login_manager), getattr(login_manager,'login_view',None))
+except Exception:
+    app.logger.exception('[DBG-LM] login_manager not accessible')
+# ===============================================================================
+
+# ---------- DEBUG: wrapear before_request funcs para ver cuál devuelve algo ----------
+import functools
+
+def _wrap_before_request_funcs():
+    funcs = app.before_request_funcs or {}
+    for bp, flist in list(funcs.items()):
+        wrapped = []
+        for f in flist:
+            # crear wrapper con closure para el f correcto
+            def make_wrapper(func):
+                @functools.wraps(func)
+                def wrapper(*a, **kw):
+                    try:
+                        rv = func(*a, **kw)
+                    except Exception as e:
+                        # no interferimos: lanzar la excepción hacia arriba para que lo veas
+                        app.logger.exception('[BR-WRAP] exception in before_request %s: %s', func.__name__, e)
+                        raise
+                    if rv is not None:
+                        # Detectado: esta before_request devolvió algo (p. ej. redirect)
+                        app.logger.warning('[BR-WRAP] before_request %s returned NON-None: %s', 
+                                           f"{getattr(func,'__module__','?')}.{getattr(func,'__name__','<lambda>')}", 
+                                           repr(rv))
+                    return rv
+                return wrapper
+            wrapped.append(make_wrapper(f))
+        app.before_request_funcs[bp] = wrapped
+
+# Llamar al wrap (temporal)
+_wrap_before_request_funcs()
+app.logger.info('[BR-WRAP] before_request funcs wrapped for debug')
+# -------------------------------------------------------------------------------
 
 def allowed_cv(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_CV_EXTENSIONS
@@ -498,10 +561,6 @@ def settings():
         redirect_url=redirect_url
     )
 
-from flask import current_app, jsonify, url_for
-import stripe
-from flask_login import login_required, current_user
-
 @app.route('/create-checkout-session', methods=['POST'])
 @login_required
 def create_checkout_session():
@@ -822,6 +881,7 @@ oauth.register(
         "scope": "openid email profile",  # 👈 email es imprescindible
     },
 )
+
 @app.route('/api/me')
 @login_required
 def api_me():
@@ -919,14 +979,6 @@ def unfollow_user(user_id):
         db.session.commit()
     return redirect(url_for('profile', username=user_to_unfollow.username))
 
-@app.before_request
-def load_user():
-    user_id = session.get('user_id')  # Verifica el ID del usuario en la sesión
-    if user_id:
-        g.user = User.query.get(user_id)  # Carga el usuario desde la base de datos
-    else:
-        g.user = None  # Si no hay usuario en sesión, asigna None
-
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -934,14 +986,6 @@ login_manager.login_view = 'login'
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-@login_manager.unauthorized_handler
-def unauthorized():
-    # Devuelve un error JSON si la solicitud es AJAX
-    if request.is_json:
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    # Redirige a la vista de inicio de sesión para solicitudes normales
-    return redirect(url_for('login'))
 
 @app.route('/')
 def inicio():
@@ -1132,8 +1176,6 @@ class ChangePasswordForm(FlaskForm):
     confirm_password = PasswordField('Confirmar nueva contraseña', validators=[DataRequired(), EqualTo('new_password')])
     submit = SubmitField('Cambiar contraseña')
 
-
-
 class Profession(db.Model):
     __tablename__ = 'profession'
     id = db.Column(db.Integer, primary_key=True)
@@ -1169,8 +1211,17 @@ def _is_safe_next(next_url: str) -> bool:
     return urlparse(next_url).netloc == ''  # solo rutas internas
 
 @app.before_request
+def load_user():
+    user_id = session.get('user_id')  # Verifica el ID del usuario en la sesión
+    if user_id:
+        g.user = User.query.get(user_id)  # Carga el usuario desde la base de datos
+    else:
+        g.user = None  # Si no hay usuario en sesión, asigna None
+
+@app.before_request
 def inject_user_into_g():
     g.user = current_user if current_user.is_authenticated else None
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -1833,15 +1884,121 @@ class Message(db.Model):
     conversation = db.relationship('Conversation', backref=db.backref('messages', lazy=True))
     sender = db.relationship('User', foreign_keys=[sender_id])
 
-@socketio.on('join')
+@socketio.on('connect')
+def socket_connect():
+    # Esto se ejecuta cuando el cliente consigue abrir la conexión websocket/polling
+    app.logger.info('SOCKET CONNECT: sid=%s current_user=%s authenticated=%s', 
+                    request.sid,
+                    getattr(current_user, 'username', None),
+                    getattr(current_user, 'is_authenticated', None))
+    # opcional: enviar un ping de ack
+    emit('server_connect_ack', {'ok': True, 'sid': request.sid})
+
+def _rel_from_root(abs_path):
+    if not abs_path:
+        return None
+    # asume que tu app se sirve desde el directorio raíz del proyecto
+    proj_root = os.path.abspath(app.root_path)  # p.ej. /home/user/proj
+    abs_path_norm = os.path.abspath(abs_path)
+    try:
+        rel = os.path.relpath(abs_path_norm, proj_root)
+        return rel.replace("\\", "/")  # e.g. "static/chat_uploads/file_123.mp4"
+    except Exception as e:
+        print("_rel_from_root error", e)
+        return None
+
+
+@app.route('/chat/<recipient_identifier>', methods=['GET'])
 @login_required
+def chat_with_user(recipient_identifier):
+    """
+    Mostrar la interfaz del chat. recipient_identifier puede ser username o id numérico.
+    """
+    # DEBUG: imprimir contexto
+    current_app.logger.info(
+        '[chat_view] request.path=%s current_user=%s authenticated=%s cookies=%s',
+        request.path,
+        getattr(current_user, 'username', None),
+        getattr(current_user, 'is_authenticated', None),
+        dict(request.cookies)
+    )
+
+    sender = current_user
+
+    # Intentar interpretar como id entero primero
+    recipient = None
+    if str(recipient_identifier).isdigit():
+        try:
+            recipient = User.query.get(int(recipient_identifier))
+        except Exception as ex:
+            current_app.logger.exception('[chat_view] error buscando por id: %s', ex)
+
+    # Si no lo encontramos por id, buscar por username
+    if not recipient:
+        recipient = User.query.filter_by(username=recipient_identifier).first()
+
+    if not recipient:
+        flash('Usuario no encontrado', 'error')
+        return redirect(url_for('home'))
+
+    # Buscar o crear conversación
+    conversation = Conversation.query.filter(
+        ((Conversation.user_id == sender.id) & (Conversation.recipient_id == recipient.id)) |
+        ((Conversation.user_id == recipient.id) & (Conversation.recipient_id == sender.id))
+    ).first()
+
+    if not conversation:
+        conversation = Conversation(user_id=sender.id, recipient_id=recipient.id)
+        db.session.add(conversation)
+        db.session.commit()
+
+    # Marcar mensajes del otro usuario como leídos
+    try:
+        Message.query.filter(
+            Message.conversation_id == conversation.id,
+            Message.sender_id != sender.id,
+            Message.is_read == False
+        ).update({'is_read': True})
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.exception("[chat_view] error marcando leídos: %s", e)
+        db.session.rollback()
+
+    messages = Message.query.filter_by(conversation_id=conversation.id).order_by(Message.timestamp).all()
+
+    # Sala consistente (helper que ya tienes)
+    room = chat_room_by_username(sender.username, recipient.username)
+
+    return render_template('chat.html',
+                           recipient=recipient,
+                           username=sender.username,
+                           messages=messages,
+                           room=room,
+                           conversation_id=conversation.id)
+
+
+@socketio.on('join')
 def handle_join(data):
     room = data.get('room')
-    if room:
-        join_room(room)
-        print(f"✅ Usuario unido a la sala: {room}")
-    else:
-        print("❌ Error: No se especificó una sala.")
+    payload_user = data.get('username')
+    app.logger.info('JOIN event received: sid=%s payload_user=%s room=%s', request.sid, payload_user, room)
+    app.logger.info('JOIN current_user=%s authenticated=%s', getattr(current_user,'username',None), getattr(current_user,'is_authenticated',None))
+    if not room:
+        emit('join_ack', {'ok': False, 'error': 'no room provided'}, room=request.sid)
+        return
+    join_room(room)
+    app.logger.info('✅ Usuario unido a la sala: %s (sid=%s)', room, request.sid)
+    emit('join_ack', {'ok': True, 'room': room}, room=request.sid)
+    emit('user_joined', {'username': payload_user}, room=room, include_self=False)
+    # Une a la sala (esto asocia request.sid a la room)
+    join_room(room)
+    app.logger.info('✅ Usuario unido a la sala: %s (sid=%s)', room, request.sid)
+
+    # Ack al emisor confirmando unión
+    emit('join_ack', {'ok': True, 'room': room}, room=request.sid)
+
+    # Notify other users in the room (exclude the sender)
+    emit('user_joined', {'username': payload_user}, room=room, include_self=False)
 
 def get_user_chats(user_id):
     conversations = Conversation.query.filter(
@@ -1932,55 +2089,6 @@ def _abs_folder(base_folder):
     # Asegura ruta absoluta basada en app.root_path
     return base_folder if os.path.isabs(base_folder) else os.path.join(app.root_path, base_folder)
 
-def _rel_from_root(path):
-    return os.path.relpath(path, app.root_path).replace("\\", "/")
-
-@app.route('/chat/<recipient_username>')
-@login_required
-def chat_with_user(recipient_username):
-    # DEBUG - confirma que Flask detecta la sesión (misma filosofía que upload view)
-    print("CHAT VIEW - current_user:", current_user, "is_authenticated:", current_user.is_authenticated, "id:", getattr(current_user, 'id', None))
-
-    sender = current_user
-    recipient = User.query.filter_by(username=recipient_username).first()
-
-    if not recipient:
-        # si no encuentra al usuario, redirige al home con flash (igual que en upload)
-        flash('Usuario no encontrado', 'error')
-        return redirect(url_for('home'))
-
-    # Buscar conversación (independiente del orden)
-    conversation = Conversation.query.filter(
-        ((Conversation.user_id == sender.id) & (Conversation.recipient_id == recipient.id)) |
-        ((Conversation.user_id == recipient.id) & (Conversation.recipient_id == sender.id))
-    ).first()
-
-    # Si no existe, crearla (evita None y facilita la lógica)
-    if not conversation:
-        conversation = Conversation(user_id=sender.id, recipient_id=recipient.id)
-        db.session.add(conversation)
-        db.session.commit()
-
-    # Marcar mensajes del otro usuario como leídos
-    Message.query.filter(
-        Message.conversation_id == conversation.id,
-        Message.sender_id != sender.id,
-        Message.is_read == False
-    ).update({'is_read': True})
-    db.session.commit()
-
-    messages = Message.query.filter_by(conversation_id=conversation.id).order_by(Message.timestamp).all()
-
-    # Calculamos room y pasamos username usando current_user para consistencia
-    room = f"chat_{'_'.join(sorted([sender.username, recipient.username]))}"
-
-    return render_template('chat.html',
-                           recipient=recipient,
-                           username=sender.username,
-                           messages=messages,
-                           room=room)
-
-
 def partial_response(abs_path, content_type=None, cache_seconds=60*60*24*7):
     if not os.path.exists(abs_path):
         abort(404)
@@ -2043,97 +2151,105 @@ def generate_thumbnail(video_path, thumbnail_path):
 #Eventos de SocketIO
 @app.route('/upload_file', methods=['POST'])
 def upload_file():
-    """Guarda el archivo y, si es video, lo transcodifica (faststart) y genera thumbnail."""
+    print("[upload_file] inicio")
     file = request.files.get('file')
     folder = request.form.get('folder', app.config.get('CHAT_UPLOAD_FOLDER', 'static/chat_uploads'))
-    filename = request.form.get('filename')
+    filename_from_form = request.form.get('filename')
 
     if not file:
-        return jsonify({"error": "No se recibió ningún archivo"}), 400
+        print("[upload_file] No se recibió 'file' en request.files")
+        return jsonify({"success": False, "error": "no_file"}), 400
 
-    abs_folder = _abs_folder(folder)
-    os.makedirs(abs_folder, exist_ok=True)
+    print(f"[upload_file] filename recibido: attr.filename={getattr(file, 'filename', None)} form_filename={filename_from_form}")
 
-    if not hasattr(file, 'filename'):
-        return jsonify({"error": "El objeto recibido no es un archivo válido"}), 400
-
-    filename = file.filename
-    if not allowed_file(filename):
-        return jsonify({"error": "El archivo no tiene una extensión permitida"}), 400
-
-    # Nombre base seguro
-    ext = os.path.splitext(filename)[1].lower()
-    new_filename = secure_filename(f"file_{int(time.time())}{ext}")
-    abs_original_path = os.path.join(abs_folder, new_filename).replace("\\", "/")
-
+    # Validaciones
     try:
-        # Tamaño máximo
-        file.seek(0, os.SEEK_END)
-        file_size = file.tell()
-        max_size = app.config.get('MAX_CONTENT_LENGTH', 50 * 1024 * 1024)  # fallback 50MB
-        if file_size > max_size:
-            return jsonify({"error": f"El archivo es demasiado grande. Máximo: {max_size / (1024*1024):.0f} MB."}), 400
-        file.seek(0)
+        # Determinar filename seguro
+        original_filename = file.filename or filename_from_form or f"upload_{int(time.time())}"
+        if not allowed_file(original_filename):
+            print(f"[upload_file] extensión no permitida: {original_filename}")
+            return jsonify({"success": False, "error": "bad_extension"}), 400
 
-        # Guardar original
+        abs_folder = _abs_folder(folder)
+        os.makedirs(abs_folder, exist_ok=True)
+
+        ext = os.path.splitext(original_filename)[1].lower()
+        new_filename = secure_filename(f"file_{int(time.time())}{ext}")
+        abs_original_path = os.path.join(abs_folder, new_filename).replace("\\", "/")
+        print(f"[upload_file] abs_original_path -> {abs_original_path}")
+
+        # Guardar (comprueba tamaño)
+        try:
+            file.seek(0, os.SEEK_END)
+            file_size = file.tell()
+            file.seek(0)
+            print(f"[upload_file] tamaño archivo: {file_size} bytes")
+        except Exception as e:
+            print("[upload_file] no se pudo obtener tamaño con seek (continuando):", e)
+
+        max_size = app.config.get('MAX_CONTENT_LENGTH', 50 * 1024 * 1024)
+        if file_size and file_size > max_size:
+            print(f"[upload_file] archivo demasiado grande: {file_size} > {max_size}")
+            return jsonify({"success": False, "error": "too_large", "max": max_size}), 400
+
         file.save(abs_original_path)
+        print("[upload_file] archivo guardado OK")
 
-        # Respuesta base
+        # Si es video: intentar optimizar y thumbnail, con logs
         is_video = ext in ['.mp4', '.mov', '.webm']
-        abs_final_video = abs_original_path
+        abs_final = abs_original_path
         thumb_abs = None
-        duration = None
 
         if is_video:
-            # 1) Transcodificar a MP4 streamable
-            base_noext = os.path.splitext(new_filename)[0]
-            optimized_name = f"{base_noext}_stream.mp4"
-            abs_optimized_path = os.path.join(abs_folder, optimized_name).replace("\\", "/")
             try:
+                base_noext = os.path.splitext(new_filename)[0]
+                optimized_name = f"{base_noext}_stream.mp4"
+                abs_optimized_path = os.path.join(abs_folder, optimized_name).replace("\\", "/")
+                print(f"[upload_file] transcodificando a {abs_optimized_path}...")
                 transcode_to_streamable_mp4(abs_original_path, abs_optimized_path)
-                abs_final_video = abs_optimized_path
-            except subprocess.CalledProcessError as e:
-                # Si falla, usamos el original (no ideal)
-                print(f"⚠️ Transcodificación falló: {e}")
+                abs_final = abs_optimized_path
+                print("[upload_file] transcodificación OK")
+            except Exception as e:
+                print("[upload_file] transcode failed:", e)
+                abs_final = abs_original_path
 
-            # 2) Thumbnail
-            thumbs_dir = os.path.join(abs_folder, "thumbnails")
-            os.makedirs(thumbs_dir, exist_ok=True)
-            thumb_name = f"{base_noext}.jpg"
-            thumb_abs = os.path.join(thumbs_dir, thumb_name).replace("\\", "/")
             try:
-                extract_thumbnail(abs_final_video, thumb_abs)
-            except subprocess.CalledProcessError as e:
-                print(f"⚠️ Error generando thumbnail: {e}")
+                thumbs_dir = os.path.join(abs_folder, "thumbnails")
+                os.makedirs(thumbs_dir, exist_ok=True)
+                thumb_name = f"{os.path.splitext(new_filename)[0]}.jpg"
+                thumb_abs = os.path.join(thumbs_dir, thumb_name).replace("\\", "/")
+                print("[upload_file] generando thumbnail en", thumb_abs)
+                extract_thumbnail(abs_final, thumb_abs)
+                print("[upload_file] thumbnail OK")
+            except Exception as e:
+                print("[upload_file] thumbnail failed:", e)
                 thumb_abs = None
 
-            # 3) Duración (opcional)
-            duration = probe_duration(abs_final_video)
-
-        # Rutas relativas para servir con /files/<path>
-        rel_final_video = _rel_from_root(abs_final_video)
+        # Convertir a rutas relativas
+        rel_final = _rel_from_root(abs_final)
         rel_original = _rel_from_root(abs_original_path)
         rel_thumb = _rel_from_root(thumb_abs) if thumb_abs else None
 
-        # URLs públicas vía la ruta con Range
-        stream_url = url_for('serve_file', filename=rel_final_video, _external=True)
-        file_url_public = url_for('serve_file', filename=rel_original if not is_video else rel_final_video, _external=True)
+        print(f"[upload_file] rel_final={rel_final} rel_original={rel_original} rel_thumb={rel_thumb}")
+
+        # Devolver siempre file_path si es posible
+        file_path_for_db = rel_final or rel_original
+        stream_url = url_for('serve_file', filename=rel_final, _external=True) if rel_final else None
         thumb_url_public = url_for('serve_file', filename=rel_thumb, _external=True) if rel_thumb else None
 
-        return jsonify({
+        response = {
             "success": True,
-            # Ruta relativa útil para guardar en BD
-            "file_path": rel_final_video if is_video else rel_original,
-            # URL recomendada para reproducir/descargar
+            "file_path": file_path_for_db,
             "stream_url": stream_url,
-            # Miniatura (si aplica)
             "thumbnail_url": thumb_url_public,
-            # Duración en segundos (si aplica)
-            "duration": duration
-        }), 200
+            "duration": None
+        }
+        print("[upload_file] respuesta final:", response)
+        return jsonify(response), 200
 
     except Exception as e:
-        return jsonify({"error": f"Error al guardar archivo: {e}"}), 500
+        print("[upload_file] EXCEPCION:", e, file=sys.stderr)
+        return jsonify({"success": False, "error": "server_exception", "detail": str(e)}), 500
 
 # Función para manejar archivos pequeños en Base64
 def handle_small_file(file, filename=None):
@@ -2178,6 +2294,10 @@ def clean_base64(file_str):
         file_str = file_str.split(",")[1]
     return file_str
 
+def chat_room_by_username(a, b):
+    users = sorted([str(a).strip(), str(b).strip()])
+    return f"chat_{users[0]}_{users[1]}"
+
 # helpers/salas.py (o en el mismo archivo si prefieres)
 @socketio.on('connect')
 def socket_connect():
@@ -2191,18 +2311,85 @@ def socket_connect():
     print("-> conexión aceptada para", current_user.username)
 
 # send_message (reemplaza handle_send_message): usa current_user en vez de 'sender' del cliente
+# Imports necesarios (añádelos si no están ya en tu módulo)
+import os
+import time
+from flask import url_for, current_app
+# Asegúrate de tener: socketio, db, User, Message, Conversation, upload_file, handle_small_file, generate_thumbnail, CHAT_UPLOAD_FOLDER, THUMBNAIL_FOLDER
+
+def normalize_and_wait_file_url(file_path, wait_attempts=6, wait_delay=0.4, fallback_stream_url=None):
+    """
+    Devuelve URL pública absoluta para frontend.
+    - Si fallback_stream_url está presente (p.ej. upload_file devolvió stream_url) lo usa.
+    - Si file_path es 'static/...' genera url_for('static', ...,_external=True) (esperando existencia en disco).
+    - Si no puede normalizar devuelve fallback_stream_url o file_path.
+    """
+    # Preferir stream_url devuelto por uploader
+    if fallback_stream_url:
+        return fallback_stream_url
+
+    if not file_path:
+        return ""
+
+    # Si ya es URL absoluta
+    if file_path.startswith("http://") or file_path.startswith("https://"):
+        return file_path
+
+    try:
+        # Caso: path relativo dentro de 'static/'
+        if file_path.startswith("static/"):
+            fs_path = os.path.join(current_app.root_path, file_path.replace("/", os.sep))
+            for _ in range(wait_attempts):
+                if os.path.exists(fs_path):
+                    break
+                time.sleep(wait_delay)
+            if not os.path.exists(fs_path):
+                current_app.logger.warning(f"[normalize_and_wait_file_url] file not found after waiting: {fs_path}")
+            static_root = os.path.join(current_app.root_path, 'static')
+            try:
+                rel = os.path.relpath(fs_path, static_root).replace("\\", "/")
+            except Exception:
+                rel = file_path[len("static/"):] if file_path.startswith("static/") else file_path
+            return url_for('static', filename=rel, _external=True)
+
+        # Intento heurístico: tratar file_path como dentro de static
+        fs_path = os.path.join(current_app.root_path, 'static', file_path.replace("/", os.sep))
+        for _ in range(wait_attempts):
+            if os.path.exists(fs_path):
+                break
+            time.sleep(wait_delay)
+        if os.path.exists(fs_path):
+            try:
+                rel = os.path.relpath(fs_path, os.path.join(current_app.root_path, 'static')).replace("\\", "/")
+            except Exception:
+                rel = file_path
+            return url_for('static', filename=rel, _external=True)
+
+    except Exception as e:
+        current_app.logger.exception("[normalize_and_wait_file_url] error: %s", e)
+
+    # Fallback: devolver lo recibido
+    return file_path or (fallback_stream_url or "")
+
+
 @socketio.on('send_message')
 def handle_send_message(data):
+    """
+    Handler WebSocket para envío de mensajes (soporta archivos).
+    - data esperado: { recipient, message, file?, filename? }
+    - Si upload_file devuelve dict con 'stream_url' se usará esa URL pública en el payload.
+    - Para data:URI pequeños intenta handle_small_file; si falla, incluye base64 en payload como fallback.
+    """
     print("Recibiendo mensaje de WebSocket...")
     print("Datos recibidos (raw):", data)
 
-    # ------ identidad segura: no confiar en 'username' enviado por cliente ------
+    # Seguridad: tomar usuario del contexto del servidor (no confiar en el cliente)
     sender_user = current_user
     if not sender_user or not sender_user.is_authenticated:
         print("❌ Envío rechazado: usuario no autenticado")
         return {'ok': False, 'error': 'not_authenticated'}
 
-    recipient_username = data.get('recipient') or data.get('to')  # aceptar varios nombres
+    recipient_username = data.get('recipient') or data.get('to')
     message_text = (data.get('message') or '').strip()
     file = data.get('file')
     filename = data.get('filename')
@@ -2211,45 +2398,69 @@ def handle_send_message(data):
         print("❌ Error: datos faltantes o mensaje vacío.")
         return {'ok': False, 'error': 'missing_fields'}
 
-    # Procesar archivo si viene (tu lógica)
     file_path = None
     thumbnail_path = None
+    file_base64_payload = None
+    upload_stream_url = None  # lo que upload_file pueda devolver (p.ej. stream_url)
+
+    # Procesar archivo si viene
     if file:
         try:
-            # tu lógica existente para procesar base64 o file object
+            # file como string: puede ser 'static/...' o 'data:...' o URL absoluta
             if isinstance(file, str):
-                if file.startswith("static/chat_uploads/"):
+                if file.startswith("static/"):
                     file_path = file
                 elif file.startswith("data:") and "," in file:
                     if not filename:
                         return {'ok': False, 'error': 'missing_filename'}
-                    file_path = handle_small_file(file, filename)
+                    try:
+                        saved = handle_small_file(file, filename)  # tu impl
+                        if isinstance(saved, dict):
+                            file_path = saved.get('file_path') or saved.get('rel_path') or None
+                            upload_stream_url = saved.get('stream_url') or saved.get('public_url') or None
+                        else:
+                            file_path = saved
+                    except Exception as e:
+                        print("⚠️ handle_small_file falló, pasaré base64 en payload:", e)
+                        file_base64_payload = file
+                elif file.startswith("http://") or file.startswith("https://"):
+                    upload_stream_url = file
+                    file_path = None
                 else:
                     return {'ok': False, 'error': 'unknown_file_format'}
+            # file como objeto (FileStorage u otro)
             elif hasattr(file, 'filename'):
-                file_path = upload_file(file, CHAT_UPLOAD_FOLDER)
+                uploaded = upload_file(file, CHAT_UPLOAD_FOLDER)
+                if isinstance(uploaded, dict):
+                    file_path = uploaded.get('file_path') or uploaded.get('rel_path') or None
+                    upload_stream_url = uploaded.get('stream_url') or uploaded.get('public_url') or None
+                else:
+                    file_path = uploaded
+            else:
+                return {'ok': False, 'error': 'unsupported_file_object'}
         except Exception as e:
             print(f"❌ Error al procesar archivo: {e}")
             return {'ok': False, 'error': 'file_process_error'}
 
-        # Generar thumbnail si corresponde
+        # Generar miniatura si es video
         if file_path and file_path.lower().endswith(('.mp4', '.webm', '.mov', '.avi', '.mpg')):
             try:
                 base = os.path.basename(file_path)
                 thumb_name = f"thumb_{base}.png"
-                thumbnail_path = os.path.join(THUMBNAIL_FOLDER, thumb_name)
-                generate_thumbnail(file_path, thumbnail_path)
-                thumbnail_path = thumbnail_path.replace("\\", "/")
+                thumb_full = os.path.join(THUMBNAIL_FOLDER, thumb_name)
+                generate_thumbnail(file_path, thumb_full)
+                thumbnail_path = thumb_full.replace("\\", "/")
             except Exception as e:
                 print(f"⚠️ No se pudo generar miniatura: {e}")
                 thumbnail_path = None
 
-    # Buscar destinatario y conversación
+    # Buscar destinatario
     recipient_user = User.query.filter_by(username=recipient_username).first()
     if not recipient_user:
         print(f"❌ Error: recipient {recipient_username} no encontrado.")
         return {'ok': False, 'error': 'recipient_not_found'}
 
+    # Buscar o crear conversación
     conversation = Conversation.query.filter(
         ((Conversation.user_id == sender_user.id) & (Conversation.recipient_id == recipient_user.id)) |
         ((Conversation.user_id == recipient_user.id) & (Conversation.recipient_id == sender_user.id))
@@ -2261,7 +2472,7 @@ def handle_send_message(data):
         db.session.commit()
         print(f"🆕 Conversación creada entre {sender_user.username} y {recipient_user.username}")
 
-    # Guardar mensaje en BD
+    # Guardar mensaje en BD (almacenar path relativo si procede)
     try:
         new_message = Message(
             sender_id=sender_user.id,
@@ -2279,22 +2490,42 @@ def handle_send_message(data):
 
     print(f"✅ Mensaje guardado con ID: {new_message.id}")
 
-    # Emitir a la sala correcta (construida desde usernames para ser consistente)
-    room = chat_room_by_username(sender_user.username, recipient_user.username)
+    # Normalizar/obtener la URL pública que enviaremos al frontend.
+    # Preferir upload_stream_url si lo tenemos, sino intentar normalizar desde file_path.
+    public_file_url = ""
+    try:
+        public_file_url = normalize_and_wait_file_url(file_path, wait_attempts=6, wait_delay=0.4, fallback_stream_url=upload_stream_url)
+    except Exception as e:
+        print("⚠️ Error normalizando file URL:", e)
+        public_file_url = upload_stream_url or (file_path or "")
+
+    # Construir payload que enviaremos por socket
     payload = {
         'username': sender_user.username,
         'message': message_text,
         'message_id': new_message.id,
-        'file_url': file_path or "",
-        'thumbnail_url': thumbnail_path or "",
+        # Enviamos la URL pública (stream_url preferida)
+        'file_url': public_file_url or "",
+        'thumbnail_url': (normalize_and_wait_file_url(thumbnail_path) if thumbnail_path else ""),
         'timestamp': new_message.timestamp.isoformat()
     }
 
-    socketio.emit('receive_message', payload, to=room, include_self=True)
-    print(f"✅ Mensaje emitido a la sala {room}")
+    # Incluir base64 en payload como fallback (solo para archivos pequeños)
+    if file_base64_payload:
+        payload['file_base64'] = file_base64_payload
+        payload['file_name'] = filename
 
-    return {'ok': True, 'message_id': new_message.id, 'file_url': file_path, 'thumbnail_url': thumbnail_path}
+    # Emitir al room
+    room = chat_room_by_username(sender_user.username, recipient_user.username)
+    try:
+        print(f"[emit] to={room} payload.file_url={payload['file_url']} stream_url={payload.get('stream_url')}")
+        socketio.emit('receive_message', payload, to=room, include_self=True)
+        print(f"✅ Mensaje emitido a la sala {room} con file_url={payload.get('file_url')}")
+    except Exception as e:
+        print("⚠️ Error emitiendo por socketio:", e)
 
+    # Respuesta al emisor (si el cliente espera JSON)
+    return {'ok': True, 'message_id': new_message.id, 'file_url': public_file_url, 'thumbnail_url': payload.get('thumbnail_url')}
 
 # Edit message: usar current_user.id para comprobar permisos
 @socketio.on('edit_message')
@@ -2408,47 +2639,114 @@ def handle_share_video(data):
 
     print(f"✅ Video compartido con {recipient.username} en la sala {room}")
 
-@app.route('/chat/<int:recipient_id>', methods=['GET', 'POST'])
-def send_message(recipient_id):
-    if 'user_id' not in session:
-        flash('Por favor inicia sesión para acceder al chat', 'error')
-        return redirect(url_for('login'))
-
-    sender = User.query.get(session['user_id'])
+@app.route('/chat/<int:recipient_id>/send', methods=['POST'])
+@app.route('/chat/<int:recipient_id>', methods=['POST'], endpoint='send_message')
+@login_required
+def send_message_http(recipient_id):
     recipient = User.query.get_or_404(recipient_id)
 
-    # Buscar la conversación existente entre el usuario y el destinatario
     conversation = Conversation.query.filter(
-        ((Conversation.user_id == sender.id) & (Conversation.recipient_id == recipient.id)) |
-        ((Conversation.user_id == recipient.id) & (Conversation.recipient_id == sender.id))
+        ((Conversation.user_id == current_user.id) & (Conversation.recipient_id == recipient.id)) |
+        ((Conversation.user_id == recipient.id) & (Conversation.recipient_id == current_user.id))
     ).first()
 
     if not conversation:
-        # Si no existe la conversación, crear una nueva
-        conversation = Conversation(user_id=sender.id, recipient_id=recipient.id)
+        conversation = Conversation(user_id=current_user.id, recipient_id=recipient.id)
         db.session.add(conversation)
         db.session.commit()
 
-    # Si se está enviando un mensaje, procesarlo
-    if request.method == 'POST':
-        message_content = request.form.get('message')
-        if message_content:
-            new_message = Message(
-                conversation_id=conversation.id,
-                sender_id=sender.id,
-                content=message_content,
-                is_read=False
-            )
-            db.session.add(new_message)
-            db.session.commit()
+    message_content = ''
+    files = None
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+        message_content = (data.get('message') or '').strip()
+    else:
+        message_content = (request.form.get('message') or '').strip()
+        files = request.files.getlist('file_input') if hasattr(request, 'files') else None
 
-            # Redirigir de nuevo al chat con el nuevo mensaje
-            return redirect(url_for('send_message', recipient_id=recipient.id))
+    if not message_content and not (files and len(files) > 0):
+        if request.is_json:
+            return jsonify({'ok': False, 'error': 'missing_message'}), 400
+        flash('No se puede enviar un mensaje vacío.', 'error')
+        return redirect(url_for('chat_with_user', recipient_identifier=recipient.username))
 
-    # Obtener todos los mensajes de la conversación
-    messages = Message.query.filter_by(conversation_id=conversation.id).order_by(Message.timestamp).all()
+    file_path = None
+    thumbnail_path = None
+    upload_stream_url = None
 
-    return render_template('chat.html', username=session.get('username'), recipient=recipient, messages=messages, conversation_id=conversation.id)
+    try:
+        if files and len(files) > 0:
+            f = files[0]
+            uploaded = upload_file(f, CHAT_UPLOAD_FOLDER)
+            if isinstance(uploaded, dict):
+                file_path = uploaded.get('file_path') or uploaded.get('rel_path') or None
+                upload_stream_url = uploaded.get('stream_url') or uploaded.get('public_url') or None
+            else:
+                file_path = uploaded
+            # generar thumb si aplica
+            if file_path and file_path.lower().endswith(('.mp4', '.webm', '.mov', '.avi', '.mpg')):
+                try:
+                    base = os.path.basename(file_path)
+                    thumb_name = f"thumb_{base}.png"
+                    thumb_full = os.path.join(THUMBNAIL_FOLDER, thumb_name)
+                    generate_thumbnail(file_path, thumb_full)
+                    thumbnail_path = thumb_full.replace("\\", "/")
+                except Exception as e:
+                    current_app.logger.warning("[send_message_http] no se pudo generar thumb: %s", e)
+                    thumbnail_path = None
+    except Exception as e:
+        current_app.logger.exception("[send_message_http] error procesando archivo: %s", e)
+        if request.is_json:
+            return jsonify({'ok': False, 'error': 'file_process_error', 'detail': str(e)}), 500
+        flash('Error procesando archivo.', 'error')
+        return redirect(url_for('chat_with_user', recipient_identifier=recipient.username))
+
+    # guardar mensaje en BD
+    try:
+        new_message = Message(
+            conversation_id=conversation.id,
+            sender_id=current_user.id,
+            content=message_content if message_content else None,
+            file_url=file_path,
+            thumbnail_url=thumbnail_path,
+            is_read=False
+        )
+        db.session.add(new_message)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.exception("[send_message_http] error guardando mensaje: %s", e)
+        if request.is_json:
+            return jsonify({'ok': False, 'error': 'db_error', 'detail': str(e)}), 500
+        flash('Error al guardar el mensaje.', 'error')
+        return redirect(url_for('chat_with_user', recipient_identifier=recipient.username))
+
+    # Normalizar URL pública: preferir upload_stream_url si lo hay
+    public_file_url = ""
+    try:
+        public_file_url = normalize_and_wait_file_url(file_path, wait_attempts=6, wait_delay=0.4, fallback_stream_url=upload_stream_url)
+    except Exception:
+        current_app.logger.exception("[send_message_http] error normalizando file url")
+
+    payload = {
+        'username': current_user.username,
+        'message': new_message.content or '',
+        'message_id': new_message.id,
+        'file_url': public_file_url or '',
+        'thumbnail_url': (normalize_and_wait_file_url(thumbnail_path) if thumbnail_path else ""),
+        'timestamp': new_message.timestamp.isoformat()
+    }
+
+    try:
+        socketio.emit('receive_message', payload, to=chat_room_by_username(current_user.username, recipient.username), include_self=True)
+        current_app.logger.debug("[send_message_http] emit payload: %s", payload)
+    except Exception:
+        current_app.logger.debug("Socket emission failed or socketio not configured here.", exc_info=True)
+
+    if request.is_json:
+        return jsonify({'ok': True, 'message_id': new_message.id, 'message': new_message.content, 'file_url': public_file_url}), 200
+
+    return redirect(url_for('chat_with_user', recipient_identifier=recipient.username))
 
 class OpinionForm(FlaskForm):
     opinion_text = TextAreaField('Opinión', validators=[DataRequired()])

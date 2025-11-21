@@ -14,7 +14,7 @@
     <div class="profile-header">
         {% if current_user.id != user.id %}
             <div class="action-buttons">
-                <a href="{{ url_for('send_message', recipient_id=user.id) }}" class="btn-send-message" title="Enviar Mensaje">✉️</a>
+                <a href="{{ url_for('chat_with_user', recipient_identifier=user.username) }}" class="btn-send-message" title="Abrir chat con {{ user.username }}">✉️</a>
                 <a href="javascript:void(0)" class="btn-reviews" title="Ver Opiniones">⭐</a>
             </div>
         {% endif %}

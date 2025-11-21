@@ -14,7 +14,7 @@
 <div class="chat-list">
     {% if chats %}
         {% for chat in chats %}
-            <a href="{{ url_for('chat_with_user', recipient_username=chat.username) }}" 
+            <a href="{{ url_for('chat_with_user', recipient_identifier=chat.username) }}" 
                class="chat-item {% if chat.has_unread %}unread{% endif %}" 
                data-username="{{ chat.username }}">
                
