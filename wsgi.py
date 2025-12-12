@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 # 1) Carga .env ANTES de leer variables
 load_dotenv(Path(__file__).resolve().parent / ".env")
-
+print("ARCHIVO APPLE ENCONTRADO:", os.path.exists(os.environ.get("APPLE_PRIVATE_KEY_PATH", "")))
 # 2) Lee el flag ya con .env cargado
 USE_EVENTLET = os.getenv("USE_EVENTLET", "1") == "1"
 

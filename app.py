@@ -45,6 +45,9 @@ from requests.exceptions import RequestException
 import secrets 
 from slugify import slugify 
 import sys
+import jwt
+from jwt import PyJWKClient
+
 
 # Helper seguro para hacer strip sin fallar si value es None
 def _safe_strip(value):
@@ -62,6 +65,16 @@ app.config.update(
     SESSION_COOKIE_DOMAIN=None,           # deja que Flask escoja
 )
 
+try:
+    from auth.apple import apple_bp
+    if 'apple' not in app.blueprints:
+        app.register_blueprint(apple_bp)
+    else:
+        print("apple blueprint already registered, skipping")
+except Exception as e:
+    import traceback, sys
+    print("Error al importar o registrar apple_bp:", e, file=sys.stderr)
+    traceback.print_exc()
 # ====== DEBUG: listar before_request funcs y login manager info (temporal) ======
 
 
@@ -112,6 +125,12 @@ GOOGLE_CLIENT_SECRET = (os.getenv("GOOGLE_CLIENT_SECRET") or "").strip()
 GOOGLE_ANDROID_CLIENT_ID = (os.getenv("GOOGLE_ANDROID_CLIENT_ID") or "").strip()  # opcional
 GOOGLE_IOS_CLIENT_ID     = (os.getenv("GOOGLE_IOS_CLIENT_ID") or "").strip()      # opcional
 
+TEAM_ID = os.environ.get('APPLE_TEAM_ID')
+CLIENT_ID = os.environ.get('APPLE_CLIENT_ID')
+KEY_ID = os.environ.get('APPLE_KEY_ID')
+PRIVATE_KEY_PATH = os.environ.get('APPLE_PRIVATE_KEY_PATH')
+REDIRECT_URI = os.environ.get('APPLE_REDIRECT_URI')
+
 os.makedirs(app.config['CV_UPLOAD_FOLDER'], exist_ok=True)
 
 # Lee la config sin fallar al importar
@@ -119,6 +138,7 @@ PRICE_ID = os.getenv("STRIPE_PRICE_ID")
 
 bp = Blueprint("admin_offers", __name__, url_prefix="/admin/offers")
 offers_public = Blueprint("offers_public", __name__, url_prefix='/offers')
+
 
 # register blueprints
 app.register_blueprint(offers_public)
@@ -199,6 +219,8 @@ def _dump_before_request_funcs():
         app.logger.exception('[DBG-DUMP] error dumping before_request_funcs: %s', e)
 
 _dump_before_request_funcs()
+
+
 
 # Info del login_manager
 try:
@@ -791,6 +813,9 @@ class User(db.Model, UserMixin):
     is_premium = db.Column(db.Boolean, default=False)
     google_id = db.Column(db.String(200), unique=True, nullable=True)
     cv_file = db.Column(db.String(255), nullable=True)
+    # dentro de la clase User (ajusta el nombre del tipo/longitud si quieres)
+    apple_sub = db.Column(db.String(255), unique=True, nullable=True, index=True)
+
 
 
     comments = db.relationship('Comment', back_populates='user')
@@ -1252,8 +1277,6 @@ def login():
     # GET: muestra el formulario (conserva ?next=...)
     return render_template('login.html')
 
-
-
 def send_verification_email(user_email):
     token = serializer.dumps(user_email, salt='email-confirm')
     confirm_url = url_for('confirm_email', token=token, _external=True)
@@ -1488,6 +1511,133 @@ def google_callback():
     next_url = request.args.get("next") or url_for("home")
     app.logger.warning("[OIDC][OK] Login completado para user_id=%s; redirect=%s", user.id, next_url)
     return redirect(next_url)
+
+def load_private_key():
+    with open(PRIVATE_KEY_PATH, 'r') as f:
+        return f.read()
+
+def generate_client_secret():
+    private_key = load_private_key()
+    now = int(time.time())
+    payload = {'iss': TEAM_ID, 'iat': now, 'exp': now + 86400*180, 'aud': 'https://appleid.apple.com', 'sub': CLIENT_ID}
+    headers = {'kid': KEY_ID}
+    cs = jwt.encode(payload, private_key, algorithm='ES256', headers=headers)
+    if isinstance(cs, bytes): cs = cs.decode()
+    return cs
+
+def exchange_code_for_token(code):
+    client_secret = generate_client_secret()
+    url = 'https://appleid.apple.com/auth/token'
+    data = {'grant_type': 'authorization_code','code': code,'redirect_uri': REDIRECT_URI,'client_id': CLIENT_ID,'client_secret': client_secret}
+    resp = request.post(url, data=data, timeout=15)
+    resp.raise_for_status()
+    return resp.json()
+
+def validate_id_token(id_token):
+    jwks_url = "https://appleid.apple.com/auth/keys"
+    jwk_client = PyJWKClient(jwks_url)
+    signing_key = jwk_client.get_signing_key_from_jwt(id_token)
+    claims = jwt.decode(id_token, signing_key.key, audience=CLIENT_ID, algorithms=['RS256','ES256'])
+    return claims
+
+apple_bp = Blueprint('apple', __name__)
+@apple_bp.route('/auth/apple')
+def auth_apple():
+    state = os.urandom(16).hex()
+    session['apple_auth_state'] = state
+    scope = 'name email'
+    auth_url = ('https://appleid.apple.com/auth/authorize'
+                f'?response_type=code&response_mode=form_post&client_id={CLIENT_ID}'
+                f'&redirect_uri={REDIRECT_URI}&scope={scope}&state={state}')
+    return redirect(auth_url)
+
+@apple_bp.route('/auth/apple/callback', methods=['POST','GET'])
+def auth_apple_callback():
+    code = request.form.get('code') or request.args.get('code')
+    state = request.form.get('state') or request.args.get('state')
+    if 'apple_auth_state' in session and state != session.get('apple_auth_state'):
+        current_app.logger.warning("Apple sign-in state mismatch")
+    if not code:
+        return "Missing code", 400
+
+    # intercambio de code por tokens
+    try:
+        token_resp = exchange_code_for_token(code)
+    except Exception as e:
+        current_app.logger.exception("Token exchange failed")
+        return "Token exchange failed", 400
+
+    id_token = token_resp.get('id_token')
+    if not id_token:
+        return "No id_token returned", 400
+
+    try:
+        claims = validate_id_token(id_token)
+    except Exception as e:
+        current_app.logger.exception("Invalid id_token")
+        return "Invalid id_token", 400
+
+    apple_sub = claims.get('sub')
+    email = claims.get('email')
+    email_verified = claims.get('email_verified')  # 'true'|'false' o bool
+
+    # nombre sólo viene en el primer auth via request.form['user'] (JSON)
+    user_json = request.form.get('user')
+    first_name = last_name = None
+    if user_json:
+        try:
+            ud = json.loads(user_json)
+            name = ud.get('name', {})
+            first_name = name.get('firstName')
+            last_name = name.get('lastName')
+        except Exception:
+            pass
+
+    user = None
+
+    # 1) buscar por apple_sub (login directo si ya asociado)
+    if apple_sub:
+        user = User.query.filter_by(apple_sub=apple_sub).first()
+
+    # 2) si no existe y Apple dió email, buscar por email y asociar apple_sub
+    if not user and email:
+        user = User.query.filter_by(email=email).first()
+        if user:
+            # asociar apple_sub si no está ya
+            if not getattr(user, 'apple_sub', None):
+                user.apple_sub = apple_sub
+                # marcar email confirmado si tienes ese campo
+                if hasattr(user, 'is_confirmed'):
+                    user.is_confirmed = True if email_verified in (True, 'true', 'True') else user.is_confirmed
+                db.session.add(user)
+                db.session.commit()
+
+    # 3) si no existe, crear nuevo usuario mínimo
+    if not user:
+        user = User()
+        # adapta los nombres de campos a tu modelo
+        if hasattr(user, 'apple_sub'):
+            user.apple_sub = apple_sub
+        if hasattr(user, 'email') and email:
+            user.email = email
+        if hasattr(user, 'is_confirmed'):
+            user.is_confirmed = True if email_verified in (True, 'true', 'True') else False
+        if hasattr(user, 'first_name') and first_name:
+            user.first_name = first_name
+        if hasattr(user, 'last_name') and last_name:
+            user.last_name = last_name
+        # cualquier campo requerido por tu modelo debes rellenarlo aquí o permitir NULL
+        db.session.add(user)
+        db.session.commit()
+
+    # login final
+    try:
+        login_user(user)
+    except Exception:
+        current_app.logger.exception("login_user failed")
+    
+    # redirigir a perfil o home
+    return redirect(url_for('main.profile') if 'main' in current_app.blueprints else '/')
 
 # ========== UTILIDAD: USERNAME ÚNICO DESDE EMAIL ==========
 def _unique_username_from_email(email: str) -> str:
