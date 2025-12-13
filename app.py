@@ -1524,14 +1524,23 @@ def generate_client_secret():
     cs = jwt.encode(payload, private_key, algorithm='ES256', headers=headers)
     if isinstance(cs, bytes): cs = cs.decode()
     return cs
-
+ 
+import requests
 def exchange_code_for_token(code):
     client_secret = generate_client_secret()
     url = 'https://appleid.apple.com/auth/token'
-    data = {'grant_type': 'authorization_code','code': code,'redirect_uri': REDIRECT_URI,'client_id': CLIENT_ID,'client_secret': client_secret}
-    resp = request.post(url, data=data, timeout=15)
+    data = {
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': REDIRECT_URI,
+        'client_id': CLIENT_ID,
+        'client_secret': client_secret
+    }
+
+    resp = requests.post(url, data=data, timeout=15)  # ← CORREGIDO
     resp.raise_for_status()
     return resp.json()
+
 
 def validate_id_token(id_token):
     jwks_url = "https://appleid.apple.com/auth/keys"
