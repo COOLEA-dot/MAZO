@@ -1517,19 +1517,38 @@ def generate_client_secret():
     return cs
  
 import requests
+import requests  # <-- asegúrate de que existe una sola vez en tu app
+
 def exchange_code_for_token(code):
+    print("\n--- INTERCAMBIO CODE → TOKEN (Apple) ---", flush=True)
+    print("CODE recibido:", code, flush=True)
+
     client_secret = generate_client_secret()
-    url = 'https://appleid.apple.com/auth/token'
+    print("Client Secret generado correctamente", flush=True)
+
+    url = "https://appleid.apple.com/auth/token"
+
     data = {
-        'grant_type': 'authorization_code',
-        'code': code,
-        'redirect_uri': REDIRECT_URI,
-        'client_id': CLIENT_ID,
-        'client_secret': client_secret
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": REDIRECT_URI,
+        "client_id": CLIENT_ID,
+        "client_secret": client_secret
     }
 
-    resp = requests.post(url, data=data, timeout=15)  # ← CORREGIDO
-    resp.raise_for_status()
+    print("POST a Apple /auth/token con redirect_uri:", REDIRECT_URI, flush=True)
+
+    try:
+        resp = requests.post(url, data=data, timeout=15)
+        print("STATUS Apple Token:", resp.status_code, flush=True)
+        print("RESPUESTA CRUDA:", resp.text, flush=True)
+        resp.raise_for_status()
+    except Exception as e:
+        print("❌ ERROR en requests.post hacia Apple:", e, flush=True)
+        traceback.print_exc()
+        raise  # <-- importante: que lo capture la función callback
+
+    print("Token JSON procesado correctamente", flush=True)
     return resp.json()
 
 
