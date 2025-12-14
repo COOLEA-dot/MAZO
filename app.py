@@ -47,7 +47,7 @@ from slugify import slugify
 import sys
 import jwt
 from jwt import PyJWKClient
-
+import traceback 
 
 # Helper seguro para hacer strip sin fallar si value es None
 def _safe_strip(value):
@@ -56,6 +56,9 @@ def _safe_strip(value):
 
 ENV_PATH = Path(__file__).resolve().parent / ".env"
 app = Flask(__name__)
+from auth.apple import apple_bp
+app.register_blueprint(apple_bp)
+
 app.config.update(
     SECRET_KEY="c65ChhxLvx0nFVW16ZD0cyPyTdvP1q77V5DK2lzAjfw",      # que no cambie entre peticiones
     SESSION_COOKIE_SAMESITE="Lax",
@@ -64,18 +67,6 @@ app.config.update(
     REMEMBER_COOKIE_SECURE=False,
     SESSION_COOKIE_DOMAIN=None,           # deja que Flask escoja
 )
-
-try:
-    from auth.apple import apple_bp
-    if 'apple' not in app.blueprints:
-        app.register_blueprint(apple_bp)
-    else:
-        print("apple blueprint already registered, skipping")
-except Exception as e:
-    import traceback, sys
-    print("Error al importar o registrar apple_bp:", e, file=sys.stderr)
-    traceback.print_exc()
-# ====== DEBUG: listar before_request funcs y login manager info (temporal) ======
 
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
@@ -1550,103 +1541,144 @@ def validate_id_token(id_token):
     return claims
 
 apple_bp = Blueprint('apple', __name__)
+
 @apple_bp.route('/auth/apple')
 def auth_apple():
+    print("\n=== APPLE LOGIN INICIADO ===", flush=True)
+
     state = os.urandom(16).hex()
     session['apple_auth_state'] = state
+
+    print("State generado:", state, flush=True)
+    print("Redirect URI:", REDIRECT_URI, flush=True)
+    print("Client ID:", CLIENT_ID, flush=True)
+
     scope = 'name email'
-    auth_url = ('https://appleid.apple.com/auth/authorize'
-                f'?response_type=code&response_mode=form_post&client_id={CLIENT_ID}'
-                f'&redirect_uri={REDIRECT_URI}&scope={scope}&state={state}')
+    auth_url = (
+        'https://appleid.apple.com/auth/authorize'
+        f'?response_type=code&response_mode=form_post&client_id={CLIENT_ID}'
+        f'&redirect_uri={REDIRECT_URI}&scope={scope}&state={state}'
+    )
+
+    print("URL de autorización:", auth_url, flush=True)
     return redirect(auth_url)
+
 
 @apple_bp.route('/auth/apple/callback', methods=['POST','GET'])
 def auth_apple_callback():
-    code = request.form.get('code') or request.args.get('code')
-    state = request.form.get('state') or request.args.get('state')
-    if 'apple_auth_state' in session and state != session.get('apple_auth_state'):
-        current_app.logger.warning("Apple sign-in state mismatch")
-    if not code:
-        return "Missing code", 400
-
-    # intercambio de code por tokens
-    try:
-        token_resp = exchange_code_for_token(code)
-    except Exception as e:
-        current_app.logger.exception("Token exchange failed")
-        return "Token exchange failed", 400
-
-    id_token = token_resp.get('id_token')
-    if not id_token:
-        return "No id_token returned", 400
+    print("\n\n========== CALLBACK DE APPLE LLEGÓ ==========", flush=True)
 
     try:
-        claims = validate_id_token(id_token)
-    except Exception as e:
-        current_app.logger.exception("Invalid id_token")
-        return "Invalid id_token", 400
+        code = request.form.get('code') or request.args.get('code')
+        state = request.form.get('state') or request.args.get('state')
 
-    apple_sub = claims.get('sub')
-    email = claims.get('email')
-    email_verified = claims.get('email_verified')  # 'true'|'false' o bool
+        print("CODE recibido:", code, flush=True)
+        print("STATE recibido:", state, flush=True)
+        print("STATE en session:", session.get('apple_auth_state'), flush=True)
 
-    # nombre sólo viene en el primer auth via request.form['user'] (JSON)
-    user_json = request.form.get('user')
-    first_name = last_name = None
-    if user_json:
+        if not code:
+            print("❌ ERROR: code viene vacío", flush=True)
+            return "Missing code", 400
+
+        print("\n--- Intercambiando code por token en Apple ---", flush=True)
+
         try:
-            ud = json.loads(user_json)
-            name = ud.get('name', {})
-            first_name = name.get('firstName')
-            last_name = name.get('lastName')
-        except Exception:
-            pass
+            token_resp = exchange_code_for_token(code)
+            print("Respuesta TOKEN Apple:", token_resp, flush=True)
+        except Exception as e:
+            print("❌ ERROR al intercambiar code/token:", e, flush=True)
+            traceback.print_exc()
+            return "Token exchange failed", 500
 
-    user = None
+        id_token = token_resp.get('id_token')
 
-    # 1) buscar por apple_sub (login directo si ya asociado)
-    if apple_sub:
-        user = User.query.filter_by(apple_sub=apple_sub).first()
+        if not id_token:
+            print("❌ ERROR: Apple NO devolvió id_token", flush=True)
+            return "No id_token returned", 400
 
-    # 2) si no existe y Apple dió email, buscar por email y asociar apple_sub
-    if not user and email:
-        user = User.query.filter_by(email=email).first()
-        if user:
-            # asociar apple_sub si no está ya
-            if not getattr(user, 'apple_sub', None):
+        print("\n--- Validando ID TOKEN ---", flush=True)
+
+        try:
+            claims = validate_id_token(id_token)
+            print("CLAIMS recibidos:", claims, flush=True)
+        except Exception as e:
+            print("❌ ERROR en validate_id_token:", e, flush=True)
+            traceback.print_exc()
+            return "Invalid id_token", 400
+
+
+        # DATOS DE USUARIO
+        apple_sub = claims.get('sub')
+        email = claims.get('email')
+        email_verified = claims.get('email_verified')
+
+        print("apple_sub:", apple_sub, flush=True)
+        print("email:", email, flush=True)
+        print("email_verified:", email_verified, flush=True)
+
+        user_json = request.form.get('user')
+        first_name = last_name = None
+
+        if user_json:
+            try:
+                ud = json.loads(user_json)
+                name = ud.get('name', {})
+                first_name = name.get('firstName')
+                last_name = name.get('lastName')
+                print("Nombre inicial recibido:", first_name, last_name, flush=True)
+            except:
+                print("Error leyendo user_json", flush=True)
+
+        print("\n--- BUSCANDO USUARIO EN DB ---", flush=True)
+
+        user = None
+
+        if apple_sub:
+            user = User.query.filter_by(apple_sub=apple_sub).first()
+
+        if not user and email:
+            user = User.query.filter_by(email=email).first()
+            if user:
+                print("Usuario encontrado por email, asociando apple_sub", flush=True)
                 user.apple_sub = apple_sub
-                # marcar email confirmado si tienes ese campo
-                if hasattr(user, 'is_confirmed'):
-                    user.is_confirmed = True if email_verified in (True, 'true', 'True') else user.is_confirmed
-                db.session.add(user)
                 db.session.commit()
 
-    # 3) si no existe, crear nuevo usuario mínimo
-    if not user:
-        user = User()
-        # adapta los nombres de campos a tu modelo
-        if hasattr(user, 'apple_sub'):
-            user.apple_sub = apple_sub
-        if hasattr(user, 'email') and email:
-            user.email = email
-        if hasattr(user, 'is_confirmed'):
-            user.is_confirmed = True if email_verified in (True, 'true', 'True') else False
-        if hasattr(user, 'first_name') and first_name:
-            user.first_name = first_name
-        if hasattr(user, 'last_name') and last_name:
-            user.last_name = last_name
-        # cualquier campo requerido por tu modelo debes rellenarlo aquí o permitir NULL
-        db.session.add(user)
-        db.session.commit()
+        if not user:
+            print("Usuario NO existe → creándolo...", flush=True)
+            user = User()
 
-    # login final
-    try:
-        login_user(user)
-    except Exception:
-        current_app.logger.exception("login_user failed")
-    
-    # redirigir a perfil o home
-    return redirect(url_for('main.profile') if 'main' in current_app.blueprints else '/')
+            if hasattr(user, 'apple_sub'): user.apple_sub = apple_sub
+            if hasattr(user, 'email'): user.email = email
+            if hasattr(user, 'is_confirmed'): user.is_confirmed = True
+            if hasattr(user, 'first_name'): user.first_name = first_name
+            if hasattr(user, 'last_name'): user.last_name = last_name
+
+            db.session.add(user)
+            db.session.commit()
+            print("Usuario creado con ID:", user.id, flush=True)
+
+        print("\n--- LOGIN USUARIO ---", flush=True)
+        try:
+            login_user(user)
+            print("LOGIN OK", flush=True)
+        except Exception as e:
+            print("❌ ERROR login_user:", e, flush=True)
+            traceback.print_exc()
+
+        print("\n=== REDIRECCIÓN FINAL ===", flush=True)
+
+        if 'main' in current_app.blueprints:
+            print("Redirigiendo a main.profile", flush=True)
+            return redirect(url_for('main.profile'))
+        else:
+            print("Redirigiendo a /", flush=True)
+            return redirect("/")
+
+    except Exception as e:
+        print("❌ ERROR GENERAL EN CALLBACK:", e, flush=True)
+        traceback.print_exc()
+        return "ERROR CALLBACK", 500
+
 
 # ========== UTILIDAD: USERNAME ÚNICO DESDE EMAIL ==========
 def _unique_username_from_email(email: str) -> str:
