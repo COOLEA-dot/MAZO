@@ -1568,93 +1568,88 @@ def validate_id_token(id_token):
 
 apple_bp = Blueprint('apple', __name__)
 
-@apple_bp.route('/auth/apple/callback', methods=['POST','GET'])
-def auth_apple_callback():
-    import traceback
+from flask import current_app
 
-    current_app.logger.info("========== [CALLBACK APPLE] ==========")
-    current_app.logger.info(f"Request.method = {request.method}")
-    current_app.logger.info(f"Request.form = {request.form}")
-    current_app.logger.info(f"Request.args = {request.args}")
+@apple_bp.route('/auth/apple/callback', methods=['POST', 'GET'])
+def auth_apple_callback():
+    current_app.logger.error("=== [APPLE CALLBACK] INICIADO ===")
 
     try:
         code = request.form.get('code') or request.args.get('code')
         state = request.form.get('state') or request.args.get('state')
 
-        current_app.logger.info(f"CODE recibido: {code}")
-        current_app.logger.info(f"STATE recibido: {state}")
-        current_app.logger.info(f"STATE en session: {session.get('apple_auth_state')}")
+        current_app.logger.error(f"CODE recibido: {code}")
+        current_app.logger.error(f"STATE recibido: {state}")
+        current_app.logger.error(f"STATE en session: {session.get('apple_auth_state')}")
 
         if not code:
-            current_app.logger.error("Falta code en callback")
+            current_app.logger.error("❌ ERROR: code viene vacío")
             return "Missing code", 400
 
-        current_app.logger.info("Intercambiando code por token con Apple...")
-
+        # Intercambio del token
         try:
+            current_app.logger.error("Solicitando token a Apple...")
             token_resp = exchange_code_for_token(code)
-            current_app.logger.info(f"Respuesta de Apple (token): {token_resp}")
+            current_app.logger.error(f"TOKEN RESP => {token_resp}")
         except Exception as e:
-            current_app.logger.error(f"ERROR al intercambiar code/token: {e}")
-            current_app.logger.error(traceback.format_exc())
+            current_app.logger.exception("❌ ERROR al intercambiar code/token")
             return "Token exchange failed", 500
 
-        id_token = token_resp.get('id_token')
-
+        id_token = token_resp.get("id_token")
         if not id_token:
-            logger.error("Apple NO devolvió id_token")
+            current_app.logger.error("❌ ERROR: Apple NO devolvió id_token")
             return "No id_token returned", 400
 
-        current_app.logger.info("Validando ID TOKEN...")
-
+        # Validar id_token
         try:
+            current_app.logger.error("Validando ID Token...")
             claims = validate_id_token(id_token)
-            current_app.logger.info(f"Claims validados: {claims}")
+            current_app.logger.error(f"CLAIMS => {claims}")
         except Exception as e:
-            current_app.logger.error(f"ERROR al validar id_token: {e}")
-            current_app.logger.error(traceback.format_exc())
+            current_app.logger.exception("❌ ERROR en validate_id_token")
             return "Invalid id_token", 400
 
-        apple_sub = claims.get('sub')
-        email = claims.get('email')
+        # Procesar datos del usuario
+        apple_sub = claims.get("sub")
+        email = claims.get("email")
 
-        current_app.logger.info(f"apple_sub: {apple_sub}")
-        current_app.logger.info(f"email: {email}")
+        current_app.logger.error(f"apple_sub: {apple_sub}  email: {email}")
 
-        # Buscar usuario
-        user = None
-        if apple_sub:
-            user = User.query.filter_by(apple_sub=apple_sub).first()
-
+        # Buscar usuario en DB
+        user = User.query.filter_by(apple_sub=apple_sub).first()
         if not user and email:
             user = User.query.filter_by(email=email).first()
             if user:
-                current_app.logger.info("Usuario encontrado por email, asociando apple_sub")
+                current_app.logger.error("Usuario existente encontrado por email → asignando apple_sub")
                 user.apple_sub = apple_sub
                 db.session.commit()
 
         if not user:
-            current_app.logger.info("Creando usuario nuevo con Apple...")
-            user = User(apple_sub=apple_sub, email=email)
+            current_app.logger.error("Usuario nuevo → creando...")
+            user = User(
+                apple_sub=apple_sub,
+                email=email,
+                is_confirmed=True,
+            )
             db.session.add(user)
             db.session.commit()
-            logger.info(f"Usuario creado con id {user.id}")
 
-        # Login
+        # Login del usuario
         try:
             login_user(user)
-            logger.info("LOGIN OK")
-        except Exception as e:
-            current_app.logger.error(f"Error login_user: {e}")
-            current_app.logger.error(traceback.format_exc())
+            current_app.logger.error(f"LOGIN OK → user_id={user.id}")
+        except Exception:
+            current_app.logger.exception("❌ ERROR login_user")
 
-        current_app.logger.info("Redirigiendo a /")
-        return redirect("/")
+        # Redirección final
+        current_app.logger.error("=== REDIRECT FINAL ===")
 
-    except Exception as e:
-        current_app.logger.error(f"ERROR GENERAL CALLBACK: {e}")
-        current_app.logger.error(traceback.format_exc())
+        return redirect("/home")
+
+    except Exception:
+        current_app.logger.exception("❌ ERROR GENERAL EN APPLE CALLBACK")
         return "ERROR CALLBACK", 500
+
 
 
 
