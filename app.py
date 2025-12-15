@@ -49,7 +49,7 @@ import jwt
 from jwt import PyJWKClient
 import traceback 
 import logging
-
+from extensions import db
 def print(*args, **kwargs):
     kwargs["file"] = sys.stdout
     return __builtins__.print(*args, **kwargs)
@@ -114,7 +114,7 @@ for folder in [UPLOAD_FOLDER, CHAT_UPLOAD_FOLDER, PROFILE_PICS_FOLDER]:  # <--- 
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-db = SQLAlchemy(app)
+db.init_app(app)
 USE_EVENTLET = os.getenv("USE_EVENTLET", "0") == "1"
 async_mode = "eventlet" if USE_EVENTLET else "threading"
 
@@ -1598,7 +1598,6 @@ def mobile_google_login():
 def handle_file_too_large(error):
     flash('El archivo es demasiado grande, por favor sube un archivo más pequeño', 'error')
     return redirect(url_for('upload'))
-
 
 videos = [
     {"id": 1, "likes": 0, "liked_by": []},  # 'liked_by' almacena usuarios que dieron like
