@@ -48,6 +48,9 @@ import sys
 import jwt
 from jwt import PyJWKClient
 import traceback 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("apple")
 
 # Helper seguro para hacer strip sin fallar si value es None
 def _safe_strip(value):
@@ -1561,146 +1564,94 @@ def validate_id_token(id_token):
 
 apple_bp = Blueprint('apple', __name__)
 
-@apple_bp.route('/auth/apple')
-def auth_apple():
-    print("\n=== APPLE LOGIN INICIADO ===", flush=True)
-
-    state = os.urandom(16).hex()
-    session['apple_auth_state'] = state
-
-    print("State generado:", state, flush=True)
-    print("Redirect URI:", REDIRECT_URI, flush=True)
-    print("Client ID:", CLIENT_ID, flush=True)
-
-    auth_url = (
-        'https://appleid.apple.com/auth/authorize'
-        f'?response_type=code&response_mode=form_post'
-        f'&client_id={CLIENT_ID}'
-        f'&redirect_uri={REDIRECT_URI}'
-        f'&scope=name email'
-        f'&state={state}'
-    )
-
-    print("URL de autorización:", auth_url, flush=True)
-    return redirect(auth_url)
-
-@apple_bp.route('/auth/apple/callback', methods=['POST', 'GET'])
+@apple_bp.route('/auth/apple/callback', methods=['POST','GET'])
 def auth_apple_callback():
-    print("\n\n========== APPLE CALLBACK RECIBIDO ==========", flush=True)
-    print("Método:", request.method, flush=True)
-    print("request.args:", dict(request.args), flush=True)
-    print("request.form:", dict(request.form), flush=True)
+    import traceback
+
+    logger.info("========== [CALLBACK APPLE] ==========")
+    logger.info(f"Request.method = {request.method}")
+    logger.info(f"Request.form = {request.form}")
+    logger.info(f"Request.args = {request.args}")
 
     try:
         code = request.form.get('code') or request.args.get('code')
         state = request.form.get('state') or request.args.get('state')
 
-        print("CODE recibido:", code, flush=True)
-        print("STATE recibido:", state, flush=True)
-        print("STATE guardado:", session.get('apple_auth_state'), flush=True)
+        logger.info(f"CODE recibido: {code}")
+        logger.info(f"STATE recibido: {state}")
+        logger.info(f"STATE en session: {session.get('apple_auth_state')}")
 
-        # --- ERROR CRÍTICO: NO VIENE CODE ---
         if not code:
-            print("❌ ERROR: Apple NO envió 'code'", flush=True)
+            logger.error("Falta code en callback")
             return "Missing code", 400
 
-        print("\n--- 🔄 Intercambiando code por token en Apple ---", flush=True)
+        logger.info("Intercambiando code por token con Apple...")
 
         try:
             token_resp = exchange_code_for_token(code)
-            print("TOKEN recibido desde Apple:", token_resp, flush=True)
+            logger.info(f"Respuesta de Apple (token): {token_resp}")
         except Exception as e:
-            print("❌ ERROR en intercambio code→token:", e, flush=True)
-            traceback.print_exc()
+            logger.error(f"ERROR al intercambiar code/token: {e}")
+            logger.error(traceback.format_exc())
             return "Token exchange failed", 500
 
-        id_token = token_resp.get("id_token")
+        id_token = token_resp.get('id_token')
+
         if not id_token:
-            print("❌ ERROR: Apple NO entregó id_token", flush=True)
+            logger.error("Apple NO devolvió id_token")
             return "No id_token returned", 400
 
-        print("\n--- 🔍 Validando ID TOKEN ---", flush=True)
+        logger.info("Validando ID TOKEN...")
 
         try:
             claims = validate_id_token(id_token)
-            print("CLAIMS:", claims, flush=True)
+            logger.info(f"Claims validados: {claims}")
         except Exception as e:
-            print("❌ ERROR validando id_token:", e, flush=True)
-            traceback.print_exc()
+            logger.error(f"ERROR al validar id_token: {e}")
+            logger.error(traceback.format_exc())
             return "Invalid id_token", 400
 
-        # === DATOS DEL USUARIO ===
-        apple_sub = claims.get("sub")
-        email = claims.get("email")
-        email_verified = claims.get("email_verified")
+        apple_sub = claims.get('sub')
+        email = claims.get('email')
 
-        print("apple_sub:", apple_sub, flush=True)
-        print("email:", email, flush=True)
-        print("email_verified:", email_verified, flush=True)
+        logger.info(f"apple_sub: {apple_sub}")
+        logger.info(f"email: {email}")
 
-        # El nombre solo viene la PRIMERA VEZ
-        user_json = request.form.get("user")
-        first_name = last_name = None
-
-        if user_json:
-            try:
-                ud = json.loads(user_json)
-                name = ud.get("name", {})
-                first_name = name.get("firstName")
-                last_name = name.get("lastName")
-                print("Nombre recibido:", first_name, last_name, flush=True)
-            except:
-                print("⚠️ Error leyendo user_json", flush=True)
-
-        print("\n--- 👤 BUSCANDO USUARIO ---", flush=True)
-
+        # Buscar usuario
         user = None
-
-        # 1) Buscar por apple_sub
         if apple_sub:
             user = User.query.filter_by(apple_sub=apple_sub).first()
 
-        # 2) Buscar por email y asociar
         if not user and email:
             user = User.query.filter_by(email=email).first()
             if user:
-                print("Usuario encontrado por email → asociando apple_sub", flush=True)
+                logger.info("Usuario encontrado por email, asociando apple_sub")
                 user.apple_sub = apple_sub
                 db.session.commit()
 
-        # 3) Crear nuevo usuario
         if not user:
-            print("Usuario NO existe → Creando nuevo", flush=True)
-            user = User()
-
-            if hasattr(user, "apple_sub"): user.apple_sub = apple_sub
-            if hasattr(user, "email"): user.email = email
-            if hasattr(user, "is_confirmed"): user.is_confirmed = True
-            if hasattr(user, "first_name"): user.first_name = first_name
-            if hasattr(user, "last_name"): user.last_name = last_name
-
+            logger.info("Creando usuario nuevo con Apple...")
+            user = User(apple_sub=apple_sub, email=email)
             db.session.add(user)
             db.session.commit()
+            logger.info(f"Usuario creado con id {user.id}")
 
-            print("Nuevo usuario creado ID:", user.id, flush=True)
-
-        print("\n--- 🔐 LOGIN DEL USUARIO ---", flush=True)
-
+        # Login
         try:
             login_user(user)
-            print("LOGIN OK ✔️", flush=True)
+            logger.info("LOGIN OK")
         except Exception as e:
-            print("❌ ERROR en login_user:", e, flush=True)
-            traceback.print_exc()
+            logger.error(f"Error login_user: {e}")
+            logger.error(traceback.format_exc())
 
-        print("\n=== 🔁 REDIRIGIENDO ===", flush=True)
-
-        return redirect("/home")
+        logger.info("Redirigiendo a /")
+        return redirect("/")
 
     except Exception as e:
-        print("❌ ERROR GENERAL EN CALLBACK:", e, flush=True)
-        traceback.print_exc()
+        logger.error(f"ERROR GENERAL CALLBACK: {e}")
+        logger.error(traceback.format_exc())
         return "ERROR CALLBACK", 500
+
 
 
 # ========== UTILIDAD: USERNAME ÚNICO DESDE EMAIL ==========
