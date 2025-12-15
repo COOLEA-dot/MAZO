@@ -49,6 +49,10 @@ import jwt
 from jwt import PyJWKClient
 import traceback 
 import logging
+
+def print(*args, **kwargs):
+    kwargs["file"] = sys.stdout
+    return __builtins__.print(*args, **kwargs)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("apple")
 
@@ -1568,31 +1572,31 @@ apple_bp = Blueprint('apple', __name__)
 def auth_apple_callback():
     import traceback
 
-    logger.info("========== [CALLBACK APPLE] ==========")
-    logger.info(f"Request.method = {request.method}")
-    logger.info(f"Request.form = {request.form}")
-    logger.info(f"Request.args = {request.args}")
+    current_app.logger.info("========== [CALLBACK APPLE] ==========")
+    current_app.logger.info(f"Request.method = {request.method}")
+    current_app.logger.info(f"Request.form = {request.form}")
+    current_app.logger.info(f"Request.args = {request.args}")
 
     try:
         code = request.form.get('code') or request.args.get('code')
         state = request.form.get('state') or request.args.get('state')
 
-        logger.info(f"CODE recibido: {code}")
-        logger.info(f"STATE recibido: {state}")
-        logger.info(f"STATE en session: {session.get('apple_auth_state')}")
+        current_app.logger.info(f"CODE recibido: {code}")
+        current_app.logger.info(f"STATE recibido: {state}")
+        current_app.logger.info(f"STATE en session: {session.get('apple_auth_state')}")
 
         if not code:
-            logger.error("Falta code en callback")
+            current_app.logger.error("Falta code en callback")
             return "Missing code", 400
 
-        logger.info("Intercambiando code por token con Apple...")
+        current_app.logger.info("Intercambiando code por token con Apple...")
 
         try:
             token_resp = exchange_code_for_token(code)
-            logger.info(f"Respuesta de Apple (token): {token_resp}")
+            current_app.logger.info(f"Respuesta de Apple (token): {token_resp}")
         except Exception as e:
-            logger.error(f"ERROR al intercambiar code/token: {e}")
-            logger.error(traceback.format_exc())
+            current_app.logger.error(f"ERROR al intercambiar code/token: {e}")
+            current_app.logger.error(traceback.format_exc())
             return "Token exchange failed", 500
 
         id_token = token_resp.get('id_token')
@@ -1601,21 +1605,21 @@ def auth_apple_callback():
             logger.error("Apple NO devolvió id_token")
             return "No id_token returned", 400
 
-        logger.info("Validando ID TOKEN...")
+        current_app.logger.info("Validando ID TOKEN...")
 
         try:
             claims = validate_id_token(id_token)
-            logger.info(f"Claims validados: {claims}")
+            current_app.logger.info(f"Claims validados: {claims}")
         except Exception as e:
-            logger.error(f"ERROR al validar id_token: {e}")
-            logger.error(traceback.format_exc())
+            current_app.logger.error(f"ERROR al validar id_token: {e}")
+            current_app.logger.error(traceback.format_exc())
             return "Invalid id_token", 400
 
         apple_sub = claims.get('sub')
         email = claims.get('email')
 
-        logger.info(f"apple_sub: {apple_sub}")
-        logger.info(f"email: {email}")
+        current_app.logger.info(f"apple_sub: {apple_sub}")
+        current_app.logger.info(f"email: {email}")
 
         # Buscar usuario
         user = None
@@ -1625,12 +1629,12 @@ def auth_apple_callback():
         if not user and email:
             user = User.query.filter_by(email=email).first()
             if user:
-                logger.info("Usuario encontrado por email, asociando apple_sub")
+                current_app.logger.info("Usuario encontrado por email, asociando apple_sub")
                 user.apple_sub = apple_sub
                 db.session.commit()
 
         if not user:
-            logger.info("Creando usuario nuevo con Apple...")
+            current_app.logger.info("Creando usuario nuevo con Apple...")
             user = User(apple_sub=apple_sub, email=email)
             db.session.add(user)
             db.session.commit()
@@ -1641,15 +1645,15 @@ def auth_apple_callback():
             login_user(user)
             logger.info("LOGIN OK")
         except Exception as e:
-            logger.error(f"Error login_user: {e}")
-            logger.error(traceback.format_exc())
+            current_app.logger.error(f"Error login_user: {e}")
+            current_app.logger.error(traceback.format_exc())
 
-        logger.info("Redirigiendo a /")
+        current_app.logger.info("Redirigiendo a /")
         return redirect("/")
 
     except Exception as e:
-        logger.error(f"ERROR GENERAL CALLBACK: {e}")
-        logger.error(traceback.format_exc())
+        current_app.logger.error(f"ERROR GENERAL CALLBACK: {e}")
+        current_app.logger.error(traceback.format_exc())
         return "ERROR CALLBACK", 500
 
 
