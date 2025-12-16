@@ -1158,7 +1158,9 @@ def login_google():
         access_type="offline",
     )
 
+
 @app.get("/auth/google/callback", endpoint="google_callback")
+@csrf.exempt
 def google_callback():
     # ---------- A) CSRF: validar state ----------
     returned_state = request.args.get('state')
