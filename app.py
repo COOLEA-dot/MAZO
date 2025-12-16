@@ -68,11 +68,7 @@ from models import (
     CURRENCY_CHOICES,
 )
 
-def print(*args, **kwargs):
-    kwargs["file"] = sys.stdout
-    return __builtins__.print(*args, **kwargs)
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("apple")
+
 
 # Helper seguro para hacer strip sin fallar si value es None
 def _safe_strip(value):
@@ -81,8 +77,6 @@ def _safe_strip(value):
 
 ENV_PATH = Path(__file__).resolve().parent / ".env"
 app = Flask(__name__)
-from auth.apple import apple_bp
-app.register_blueprint(apple_bp)
 
 app.config.update(
     SECRET_KEY="c65ChhxLvx0nFVW16ZD0cyPyTdvP1q77V5DK2lzAjfw",      # que no cambie entre peticiones
@@ -136,10 +130,18 @@ db.init_app(app)
 USE_EVENTLET = os.getenv("USE_EVENTLET", "0") == "1"
 async_mode = "eventlet" if USE_EVENTLET else "threading"
 
+csrf = CSRFProtect(app)
+csrf.init_app(app)
+
 GOOGLE_CLIENT_ID = (os.getenv("GOOGLE_CLIENT_ID") or "").strip()
 GOOGLE_CLIENT_SECRET = (os.getenv("GOOGLE_CLIENT_SECRET") or "").strip()
 GOOGLE_ANDROID_CLIENT_ID = (os.getenv("GOOGLE_ANDROID_CLIENT_ID") or "").strip()  # opcional
 GOOGLE_IOS_CLIENT_ID     = (os.getenv("GOOGLE_IOS_CLIENT_ID") or "").strip()      # opcional
+
+from auth.apple import apple_bp
+app.register_blueprint(apple_bp)
+csrf.exempt("apple.auth_apple_callback")
+
 
 TEAM_ID = os.environ.get('APPLE_TEAM_ID')
 CLIENT_ID = os.environ.get('APPLE_CLIENT_ID')
@@ -183,9 +185,6 @@ if ext_base:
     allowed_origins.append(ext_base)
 
 socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)  # permite orígenes y logging
-
-csrf = CSRFProtect(app)
-csrf.init_app(app)
 
 logging.basicConfig(level=logging.DEBUG)
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
@@ -1158,152 +1157,6 @@ def login_google():
         access_type="offline",
     )
 
-
-@app.get("/auth/google/callback", endpoint="google_callback")
-@csrf.exempt
-def google_callback():
-    # ---------- A) CSRF: validar state ----------
-    returned_state = request.args.get('state')
-    expected_state = session.pop('oauth_state', None)
-    if not returned_state or not expected_state or returned_state != expected_state:
-        app.logger.warning("[OIDC] STATE mismatch: returned=%r expected=%r", returned_state, expected_state)
-        flash("CSRF: el parámetro state no coincide. Vuelve a intentarlo.", "danger")
-        return redirect(url_for("login"))
-
-    # ---------- B) Intercambiar code por tokens ----------
-    try:
-        token = oauth.google.authorize_access_token()
-        if not token:
-            app.logger.warning("[OIDC] authorize_access_token devolvió token vacío")
-            flash("No se obtuvo token de Google", "danger")
-            return redirect(url_for("login"))
-    except Exception as e:
-        app.logger.exception("[OIDC] Error en authorize_access_token: %s", e)
-        flash(f"Error de autorización con Google: {e}", "danger")
-        return redirect(url_for("login"))
-
-    # DEBUG del token (seguro, sin imprimir secretos)
-    raw_id = token.get("id_token")
-    app.logger.warning(
-        "[OIDC][DBG] has_id_token=%s access_token_len=%s scope=%r",
-        bool(raw_id), len(token.get('access_token','')), token.get('scope')
-    )
-
-    def _b64url_decode_to_json(b64url: str):
-        try:
-            padding = '=' * (-len(b64url) % 4)
-            data = base64.urlsafe_b64decode(b64url + padding)
-            return json.loads(data.decode('utf-8'))
-        except Exception as e:
-            app.logger.warning("[OIDC][DBG] fallo al decodificar base64url: %s", e)
-            return None
-
-    # ---------- C) Intento A: ID Token (sin red) ----------
-    info = None
-    try:
-        nonce = session.pop('oauth_nonce', None)
-        claims = oauth.google.parse_id_token(token, nonce=nonce) if nonce else oauth.google.parse_id_token(token)
-        if claims:
-            app.logger.warning("[OIDC][DBG] id_token.payload(parse_id_token) = %s", json.dumps(claims, ensure_ascii=False))
-            info = {
-                "email":           claims.get("email"),
-                "name":            claims.get("name") or "",
-                "picture":         claims.get("picture") or "",
-                "sub":             claims.get("sub"),
-                "email_verified":  claims.get("email_verified"),
-            }
-    except Exception as e:
-        app.logger.warning("[OIDC] parse_id_token falló: %s", e)
-
-    # ---------- D) Intento B: userinfo OIDC (si falta email) ----------
-    if not (info and info.get("email")):
-        try:
-            resp = oauth.google.get("https://openidconnect.googleapis.com/v1/userinfo")
-            app.logger.warning("[OIDC][DBG] userinfo status=%s body=%s", getattr(resp, "status_code", None), getattr(resp, "text", None))
-            resp.raise_for_status()
-            ui = resp.json()
-            info = {
-                "email":           ui.get("email"),
-                "name":            ui.get("name") or "",
-                "picture":         ui.get("picture") or "",
-                "sub":             ui.get("sub"),
-                "email_verified":  ui.get("email_verified"),
-            }
-        except RequestException as e:
-            app.logger.exception("[OIDC] userinfo error: %s", e)
-
-    # ---------- E) Intento C: Decodificación manual del id_token (debug) ----------
-    if not (info and info.get("email")) and raw_id and raw_id.count('.') == 2:
-        h_b64, p_b64, _ = raw_id.split('.')
-        payload = _b64url_decode_to_json(p_b64) or {}
-        app.logger.warning("[OIDC][DBG] id_token.payload(manual) = %s", json.dumps(payload, ensure_ascii=False))
-        info = info or {}
-        info.setdefault("email", payload.get("email"))
-        info.setdefault("name",  payload.get("name") or "")
-        info.setdefault("picture", payload.get("picture") or "")
-        info.setdefault("sub",   payload.get("sub"))
-        info.setdefault("email_verified", payload.get("email_verified"))
-
-    # ---------- F) Modo rescate: permitir login sin email usando 'sub' ----------
-    if not info:
-        app.logger.warning("[OIDC] No se pudo construir 'info' ni siquiera con decodificación manual.")
-        flash("No se pudo obtener datos mínimos de Google. Inténtalo de nuevo.", "danger")
-        return redirect(url_for("login"))
-
-    email = info.get("email")
-    sub   = info.get("sub")
-    if not sub:
-        app.logger.warning("[OIDC] Falta 'sub' en claims; no podemos identificar la cuenta.")
-        flash("No se pudo identificar tu cuenta de Google (sin 'sub').", "danger")
-        return redirect(url_for("login"))
-
-    # Si NO hay email, seguimos adelante usando 'sub' (google_id) como clave
-    if not email:
-        app.logger.warning("[OIDC] ID Token/userinfo sin 'email'. Seguimos por 'sub' únicamente (modo rescate).")
-        # Opción: puedes inventar un email interno no real (si tu modelo requiere no-null):
-        # email = f"{sub}@google.local"
-        # o permitir email nullable en tu modelo.
-
-    # ---------- G) Crear / actualizar usuario ----------
-    user = None
-    if email:
-        user = User.query.filter_by(email=email).first()
-
-    if not user:
-        # Si no encontramos por email, probamos por google_id (sub)
-        user = User.query.filter_by(google_id=sub).first()
-
-    if not user:
-        user = User(
-            username=(email.split("@")[0] if email else f"user_{sub[:8]}"),
-            email=email,  # puede ser None si tu modelo lo permite
-            name=info.get("name"),
-            profile_pic=info.get("picture"),
-            google_id=sub,
-            password_hash=generate_password_hash(os.urandom(16).hex()),
-        )
-        db.session.add(user)
-        db.session.commit()
-        app.logger.warning("[OIDC] Usuario creado: id=%s email=%r google_id=%r", user.id, user.email, user.google_id)
-    else:
-        updated = False
-        if not getattr(user, "google_id", None):
-            user.google_id = sub
-            updated = True
-        if not user.profile_pic and info.get("picture"):
-            user.profile_pic = info.get("picture")
-            updated = True
-        if updated:
-            db.session.commit()
-            app.logger.warning("[OIDC] Usuario actualizado: id=%s email=%r google_id=%r", user.id, user.email, user.google_id)
-
-    # ---------- H) Login + redirect ----------
-    login_user(user, remember=True)
-    next_url = request.args.get("next") or url_for("home")
-    app.logger.warning("[OIDC][OK] Login completado para user_id=%s; redirect=%s", user.id, next_url)
-    return redirect(next_url)
-
-# ========== UTILIDAD: USERNAME ÚNICO DESDE EMAIL ==========
 def _unique_username_from_email(email: str) -> str:
     base = email.split("@")[0]
     name = base

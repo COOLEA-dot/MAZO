@@ -6,6 +6,7 @@ from app import User
 import jwt
 from jwt import PyJWKClient
 import requests
+ 
 
 APPLE_TEAM_ID = os.getenv("APPLE_TEAM_ID")
 APPLE_CLIENT_ID = os.getenv("APPLE_CLIENT_ID")
