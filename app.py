@@ -133,6 +133,9 @@ async_mode = "eventlet" if USE_EVENTLET else "threading"
 csrf = CSRFProtect(app)
 csrf.init_app(app)
 
+from auth.google import google_bp
+app.register_blueprint(google_bp)
+
 GOOGLE_CLIENT_ID = (os.getenv("GOOGLE_CLIENT_ID") or "").strip()
 GOOGLE_CLIENT_SECRET = (os.getenv("GOOGLE_CLIENT_SECRET") or "").strip()
 GOOGLE_ANDROID_CLIENT_ID = (os.getenv("GOOGLE_ANDROID_CLIENT_ID") or "").strip()  # opcional
@@ -230,12 +233,6 @@ def _dump_before_request_funcs():
             app.logger.info('[DBG-DUMP] before_request_funcs for %s: %s', bp or 'None', names)
     except Exception as e:
         app.logger.exception('[DBG-DUMP] error dumping before_request_funcs: %s', e)
-
-
-
-
-
-
 
 # Info del login_manager
 try:
@@ -1116,138 +1113,6 @@ def confirm_email(token):
 
     flash('Correo verificado con éxito. ¡Ya puedes usar todas las funciones!', 'success')
     return redirect(url_for('login'))  # o url_for('dashboard') si prefieres
-
-def _preferred_external_url(path: str) -> str:
-    """
-    Devuelve una URL absoluta usando EXTERNAL_BASE_URL si existe (prod),
-    o el host real de la petición (local/prod sin variable).
-    """
-    base = os.environ.get("EXTERNAL_BASE_URL")
-    if base:
-        return base.rstrip("/") + path
-    # Sin EXTERNAL_BASE_URL: usa el host que ve Flask (asegúrate de tener ProxyFix)
-    scheme = request.headers.get("X-Forwarded-Proto", request.scheme) or "https"
-    host   = request.headers.get("Host") or request.host
-    return f"{scheme}://{host}{path}"
-
-@app.get("/login/google")
-def login_google():
-    # Comprobar que las credenciales están cargadas
-    cid = (os.getenv("GOOGLE_CLIENT_ID") or "").strip()
-    csec = (os.getenv("GOOGLE_CLIENT_SECRET") or "").strip()
-    if not cid or not csec:
-        app.logger.error("[GOAUTH] Falta GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET en el entorno")
-        flash("Config OAuth incompleta en el servidor. Avísame.", "danger")
-        return redirect(url_for("login"))
-
-    # Guardar state y nonce para CSRF/OIDC
-    state = secrets.token_urlsafe(32)
-    nonce = secrets.token_urlsafe(32)
-    session['oauth_state'] = state
-    session['oauth_nonce'] = nonce
-
-    # Construir redirect_uri que COINCIDA con lo registrado en Google
-    redirect_uri = _preferred_external_url("/auth/google/callback")
-
-    app.logger.warning(
-        "[GOAUTH] redirect_uri=%s  host=%s  client_id_prefix=%s",
-        redirect_uri,
-        request.headers.get("Host"),
-        (cid[:12] + "…")
-    )
-
-    return oauth.google.authorize_redirect(
-        redirect_uri,
-        state=state,
-        nonce=nonce,
-        prompt="consent",
-        include_granted_scopes="true",
-        access_type="offline",
-    )
-
-def _unique_username_from_email(email: str) -> str:
-    base = email.split("@")[0]
-    name = base
-    i = 1
-    while User.query.filter_by(username=name).first() is not None:
-        name = f"{base}{i}"; i += 1
-    return name
-
-# ========== LOGIN MÓVIL (ID TOKEN) ==========
-# Si usas CSRFProtect global, probablemente necesites eximir esta ruta:
-# @csrf.exempt
-@app.post("/mobile/login/google")
-def mobile_google_login():
-    """
-    Espera JSON: {"idToken": "<token>"}
-    Devuelve: {"ok": True, "username": "...", "email": "..."}
-    """
-    data = request.get_json(silent=True) or {}
-    token = data.get("idToken") or data.get("id_token")
-    if not token:
-        return jsonify({"ok": False, "error": "missing_id_token"}), 400
-
-    # Acepta varios 'aud' válidos (web + android + ios) por si usas múltiples clientes
-    allowed_auds = [c for c in [GOOGLE_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID, GOOGLE_IOS_CLIENT_ID] if c]
-    if not allowed_auds:
-        return jsonify({"ok": False, "error": "server_not_configured"}), 500
-
-    req = grequests.Request()
-    idinfo = None
-    last_err = None
-    for aud in allowed_auds:
-        try:
-            tmp = id_token.verify_oauth2_token(token, req, aud)
-            # sanity checks
-            iss = tmp.get("iss")
-            if iss not in ("accounts.google.com", "https://accounts.google.com"):
-                continue
-            # si quieres forzar email verificado:
-            # if not tmp.get("email_verified", False): continue
-            idinfo = tmp
-            break
-        except Exception as e:
-            last_err = e
-
-    if idinfo is None:
-        return jsonify({"ok": False, "error": f"invalid_token: {last_err}"}), 401
-
-    email = idinfo.get("email")
-    google_id = idinfo.get("sub")
-    name = idinfo.get("name")
-    picture = idinfo.get("picture")
-
-    if not email:
-        return jsonify({"ok": False, "error": "no_email"}), 400
-
-    user = User.query.filter_by(email=email).first()
-    if user is None:
-        try:
-            user = User(
-                username=_unique_username_from_email(email),
-                email=email,
-                name=name,
-                profile_pic=picture,
-                google_id=google_id,
-                password=generate_password_hash(os.urandom(16).hex())
-            )
-            db.session.add(user)
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-            # reintenta por google_id
-            user = User.query.filter_by(google_id=google_id).first()
-            if user is None:
-                return jsonify({"ok": False, "error": "db_integrity"}), 500
-    else:
-        if not getattr(user, "google_id", None):
-            user.google_id = google_id
-            if not user.profile_pic and picture:
-                user.profile_pic = picture
-            db.session.commit()
-
-    login_user(user)
-    return jsonify({"ok": True, "username": user.username, "email": user.email})
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_too_large(error):
     flash('El archivo es demasiado grande, por favor sube un archivo más pequeño', 'error')
