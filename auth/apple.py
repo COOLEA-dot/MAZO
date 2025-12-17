@@ -16,6 +16,15 @@ APPLE_REDIRECT_URI = os.getenv("APPLE_REDIRECT_URI")
 
 apple_bp = Blueprint("apple", __name__)
 
+def _unique_username_from_email(email: str) -> str:
+    base = email.split("@")[0]
+    name = base
+    i = 1
+    while User.query.filter_by(username=name).first() is not None:
+        name = f"{base}{i}"
+        i += 1
+    return name
+
 def load_private_key():
     with open(APPLE_PRIVATE_KEY_PATH, "r") as f:
         return f.read()
@@ -77,35 +86,72 @@ def auth_apple():
     )
     return redirect(url)
 
-@apple_bp.route("/auth/apple/callback", methods=["GET", "POST"])
+@apple_bp.route('/auth/apple/callback', methods=['POST', 'GET'])
 def auth_apple_callback():
     current_app.logger.error("=== [APPLE CALLBACK] Ahora sí se ejecuta ===")
 
-    code = request.form.get("code") or request.args.get("code")
-    if not code:
-        return "Missing code", 400
+    try:
+        code = request.form.get("code") or request.args.get("code")
 
-    token_response = exchange_code_for_token(code)
-    id_token = token_response.get("id_token")
-    if not id_token:
-        return "No id_token", 400
+        if not code:
+            current_app.logger.error("❌ Apple no envió 'code'")
+            return "Missing code", 400
 
-    claims = validate_id_token(id_token)
+        # --- Obtener token de Apple ---
+        token_resp = exchange_code_for_token(code)
+        id_token_str = token_resp.get("id_token")
 
-    apple_sub = claims.get("sub")
-    email = claims.get("email")
+        if not id_token_str:
+            current_app.logger.error("❌ Apple no devolvió id_token")
+            return "No id_token returned", 400
 
-    current_app.logger.error(f"[APPLE] SUB: {apple_sub} EMAIL: {email}")
+        # --- Validar token ---
+        claims = validate_id_token(id_token_str)
+        apple_sub = claims.get("sub")
+        email = claims.get("email")
 
-    user = User.query.filter_by(apple_sub=apple_sub).first()
-    if not user and email:
-        user = User.query.filter_by(email=email).first()
+        current_app.logger.error(f"[APPLE] SUB={apple_sub} EMAIL={email}")
 
-    if not user:
-        user = User(email=email, apple_sub=apple_sub, is_confirmed=True)
-        db.session.add(user)
-        db.session.commit()
+        # Si Apple NO entrega email → generamos uno temporal
+        if not email:
+            email = f"apple_{apple_sub}@apple-user.com"
+            current_app.logger.error(f"[APPLE] Email no entregado → usando {email}")
 
-    login_user(user)
+        # --- Buscar usuario existente ---
+        user = User.query.filter_by(apple_sub=apple_sub).first()
 
-    return redirect("/home")
+        if not user:
+            # Buscar por email
+            user = User.query.filter_by(email=email).first()
+
+            if user:
+                # Asociar apple_sub a usuario existente
+                user.apple_sub = apple_sub
+                db.session.commit()
+                current_app.logger.error("[APPLE] Usuario encontrado por email → apple_sub asignado")
+
+        # --- Si no existe, crearlo ---
+        if not user:
+            username = _unique_username_from_email(email)
+
+            user = User(
+                username=username,
+                email=email,
+                apple_sub=apple_sub,
+                # NO poner is_verified aquí
+            )
+
+            db.session.add(user)
+            db.session.commit()
+
+            current_app.logger.error(f"[APPLE] Usuario nuevo creado → id={user.id}")
+
+        # --- Login del usuario ---
+        login_user(user)
+        current_app.logger.error(f"[APPLE] LOGIN OK → id={user.id}")
+
+        return redirect("/home")
+
+    except Exception as e:
+        current_app.logger.exception("❌ ERROR GENERAL EN APPLE CALLBACK")
+        return "ERROR CALLBACK", 500
