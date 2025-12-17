@@ -140,7 +140,15 @@ GOOGLE_IOS_CLIENT_ID     = (os.getenv("GOOGLE_IOS_CLIENT_ID") or "").strip()    
 
 from auth.apple import apple_bp
 app.register_blueprint(apple_bp)
-csrf.exempt("apple.auth_apple_callback")
+@app.before_request
+def skip_csrf_for_apple():
+    # Ignorar CSRF SOLO para el callback de Apple
+    if request.path == "/auth/apple/callback":
+        setattr(request, "_disable_csrf", True)
+
+def disable_csrf():
+    pass
+csrf._exempt_views.add("apple.auth_apple_callback")
 
 
 TEAM_ID = os.environ.get('APPLE_TEAM_ID')
