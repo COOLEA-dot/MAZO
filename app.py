@@ -231,7 +231,9 @@ def _dump_before_request_funcs():
     except Exception as e:
         app.logger.exception('[DBG-DUMP] error dumping before_request_funcs: %s', e)
 
-_dump_before_request_funcs()
+
+
+
 
 
 
@@ -279,6 +281,9 @@ def _wrap_before_request_funcs():
             new_list.append(make_wrapper(func))
 
         app.before_request_funcs[bp] = new_list
+
+_wrap_before_request_funcs()
+app.logger.info(">>> [CSRF WRAPPER ACTIVADO] <<<")
 
 def allowed_cv(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_CV_EXTENSIONS
