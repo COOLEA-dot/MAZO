@@ -280,10 +280,42 @@ def _wrap_before_request_funcs():
             wrapped.append(make_wrapper(f))
         app.before_request_funcs[bp] = wrapped
 
-# Llamar al wrap (temporal)
-_wrap_before_request_funcs()
-app.logger.info('[BR-WRAP] before_request funcs wrapped for debug')
-# -------------------------------------------------------------------------------
+
+EXEMPT_PATHS = {
+    "/auth/apple/callback",
+    "/auth/apple",
+    "/auth/google/callback",
+    "/mobile/login/google",
+}
+
+def _wrap_before_request_funcs():
+    """
+    Envuelve los before_request, pero saltándose las rutas OAuth
+    para evitar errores de CSRF.
+    """
+    original_funcs = app.before_request_funcs
+
+    for bp, funcs in original_funcs.items():
+        new_list = []
+
+        for func in funcs:
+
+            def make_wrapper(func):
+                def wrapper(*args, **kwargs):
+
+                    # ⛔ Excluir rutas OAuth del CSRF
+                    if request.path in EXEMPT_PATHS:
+                        # Saltamos todos los before_request peligrosos
+                        return None
+
+                    # Ejecutar el before_request original
+                    return func(*args, **kwargs)
+
+                return wrapper
+
+            new_list.append(make_wrapper(func))
+
+        app.before_request_funcs[bp] = new_list
 
 def allowed_cv(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_CV_EXTENSIONS
