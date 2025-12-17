@@ -140,16 +140,6 @@ GOOGLE_IOS_CLIENT_ID     = (os.getenv("GOOGLE_IOS_CLIENT_ID") or "").strip()    
 
 from auth.apple import apple_bp
 app.register_blueprint(apple_bp)
-@app.before_request
-def skip_csrf_for_apple():
-    # Ignorar CSRF SOLO para el callback de Apple
-    if request.path == "/auth/apple/callback":
-        setattr(request, "_disable_csrf", True)
-
-def disable_csrf():
-    pass
-csrf._exempt_views.add("apple.auth_apple_callback")
-
 
 TEAM_ID = os.environ.get('APPLE_TEAM_ID')
 CLIENT_ID = os.environ.get('APPLE_CLIENT_ID')
@@ -253,33 +243,6 @@ except Exception:
 # ===============================================================================
 
 # ---------- DEBUG: wrapear before_request funcs para ver cuál devuelve algo ----------
-import functools
-
-def _wrap_before_request_funcs():
-    funcs = app.before_request_funcs or {}
-    for bp, flist in list(funcs.items()):
-        wrapped = []
-        for f in flist:
-            # crear wrapper con closure para el f correcto
-            def make_wrapper(func):
-                @functools.wraps(func)
-                def wrapper(*a, **kw):
-                    try:
-                        rv = func(*a, **kw)
-                    except Exception as e:
-                        # no interferimos: lanzar la excepción hacia arriba para que lo veas
-                        app.logger.exception('[BR-WRAP] exception in before_request %s: %s', func.__name__, e)
-                        raise
-                    if rv is not None:
-                        # Detectado: esta before_request devolvió algo (p. ej. redirect)
-                        app.logger.warning('[BR-WRAP] before_request %s returned NON-None: %s', 
-                                           f"{getattr(func,'__module__','?')}.{getattr(func,'__name__','<lambda>')}", 
-                                           repr(rv))
-                    return rv
-                return wrapper
-            wrapped.append(make_wrapper(f))
-        app.before_request_funcs[bp] = wrapped
-
 
 EXEMPT_PATHS = {
     "/auth/apple/callback",
