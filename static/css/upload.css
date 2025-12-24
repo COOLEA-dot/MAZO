@@ -131,3 +131,23 @@ button:hover {
         overflow-x: hidden;
     }
 }
+.flash-messages {
+    margin-bottom: 15px;
+}
+
+.flash {
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.flash.error {
+    background: #ffe5e5;
+    color: #a10000;
+}
+
+.flash.success {
+    background: #e6ffe8;
+    color: #0a7a1f;
+}

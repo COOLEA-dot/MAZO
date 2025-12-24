@@ -7,6 +7,19 @@
 
 <h1>{{ _('Sube tu Video') }}</h1>
 
+{# 🔔 BLOQUE DE FLASH MESSAGES #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-messages">
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
 {% if current_user.is_authenticated %}
 <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
     <!-- CSRF Token -->

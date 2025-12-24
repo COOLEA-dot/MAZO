@@ -120,7 +120,8 @@ app.config['CHAT_UPLOAD_FOLDER'] = CHAT_UPLOAD_FOLDER
 app.config['PROFILE_PICS_FOLDER'] = PROFILE_PICS_FOLDER  
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm', 'mov', 'pdf', 'docx', 'pptx', 'avi', 'mpg'}
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
+
+app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500 MB
 
 for folder in [UPLOAD_FOLDER, CHAT_UPLOAD_FOLDER, PROFILE_PICS_FOLDER]:  # <--- Incluido aquí
     if not os.path.exists(folder):
@@ -2602,38 +2603,30 @@ def delete_response(response_id):
         return jsonify({"success": False, "message": "Error al eliminar la respuesta"}), 500
     
 @app.route('/delete_video/<int:video_id>', methods=['POST'])
+@login_required
 def delete_video(video_id):
-    if 'user_id' not in session: 
-        flash('Debes iniciar sesión para realizar esta acción', 'error')
-        return redirect(url_for('login'))
-    
+
     video = Video.query.get(video_id)
-    if not video: 
+    if not video:
         flash('El video no existe', 'error')
         return redirect(url_for('home'))
-    
-    if video.user_id != session['user_id']: 
+
+    if video.user_id != current_user.id:
         flash('No tienes permiso para eliminar este video', 'error')
         return redirect(url_for('home'))
-    
-    #Eliminar el archivo del servidor
-    file_path = os.path.join('static', 'uploads', 'videos', video.video_url)
+
+    # Eliminar archivo físico
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], video.video_url)
     if os.path.exists(file_path):
         os.remove(file_path)
-    
-    #Eliminar el archivo de la base de datos
+
+    # Eliminar de la BD
     db.session.delete(video)
     db.session.commit()
 
     flash('Video eliminado exitosamente', 'success')
-    
-    user = User.query.get(session['user_id'])
-    print('User obtenido para redirección', user)
 
-    if user:
-        return redirect(url_for('profile', username=user.username))
-    else:
-        return redirect(url_for('home'))
+    return redirect(url_for('profile', username=current_user.username))
 
 @app.route('/premium')
 @login_required
