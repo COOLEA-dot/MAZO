@@ -1043,31 +1043,33 @@ def inject_user_into_g():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-  
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
+        username_or_email = request.form.get('username', '').strip()
         password = request.form.get('password', '')
-        remember = bool(request.form.get('remember'))  # checkbox opcional
+        remember = bool(request.form.get('remember'))
 
-        if not username or not password:
+        if not username_or_email or not password:
             flash('Por favor completa todos los campos.', 'error')
             return render_template('login.html')
 
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter(
+            or_(
+                User.username == username_or_email,
+                User.email == username_or_email
+            )
+        ).first()
 
-        if user and getattr(user, 'password_hash', None) and check_password_hash(user.password_hash, password):
+        if user and user.password_hash and check_password_hash(user.password_hash, password):
             login_user(user, remember=remember)
             flash(f"¡Bienvenido, {user.username}!", "success")
 
-            # Manejo seguro de 'next'
             next_url = request.args.get('next')
             if next_url and urlparse(next_url).netloc == '':
                 return redirect(next_url)
             return redirect(url_for('home'))
 
-        flash("Usuario o contraseña incorrectos", "error")
+        flash("Usuario, email o contraseña incorrectos", "error")
 
-    # GET: muestra el formulario (conserva ?next=...)
     return render_template('login.html')
 
 def send_verification_email(user_email):
