@@ -1126,36 +1126,29 @@ videos = [
 @app.route('/like/<int:video_id>', methods=['POST', 'DELETE'])
 @login_required
 def like_video(video_id):
-    if 'user_id' not in session:
-        return jsonify({"success": False, 'message': 'No estás autorizado para realizar esta acción'}), 401
 
     video = Video.query.get_or_404(video_id)
     user = current_user
 
     if request.method == 'POST':
         if video in user.liked_videos:
-            return jsonify({'success': False, 'message': 'Ya has dado like a este video'}), 400
+            return jsonify({'success': False, 'message': 'Ya has dado like'}), 400
         user.liked_videos.append(video)
         liked = True
+
     elif request.method == 'DELETE':
         if video not in user.liked_videos:
-            return jsonify({'success': False, 'message': 'No has dado like en este video'}), 200
+            return jsonify({'success': False, 'message': 'No has dado like'}), 200
         user.liked_videos.remove(video)
         liked = False
 
     db.session.commit()
 
- 
-    likes_count = len(video.liked_by)
-    comments_count = len(video.comments)
-
- # Similar para comentarios
-
     return jsonify({
-       'success': True,
-       'liked': liked, 
-       'new_likes': likes_count,
-       'comments_count': comments_count
+        'success': True,
+        'liked': liked,
+        'new_likes': len(video.liked_by),
+        'comments_count': len(video.comments)
     })
 
 @app.route('/comments/<int:video_id>', methods=['POST'])
