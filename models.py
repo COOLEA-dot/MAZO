@@ -286,7 +286,9 @@ class Conversation(db.Model):
         else:
             return self.user 
 
-class Message(db.Model):
+class ChatMessage(db.Model):
+    __tablename__ = 'message' 
+    
     id = db.Column(db.Integer, primary_key=True)
     conversation_id = db.Column(db.Integer, db.ForeignKey('conversation.id'), nullable=False)
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)

@@ -44,30 +44,6 @@ from jwt import PyJWKClient
 import traceback 
 import logging
 from extensions import db
-from models import (
-    User,
-    UserToken,
-    user_professions,
-    Profession,
-    Opinion,
-    Comment,
-    Video,
-    Conversation,
-    Message,
-    Project,
-    Offer,
-    Response,
-    Job,
-    RegisterForm,
-    OpinionForm,
-    ChangePasswordForm,
-    ProjectApplication,
-    ProjectForm,
-    JobApplication,
-    JobForm,
-    CURRENCY_CHOICES,
-)
-
 
 
 # Helper seguro para hacer strip sin fallar si value es None
@@ -130,6 +106,29 @@ for folder in [UPLOAD_FOLDER, CHAT_UPLOAD_FOLDER, PROFILE_PICS_FOLDER]:  # <--- 
 db.init_app(app)
 USE_EVENTLET = os.getenv("USE_EVENTLET", "0") == "1"
 async_mode = "eventlet" if USE_EVENTLET else "threading"
+from models import (
+    User,
+    UserToken,
+    user_professions,
+    Profession,
+    Opinion,
+    Comment,
+    Video,
+    Conversation,
+    ChatMessage,
+    Project,
+    Offer,
+    Response,
+    Job,
+    RegisterForm,
+    OpinionForm,
+    ChangePasswordForm,
+    ProjectApplication,
+    ProjectForm,
+    JobApplication,
+    JobForm,
+    CURRENCY_CHOICES,
+)
 
 csrf = CSRFProtect(app)
 csrf.init_app(app)
@@ -1395,10 +1394,7 @@ def _rel_from_root(abs_path):
 @app.route('/chat/<recipient_identifier>', methods=['GET'])
 @login_required
 def chat_with_user(recipient_identifier):
-    """
-    Mostrar la interfaz del chat. recipient_identifier puede ser username o id numérico.
-    """
-    # DEBUG: imprimir contexto
+
     current_app.logger.info(
         '[chat_view] request.path=%s current_user=%s authenticated=%s cookies=%s',
         request.path,
@@ -1409,24 +1405,20 @@ def chat_with_user(recipient_identifier):
 
     sender = current_user
 
-    # Intentar interpretar como id entero primero
+    # --- Buscar receptor ---
     recipient = None
     if str(recipient_identifier).isdigit():
-        try:
-            recipient = User.query.get(int(recipient_identifier))
-        except Exception as ex:
-            current_app.logger.exception('[chat_view] error buscando por id: %s', ex)
+        recipient = db.session.get(User, int(recipient_identifier))
 
-    # Si no lo encontramos por id, buscar por username
     if not recipient:
-        recipient = User.query.filter_by(username=recipient_identifier).first()
+        recipient = db.session.query(User).filter_by(username=recipient_identifier).first()
 
     if not recipient:
         flash('Usuario no encontrado', 'error')
         return redirect(url_for('home'))
 
-    # Buscar o crear conversación
-    conversation = Conversation.query.filter(
+    # --- Buscar o crear conversación ---
+    conversation = db.session.query(Conversation).filter(
         ((Conversation.user_id == sender.id) & (Conversation.recipient_id == recipient.id)) |
         ((Conversation.user_id == recipient.id) & (Conversation.recipient_id == sender.id))
     ).first()
@@ -1436,29 +1428,36 @@ def chat_with_user(recipient_identifier):
         db.session.add(conversation)
         db.session.commit()
 
-    # Marcar mensajes del otro usuario como leídos
+    # --- Marcar mensajes como leídos ---
     try:
-        Message.query.filter(
-            Message.conversation_id == conversation.id,
-            Message.sender_id != sender.id,
-            Message.is_read == False
-        ).update({'is_read': True})
+        db.session.query(ChatMessage).filter(
+            ChatMessage.conversation_id == conversation.id,
+            ChatMessage.sender_id != sender.id,
+            ChatMessage.is_read.is_(False)
+        ).update({ChatMessage.is_read: True})
         db.session.commit()
     except Exception as e:
         current_app.logger.exception("[chat_view] error marcando leídos: %s", e)
         db.session.rollback()
 
-    messages = Message.query.filter_by(conversation_id=conversation.id).order_by(Message.timestamp).all()
+    # --- Cargar mensajes ---
+    messages = (
+        db.session.query(ChatMessage)
+        .filter_by(conversation_id=conversation.id)
+        .order_by(ChatMessage.timestamp)
+        .all()
+    )
 
-    # Sala consistente (helper que ya tienes)
     room = chat_room_by_username(sender.username, recipient.username)
 
-    return render_template('chat.html',
-                           recipient=recipient,
-                           username=sender.username,
-                           messages=messages,
-                           room=room,
-                           conversation_id=conversation.id)
+    return render_template(
+        'chat.html',
+        recipient=recipient,
+        username=sender.username,
+        messages=messages,
+        room=room,
+        conversation_id=conversation.id
+    )
 
 @socketio.on('join')
 def handle_join(data):
@@ -1496,10 +1495,10 @@ def get_user_chats(user_id):
             # Si no existe el otro usuario, ignorar esta conversación
             continue
         
-        last_message = Message.query.filter_by(conversation_id=conv.id).order_by(Message.timestamp.desc()).first()
+        last_message = ChatMessage.query.filter_by(conversation_id=conv.id).order_by(ChatMessage.timestamp.desc()).first()
 
         if last_message:
-            unread_messages = Message.query.filter_by(
+            unread_messages = ChatMessage.query.filter_by(
                 conversation_id=conv.id,
                 is_read=False,
                 sender_id=other_user.id  # Solo contar si son mensajes del otro usuario
@@ -1956,7 +1955,7 @@ def handle_send_message(data):
 
     # Guardar mensaje en BD (almacenar path relativo si procede)
     try:
-        new_message = Message(
+        new_message = ChatMessage(
             sender_id=sender_user.id,
             conversation_id=conversation.id,
             content=message_text if message_text else None,
@@ -2018,7 +2017,7 @@ def handle_edit_message(data):
         print("Error: Faltan datos para editar el mensaje.")
         return {'ok': False, 'error': 'missing_fields'}
 
-    msg = Message.query.get(message_id)
+    msg = ChatMessage.query.get(message_id)
     if not msg:
         print("Error: mensaje no encontrado")
         return {'ok': False, 'error': 'not_found'}
@@ -2053,7 +2052,7 @@ def handle_delete_message(data):
         print("Error: Faltan datos para eliminar el mensaje.")
         return {'ok': False, 'error': 'missing_fields'}
 
-    msg = Message.query.get(message_id)
+    msg = ChatMessage.query.get(message_id)
     if not msg:
         print("Error: mensaje no encontrado")
         return {'ok': False, 'error': 'not_found'}
@@ -2100,7 +2099,7 @@ def handle_share_video(data):
         db.session.commit()
 
     # Crear el mensaje con el video
-    new_message = Message(
+    new_message = ChatMessage(
         conversation_id=conversation.id,
         sender_id=sender_id,
         content=f"[VIDEO]{video_url}",  # marcamos como video compartido
@@ -2185,7 +2184,7 @@ def send_message_http(recipient_id):
 
     # guardar mensaje en BD
     try:
-        new_message = Message(
+        new_message = ChatMessage(
             conversation_id=conversation.id,
             sender_id=current_user.id,
             content=message_content if message_content else None,

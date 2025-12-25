@@ -1,3 +1,12 @@
+// 👇 FUNCIÓN GLOBAL (NECESARIA para onclick)
+function toggleMobileSearch() {
+    const form = document.getElementById("mobileSearchForm");
+    if (!form) return;
+
+    form.style.display = form.style.display === "block" ? "none" : "block";
+}
+
+// 👇 Tu código actual
 document.addEventListener("DOMContentLoaded", function () {
     const videos = document.querySelectorAll(".video-item");
     let currentIndex = 0;
@@ -16,7 +25,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Botones (solo en escritorio)
     const nextBtn = document.getElementById("next-video");
     const prevBtn = document.getElementById("prev-video");
 
@@ -36,10 +44,8 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Inicializar
     showVideo(currentIndex);
 
-    // 👇 Swipe para móviles
     let touchStartY = 0;
 
     document.addEventListener("touchstart", (e) => {

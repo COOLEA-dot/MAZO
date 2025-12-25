@@ -2,7 +2,7 @@
 from flask import Blueprint, request, redirect, session, current_app
 from flask_login import login_user
 from app import db
-from app import User
+from models import User
 import jwt
 from jwt import PyJWKClient
 import requests

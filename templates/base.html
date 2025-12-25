@@ -5,157 +5,163 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}Aplicación{% endblock %}</title>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/logout_modal.css') }}">
+
     <script src="https://unpkg.com/cloudinary-video-player@1.9.13/dist/cld-video-player.min.js"></script>
     <link href="https://unpkg.com/cloudinary-video-player@1.9.13/dist/cld-video-player.min.css" rel="stylesheet">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
+
 <body>
-    <!-- Barra de tareas -->
-    <nav class="navbar">
-        <div class="navbar-brand">
-            <a href="{{ url_for('home') }}">MAZO</a>
-        </div>
 
-        <ul class="navbar-links">
-            <li>
-                <a href="{{ url_for('home') }}">
-                    <i class="fas fa-home"></i>
-                    <span class="link-text">{{ _('Inicio') }}</span>
-                </a>
-            </li>
+<!-- Barra de tareas -->
+<nav class="navbar">
+    <div class="navbar-brand">
+        <a href="{{ url_for('home') }}">MAZO</a>
+    </div>
 
-            {% if g.user %}
-            <li>
-                <a href="{{ url_for('profile', username=g.user.username) }}">
-                    <i class="fas fa-user"></i>
-                    <span class="link-text">{{ _('Perfil') }}</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('chats') }}">
-                    <i class="fas fa-comments"></i>
-                    <span class="link-text">Chats</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('jobs') }}">
-                    <i class="fas fa-briefcase"></i>
-                    <span class="link-text">{{ _('Proyectos y Empleos') }}</span>
-                </a>
-            </li>
-            {% else %}
-            <li>
-                <a href="{{ url_for('login') }}">
-                    <i class="fas fa-sign-in-alt"></i>
-                    <span class="link-text">{{ _('Entrar') }}</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('register') }}">
-                    <i class="fas fa-user-plus"></i>
-                    <span class="link-text">{{ _('Registrarse') }}</span>
-                </a>
-            </li>
-            {% endif %}
+    <ul class="navbar-links">
+        <li>
+            <a href="{{ url_for('home') }}">
+                <i class="fas fa-home"></i>
+                <span class="link-text">{{ _('Inicio') }}</span>
+            </a>
+        </li>
 
-            <li class="mobile-only">
-                <button class="mobile-search-icon" onclick="toggleMobileSearch()">
-                    <i class="fas fa-search"></i>
-                </button>
-            </li>
-        </ul>
+        {% if g.user %}
+        <li>
+            <a href="{{ url_for('profile', username=g.user.username) }}">
+                <i class="fas fa-user"></i>
+                <span class="link-text">{{ _('Perfil') }}</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('chats') }}">
+                <i class="fas fa-comments"></i>
+                <span class="link-text">Chats</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('jobs') }}">
+                <i class="fas fa-briefcase"></i>
+                <span class="link-text">{{ _('Proyectos y Empleos') }}</span>
+            </a>
+        </li>
+        {% else %}
+        <li>
+            <a href="{{ url_for('login') }}">
+                <i class="fas fa-sign-in-alt"></i>
+                <span class="link-text">{{ _('Entrar') }}</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('register') }}">
+                <i class="fas fa-user-plus"></i>
+                <span class="link-text">{{ _('Registrarse') }}</span>
+            </a>
+        </li>
+        {% endif %}
 
-        <!-- Buscador escritorio -->
-        <div class="navbar-search desktop-only">
-            <form method="GET" action="{{ url_for('search') }}">
-                <input type="text" name="q" placeholder="Buscar...">
-                <button type="submit"><i class="fas fa-search"></i></button>
-            </form>
-        </div>
-    </nav>
+        <li class="mobile-only">
+            <button class="mobile-search-icon" onclick="toggleMobileSearch()">
+                <i class="fas fa-search"></i>
+            </button>
+        </li>
+    </ul>
 
-    <!-- Buscador móvil desplegable -->
-    <div class="mobile-search-form mobile-only" id="mobileSearchForm">
+    <!-- Buscador escritorio -->
+    <div class="navbar-search desktop-only">
         <form method="GET" action="{{ url_for('search') }}">
             <input type="text" name="q" placeholder="Buscar...">
             <button type="submit"><i class="fas fa-search"></i></button>
         </form>
     </div>
+</nav>
 
-    <!-- Contenido de la página -->
-    <main>
-        {% block content %}{% endblock %}
-    </main>
-</body>
-</html>
+<!-- Buscador móvil desplegable -->
+<div class="mobile-search-form mobile-only" id="mobileSearchForm">
+    <form method="GET" action="{{ url_for('search') }}">
+        <input type="text" name="q" placeholder="Buscar...">
+        <button type="submit"><i class="fas fa-search"></i></button>
+    </form>
+</div>
 
-    <!-- Scripts -->
-    <script>
-    // Cerrar si se hace clic fuera del buscador
-    document.addEventListener('click', function(event) {
-        const searchIcon = document.querySelector('.mobile-search-icon');
-        const form = document.getElementById('mobileSearchForm');
+<main>
+    {% block content %}{% endblock %}
+</main>
 
-        if (!form.contains(event.target) && !searchIcon.contains(event.target)) {
-            form.style.display = 'none';
-        }
-    });
+<!-- Scripts -->
+<script>
+/* FUNCIÓN GLOBAL PARA EL BUSCADOR MÓVIL */
+function toggleMobileSearch() {
+    const form = document.getElementById('mobileSearchForm');
+    if (!form) return;
 
-    document.addEventListener('DOMContentLoaded', () => {
-  // Solo pedir permiso si no se ha concedido antes
-  if (Notification.permission === 'default') {
-    Notification.requestPermission().then(permission => {
-      if (permission === 'granted') {
+    if (form.style.display === 'block') {
+        form.style.display = 'none';
+    } else {
+        form.style.display = 'block';
+    }
+}
+</script>
+
+<script>
+/* Cerrar buscador móvil al hacer click fuera (FIXED) */
+document.addEventListener('click', function (event) {
+    const searchIcon = document.querySelector('.mobile-search-icon');
+    const form = document.getElementById('mobileSearchForm');
+
+    if (!form || !searchIcon) return;
+
+    if (
+        !form.contains(event.target) &&
+        !searchIcon.contains(event.target)
+    ) {
+        form.style.display = 'none';
+    }
+});
+</script>
+
+<script>
+/* Push notifications (SIN TOCAR) */
+document.addEventListener('DOMContentLoaded', () => {
+    if (Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                registerPushToken();
+            }
+        });
+    } else if (Notification.permission === 'granted') {
         registerPushToken();
-      } else {
-        console.log('Usuario no concedió permiso para notificaciones');
-      }
-    });
-  } else if (Notification.permission === 'granted') {
-    // Ya concedido, solo registrar token
-    registerPushToken();
-  }
+    }
 });
 
 function registerPushToken() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/static/firebase-messaging-sw.js')
-      .then(registration => {
-        console.log('Service Worker registrado:', registration);
-        return getToken(messaging, {
-          vapidKey: 'BDcTpTjm-XVDpZmRxD1qYRyQfKzHyvXkhkzMuCayeYCmPAVtU7LcCNYseJoem59k1GEXlqsWPwx-xFB04-i5Fos',
-          serviceWorkerRegistration: registration
-        });
-      })
-      .then(token => {
-        if (token) {
-          console.log('Token FCM:', token);
-          // Enviar al backend
-          fetch('/register_token', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({token})
-          })
-          .then(res => res.json())
-          .then(data => {
-            console.log('Token registrado en backend:', data);
-          })
-          .catch(err => console.error('Error registrando token:', err));
-        } else {
-          console.log('No se pudo obtener token');
-        }
-      })
-      .catch(err => {
-        console.error('Error registro service worker:', err);
-      });
-  } else {
-    console.log('Service Worker no soportado');
-  }
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/static/firebase-messaging-sw.js')
+            .then(registration => {
+                return getToken(messaging, {
+                    vapidKey: 'BDcTpTjm-XVDpZmRxD1qYRyQfKzHyvXkhkzMuCayeYCmPAVtU7LcCNYseJoem59k1GEXlqsWPwx-xFB04-i5Fos',
+                    serviceWorkerRegistration: registration
+                });
+            })
+            .then(token => {
+                if (token) {
+                    fetch('/register_token', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({token})
+                    });
+                }
+            })
+            .catch(err => console.error(err));
+    }
 }
+</script>
 
-    </script>
 </body>
 </html>
