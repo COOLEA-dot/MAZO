@@ -202,3 +202,13 @@ body {
         overflow-x: hidden;
     }
 }
+/* iPad y pantallas medianas */
+@media (max-width: 900px) {
+    .navbar-links .link-text {
+        display: none;
+    }
+
+    .navbar-links a {
+        justify-content: center;
+    }
+}
