@@ -600,14 +600,14 @@
 
     /* Contenedor del mensaje */
     #chat-box {
+        margin-top: 80px;        /* 44px navbar + 56px header */
         padding: 8px;
-        padding-top: 70px; /* 👈 espacio para el header */
-        margin-bottom: 60px; /* espacio para el input de abajo */
+        margin-bottom: 80px;     /* espacio para input fijo */
+        max-height: calc(100vh - 44px - 56px - 80px);
         overflow-y: auto;
-        max-height: calc(100vh - 130px); /* altura total menos header + input */
         box-sizing: border-box;
     }
-         
+    
     .chat-message {
         margin-bottom: 12px;
         word-wrap: break-word;
@@ -655,8 +655,16 @@
     
     .chat-header {
         position: fixed;
-        margin-top: 0px;
+        top: 70px;               /* debajo de la navbar */
+        left: 0;
+        right: 0;
+        height: 56px;
+        background: #fff;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
         padding-left: 12px;
+        border-bottom: 1px solid #e5e5e5;
     }
     
     .chat-avatar img {

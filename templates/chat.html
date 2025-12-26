@@ -17,32 +17,33 @@
   {% endif %}
 {% endwith %}
 
-<h2 class="chat-header">
-    <a href="{{ url_for('profile', username=recipient.username) }}" class="chat-profile-link">
-        <div class="chat-avatar">
-            {% if recipient.profile_pic %}
-                {% if recipient.profile_pic.startswith('http') %}
-                    <img src="{{ recipient.profile_pic }}" alt="{{ recipient.username }}">
+    <h2 class="chat-header">
+        <a href="{{ url_for('profile', username=recipient.username) }}" class="chat-profile-link">
+            <div class="chat-avatar">
+                {% if recipient.profile_pic %}
+                    {% if recipient.profile_pic.startswith('http') %}
+                        <img src="{{ recipient.profile_pic }}" alt="{{ recipient.username }}">
+                    {% else %}
+                        <img src="{{ url_for('static', filename=recipient.profile_pic) }}" alt="{{ recipient.username }}">
+                    {% endif %}
                 {% else %}
-                    <img src="{{ url_for('static', filename=recipient.profile_pic) }}" alt="{{ recipient.username }}">
+                       <img src="{{ url_for('static', filename='profile_pics/default.jpg') }}" alt="{{ recipient.username }}">
                 {% endif %}
-            {% else %}
-                <img src="{{ url_for('static', filename='profile_pics/default.jpg') }}" alt="{{ recipient.username }}">
-            {% endif %}
-        </div>
-        <div class="chat-info">
-            <h3>{{ recipient.company if recipient.company else recipient.username }}</h3>
-        </div>
-    </a>
-</h2>
+            </div>
+            <div class="chat-info">
+                <h3>{{ recipient.company if recipient.company else recipient.username }}</h3>
+            </div>
+        </a>
+    </h2>
 
 <!-- Contenedor principal del chat: id="chat" esperado por el JS -->
-<div id="chat"
+
+<div id="chat-box"
      data-my-username="{{ username }}"
      data-recipient-username="{{ recipient.username }}"
      data-room="{{ room }}"
      data-recipient-id="{{ recipient.id }}"
-     style="min-height: 300px; overflow-y: auto; padding: 1rem; border-radius: 8px; background:#fff;">
+     style="min-height: 100px; overflow-y: auto; padding: 1rem; border-radius: 8px; background:#fff;">
 
     <!-- Fallback hidden inputs para el JS (por si los data-attributes no se leen) -->
     <input type="hidden" id="chat-my-username" value="{{ username }}">
