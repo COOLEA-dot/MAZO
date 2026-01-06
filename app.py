@@ -8,7 +8,7 @@ import mimetypes
 from flask_cors import CORS
 import subprocess
 from flask_migrate import Migrate
-from flask_login import login_required, current_user, login_user, LoginManager
+from flask_login import login_required, current_user, login_user, LoginManager, logout_user
 from flask_wtf.csrf import CSRFProtect, CSRFError, validate_csrf, generate_csrf
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -2642,9 +2642,35 @@ def logout():
     flash("Has cerrado sesión exitosamente", "success")
     return redirect(url_for("login"))
 
-@app.route('/delete_account')
-def eliminar_cuenta():
-    return render_template('eliminar-cuenta.html')
+@app.route('/delete-account', methods=['POST'])
+@login_required
+def delete_account():
+    try:
+        # ⚠️ Obtener la instancia REAL del usuario
+        user = User.query.get(current_user.id)
+
+        if not user:
+            return jsonify({"success": False}), 404
+
+        # Eliminar contenido relacionado (solo lo necesario)
+        Video.query.filter_by(user_id=user.id).delete()
+        Comment.query.filter_by(user_id=user.id).delete()
+
+        logout_user()
+
+        db.session.delete(user)
+        db.session.commit()
+
+        session.clear()
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        db.session.rollback()
+        print("ERROR AL ELIMINAR CUENTA:", e)
+        return jsonify({"success": False}), 500
+
+
 
 @app.route("/jobs", endpoint="jobs")
 def jobs_view():
