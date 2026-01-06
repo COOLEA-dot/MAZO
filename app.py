@@ -44,6 +44,7 @@ from jwt import PyJWKClient
 import traceback 
 import logging
 from extensions import db
+from algorithms.feed_algorithm import get_feed_videos
 
 
 # Helper seguro para hacer strip sin fallar si value es None
@@ -1264,6 +1265,7 @@ def get_replies(comment_id):
 
     return jsonify(reply_list)
 
+
 @app.route('/home')
 def home():
     user = None
@@ -1273,36 +1275,32 @@ def home():
     if user_id:
         user = User.query.get(user_id)
         if user is None:
-            # El usuario no existe, limpiar sesión
             session.pop('user_id', None)
             session.pop('username', None)
         else:
             chats = get_user_chats(user.id)
 
-    # Obtener video introductorio
+    # 🎬 Vídeo introductorio
     intro_video = Video.query.filter_by(is_intro=True).first()
 
-    # Base query excluyendo el video introductorio si existe
-    base_query = Video.query
+    # 🧠 ALGORITMO DEL FEED
+    if user:
+        videos = get_feed_videos(user)
+    else:
+        # Usuario no logueado → fallback simple
+        videos = Video.query.order_by(Video.id.desc()).all()
+
+    # ❌ Evitar que el intro se repita
     if intro_video:
-        base_query = base_query.filter(Video.id != intro_video.id)
+        videos = [v for v in videos if v.id != intro_video.id]
+        videos.insert(0, intro_video)
 
-    # Separar videos por tipo de usuario (premium primero)
-    premium_videos = (
-        base_query.join(User).filter(User.is_premium == True).order_by(Video.id.desc()).all()
+    return render_template(
+        'home.html',
+        user=user,
+        videos=videos,
+        chats=chats
     )
-    regular_videos = (
-        base_query.join(User).filter(User.is_premium == False).order_by(Video.id.desc()).all()
-    )
-
-    # Combinar: intro (si existe) + premium + normales
-    videos = []
-    if intro_video:
-        videos.append(intro_video)
-    videos.extend(premium_videos)
-    videos.extend(regular_videos)
-
-    return render_template('home.html', user=user, videos=videos, chats=chats)
 
 @app.route('/search', methods=['GET'])
 def search():
