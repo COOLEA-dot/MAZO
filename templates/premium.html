@@ -8,7 +8,10 @@
 <div class="premium-container">
   <div class="premium-card">
     <h1>💼 MAZO Premium</h1>
-    <p class="lead">{{ _('Impulsa tu perfil por solo') }} <strong>{{ _('9,99 €/mes') }}</strong></p>
+    <p class="lead">
+      {{ _('Impulsa tu perfil por solo') }}
+      <strong>{{ _('9,99 €/mes') }}</strong>
+    </p>
 
     <ul class="premium-benefits">
       <li>🔝 {{ _('Tu perfil aparece primero en la página principal y en búsquedas.') }}</li>
@@ -17,7 +20,9 @@
     </ul>
 
     {% if current_user.is_premium %}
-      <div class="alert-success">{{ _('✔ Ya eres usuario Premium') }}</div>
+      <div class="alert-success">
+        {{ _('✔ Ya eres usuario Premium') }}
+      </div>
     {% else %}
       <!-- Bloque de checkout -->
       <div id="premium-checkout">
@@ -39,5 +44,9 @@
           {{ _('Este es un pago mensual. Deberás renovarlo manualmente cada mes para mantener tu cuenta premium.') }}
         </p>
       </div>
+    {% endif %}
+  </div>
+</div>
 
 {% endblock %}
+
