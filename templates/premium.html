@@ -40,27 +40,4 @@
         </p>
       </div>
 
-      <!-- Programa de referidos -->
-      <div class="referral-box">
-        <h3>{{ _('🤝 Programa de Referidos') }}</h3>
-        <p>{{ _('Invita a tus amigos a MAZO. Si 3 se suscriben, obtienes') }}<strong>{{ _('3 meses gratis') }}</strong>.</p>
-        <div class="referral-link">
-          <input type="text" id="referral-link" readonly value="{{ referral_link }}" class="referral-input">
-          <button class="copy-btn" onclick="copyReferralLink()">Copiar</button>
-        </div>
-        <p class="referral-note">{{ _('Comparte tu enlace por WhatsApp, correo o redes sociales.') }}</p>
-      </div>
-    {% endif %}
-  </div>
-</div>
-
-<script>
-function copyReferralLink() {
-  const input = document.getElementById("referral-link");
-  input.select();
-  document.execCommand("copy");
-  alert("✅ Enlace copiado al portapapeles");
-}
-</script>
-
 {% endblock %}
