@@ -17,3 +17,7 @@ __pycache__/
 
 # Archivos del entorno virtual (si tenés venv)
 venv/
+
+static/uploads/
+static/uploads/videos/
+
