@@ -7,11 +7,19 @@
 
 <form action="{{ url_for('search') }}" method="GET" id="search-form">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
-    <input type="text" name="q" id="search-input" placeholder="Buscar videos, perfiles o profesiones o ubicación..." value="{{ query }}" autocomplete="off">
+    <input
+        type="text"
+        name="q"
+        id="search-input"
+        placeholder="Buscar videos, perfiles, proyectos, empleos o ubicación..."
+        value="{{ query }}"
+        autocomplete="off"
+    >
     <button type="submit">{{ _('Buscar') }}</button>
     <div id="suggestions" class="suggestions-box"></div>
 </form>
 
+{# ================= PERFILES ================= #}
 {% if users %}
 <div class="search-results">
     <h2>{{ _('Perfiles relacionados con') }} "{{ query }}"</h2>
@@ -22,9 +30,9 @@
                 <img src="{{ url_for('static', filename='profile_pics/' + (user.profile_picture if user.profile_picture else 'default.jpg')) }}" alt="Perfil">
                 <div class="user-info">
                     <strong>{{ user.name }}</strong>
-                    <p>👷 {{ user.profession or "Profesión no especificada" }}</p>
-                    <p>🏢 {{ user.company or "Empresa no especificada" }}</p>
-                    <p>📍 {{ user.location or "Ubicación no disponible" }}</p>
+                    <p>👷 {{ user.profession or _('Profesión no especificada') }}</p>
+                    <p>🏢 {{ user.company or _('Empresa no especificada') }}</p>
+                    <p>📍 {{ user.location or _('Ubicación no disponible') }}</p>
                 </div>
             </a>
         </div>
@@ -33,6 +41,56 @@
 </div>
 {% endif %}
 
+{# ================= PROYECTOS ================= #}
+{% if projects %}
+<div class="search-results">
+    <h2>🧩 {{ _('Proyectos relacionados con') }} "{{ query }}"</h2>
+    <div class="projects">
+        {% for project in projects %}
+        <div class="project-card">
+            <a href="{{ url_for('project_detail', project_id=project.id) }}">
+                <div class="project-info">
+                    <strong>{{ project.title }}</strong>
+                    <p>
+                        {{ project.description[:120] }}
+                        {% if project.description|length > 120 %}...{% endif %}
+                    </p>
+                    <p>👤 {{ project.user.name }}</p>
+                    <p>📍 {{ project.location or _('Ubicación no especificada') }}</p>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{# ================= EMPLEOS ================= #}
+{% if jobs %}
+<div class="search-results">
+    <h2>💼 {{ _('Empleos relacionados con') }} "{{ query }}"</h2>
+    <div class="jobs">
+        {% for job in jobs %}
+        <div class="job-card">
+            <a href="{{ url_for('view_job', job_id=job.id) }}">
+                <div class="job-info">
+                    <strong>{{ job.title }}</strong>
+                    <p>
+                        {{ job.description[:120] }}
+                        {% if job.description|length > 120 %}...{% endif %}
+                    </p>
+                    <p>🏢 {{ job.user.company or _('Empresa no especificada') }}</p>
+                    <p>👤 {{ job.user.name }}</p>
+                    <p>📍 {{ job.location or _('Ubicación no especificada') }}</p>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{# ================= VIDEOS ================= #}
 {% if videos %}
 <div class="video-results">
     <h2>{{ _('Videos relacionados con') }} "{{ query }}"</h2>
@@ -41,10 +99,15 @@
         <div class="video">
             <h3>{{ video.title }}</h3>
             <video width="100%" height="auto" autoplay muted controls>
-                 <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
+                <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
                 {{ _('Tu navegador no soporta el video.') }}
             </video>
-            <p>{{ _('🎥 Subido por:') }} <a href="{{ url_for('profile', username=video.user.username) }}">{{ video.user.username }}</a></p>
+            <p>
+                🎥 {{ _('Subido por:') }}
+                <a href="{{ url_for('profile', username=video.user.username) }}">
+                    {{ video.user.username }}
+                </a>
+            </p>
         </div>
         {% endfor %}
     </div>
@@ -53,3 +116,4 @@
 
 <script src="{{ url_for('static', filename='js/search.js') }}" defer></script>
 {% endblock %}
+

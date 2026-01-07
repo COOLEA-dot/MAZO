@@ -932,4 +932,23 @@ p {
         align-items: center;
         justify-content: center;
     }
+
+    .profile-pic-mobile {
+    position: absolute;
+    right: 10px;
+    top: calc(50% - 100px); /* 👈 encima del primer botón */
+    z-index: 20;
+    display: block;
+    }
+
+    .profile-pic-mobile .profile-pic {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid white;
+        background: black;
+        cursor: pointer;
+    }
+
 }

@@ -1307,11 +1307,15 @@ def search():
     query = request.args.get('q', '').strip()
     location = request.args.get('location', '').strip()
 
+    videos = []
+    users = []
+    projects = []
+    jobs = []
+
     if query:
-        # Construir patrón para ilike, seguro para múltiples palabras
         pattern = f"%{query}%"
 
-        # Buscar videos donde título, descripción o usuario relacionado contengan query
+        # 🔹 VIDEOS
         videos = Video.query.join(User).filter(
             or_(
                 Video.title.ilike(pattern),
@@ -1324,7 +1328,7 @@ def search():
             )
         ).order_by(Video.id.desc()).all()
 
-        # Buscar usuarios donde varios campos contengan query
+        # 🔹 USUARIOS
         users = User.query.filter(
             or_(
                 User.name.ilike(pattern),
@@ -1335,13 +1339,44 @@ def search():
             )
         ).all()
 
+        # 🔹 PROYECTOS
+        projects = Project.query.join(User).filter(
+            or_(
+                Project.title.ilike(pattern),
+                Project.short_description.ilike(pattern),
+                Project.description.ilike(pattern),
+                Project.location.ilike(pattern),
+                User.company.ilike(pattern),
+                User.name.ilike(pattern),
+                User.profession.ilike(pattern)
+            )
+        ).order_by(Project.created_at.desc()).all()
+
+
+        # 🔹 EMPLEOS
+        jobs = Job.query.join(User).filter(
+           or_(
+               Job.title.ilike(pattern),
+               Job.short_description.ilike(pattern),
+               Job.description.ilike(pattern),
+               Job.location.ilike(pattern),
+               User.company.ilike(pattern),
+               User.name.ilike(pattern),
+               User.profession.ilike(pattern)
+            )
+        ).order_by(Job.created_at.desc()).all()
+
         flash(f"Resultados para: '{query}'", "info")
 
-    else:
-        videos, users = [], []
-
-    return render_template('search.html', videos=videos, users=users, query=query)
-
+    return render_template(
+        'search.html',
+        videos=videos,
+        users=users,
+        projects=projects,
+        jobs=jobs,
+        query=query
+    )
+    
 @app.route('/test-video')
 def test_video():
     return render_template('test_video.html')
