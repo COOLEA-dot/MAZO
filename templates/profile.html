@@ -43,10 +43,19 @@
         <!-- 🔵 Contadores de seguidores -->
         <div class="follow-container">
             <div class="follow-stats">
-                <span>{{ user.followers.count() }} {{ _('seguidores') }}</span>
-                <span>{{ user.followed.count() }} {{ _('siguiendo') }}</span>
-            </div>
 
+                <a href="{{ url_for('profile_followers', username=user.username) }}"
+                    class="follow-link">
+                <strong>{{ user.followers.count() }}</strong> {{ _('seguidores') }}
+                </a>
+
+                <a href="{{ url_for('profile_following', username=user.username) }}"
+                    class="follow-link">
+                <strong>{{ user.followed.count() }}</strong> {{ _('siguiendo') }}
+                </a>
+
+            </div>
+            
             {% if current_user.is_authenticated and current_user.id != user.id %}
                 {% if current_user in user.followers %}
                     <form action="{{ url_for('unfollow_user', user_id=user.id) }}" method="POST">

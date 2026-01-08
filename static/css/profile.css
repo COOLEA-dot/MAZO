@@ -623,6 +623,20 @@ video {
 .btn-unfollow:hover {
     background-color: #c82333;
 }
+.follow-stats {
+    display: flex;
+    gap: 15px;
+}
+
+.follow-link {
+    text-decoration: none;
+    color: inherit;
+    font-weight: 500;
+}
+
+.follow-link:hover {
+    text-decoration: underline;
+}
 
 @media (max-width: 600px) {
     .profile-container {

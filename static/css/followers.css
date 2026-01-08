@@ -1,0 +1,108 @@
+.followers-container {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 15px;
+}
+
+/* Título */
+.followers-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 18px;
+}
+
+.username-highlight {
+    font-weight: 700;
+    color: #111;
+}
+
+/* Lista */
+.followers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Tarjeta */
+.follower-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+/* Usuario clicable */
+.user-link,
+.user-card-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    color: inherit;
+    padding: 10px;
+    border-radius: 12px;
+    flex: 1;
+    transition: background 0.2s ease;
+}
+
+.user-link:hover,
+.user-card-link:hover {
+    background: #f4f4f4;
+}
+
+/* Foto */
+.user-link img,
+.user-card-link img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Nombre */
+.user-text .username,
+.user-link span {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Botón seguir */
+.btn-follow {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-follow:hover {
+    background: #0066d1;
+}
+
+/* Botón dejar de seguir */
+/* Botón dejar de seguir */
+.btn-unfollow {
+    background: #ffe5e5;          /* rojo suave */
+    color: #d93025;               /* rojo elegante */
+    border: none;
+    padding: 7px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.btn-unfollow:hover {
+    background: #ffcccc;
+    transform: scale(1.03);
+}
+
+
+/* Texto vacío */
+.empty-text {
+    text-align: center;
+    color: #777;
+    margin-top: 30px;
+}

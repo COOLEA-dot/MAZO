@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · {{ profile_user.username }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/followers.css') }}">
+
+<div class="followers-container">
+
+  <!-- 🔵 Título -->
+  <h2 class="followers-title">
+    {{ title }} de <span class="username-highlight">{{ profile_user.username }}</span>
+  </h2>
+
+  {% if users %}
+    <div class="followers-list">
+      {% for u in users %}
+        <div class="follower-card">
+
+          <!-- Usuario clicable -->
+          <a href="{{ url_for('profile', username=u.username) }}" class="user-card-link">
+            <img src="{{ url_for('static', filename='profile_pics/' ~ u.profile_image) }}" alt="Foto de perfil">
+            <div class="user-text">
+              <span class="username">{{ u.username }}</span>
+            </div>
+          </a>
+
+          <!-- Botón seguir -->
+          {% if current_user.is_authenticated and current_user.id != u.id %}
+            {% if current_user.is_following(u) %}
+              <form action="{{ url_for('unfollow_user', user_id=u.id) }}" method="post">
+                <button class="btn-unfollow">Dejar de seguir</button>
+              </form>
+            {% else %}
+              <form action="{{ url_for('follow_user', user_id=u.id) }}" method="post">
+                <button class="btn-follow">Seguir</button>
+              </form>
+            {% endif %}
+          {% endif %}
+
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty-text">No hay usuarios para mostrar.</p>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -2562,6 +2562,31 @@ def reply_opinion(opinion_id):
         }
     }), 201
 
+@app.route('/profile/<username>/followers')
+def profile_followers(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    followers = user.followers.all()
+
+    return render_template(
+        'followers.html',
+        profile_user=user,
+        users=followers,
+        title="Seguidores"
+    )
+
+
+@app.route('/profile/<username>/following')
+def profile_following(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    following = user.followed.all()
+
+    return render_template(
+        'followers.html',
+        profile_user=user,
+        users=following,
+        title="Siguiendo"
+    )
+
 @app.route('/opinion/<int:opinion_id>/responses', methods=['GET'])
 def get_responses(opinion_id):
     # Obtener la opinión con el id proporcionado
