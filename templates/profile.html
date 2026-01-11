@@ -35,11 +35,29 @@
   {% endif %}
 
   {% if user.cv_file %}
-    <a class="btn btn-secondary" href="{{ url_for('view_cv', username=user.username) }}" target="_blank" rel="noopener">
+    <!-- 👁️ Ver CV -->
+    <a class="btn btn-secondary"
+       href="{{ url_for('view_cv', username=user.username) }}"
+       target="_blank"
+       rel="noopener">
       {{ _('Ver CV') }}
     </a>
+
+    {% if is_owner %}
+      <!-- 🗑️ Borrar CV -->
+      <form action="{{ url_for('delete_cv') }}"
+            method="post"
+            class="cv-form-inline"
+            onsubmit="return confirm('Seguro que quieres borrar tu CV?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-danger cv-delete-btn">
+          {{ _('Borrar CV') }}
+        </button>
+      </form>
+    {% endif %}
   {% endif %}
 </div>
+
         <!-- 🔵 Contadores de seguidores -->
         <div class="follow-container">
             <div class="follow-stats">
@@ -52,10 +70,11 @@
                 <a href="{{ url_for('profile_following', username=user.username) }}"
                     class="follow-link">
                 <strong>{{ user.followed.count() }}</strong> {{ _('siguiendo') }}
-                </a>
+        </a>
 
-            </div>
-            
+    </div>
+
+
             {% if current_user.is_authenticated and current_user.id != user.id %}
                 {% if current_user in user.followers %}
                     <form action="{{ url_for('unfollow_user', user_id=user.id) }}" method="POST">

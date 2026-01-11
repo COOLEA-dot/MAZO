@@ -638,6 +638,25 @@ video {
     text-decoration: underline;
 }
 
+.cv-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cv-form-inline {
+  display: inline-block;
+}
+
+.cv-delete-btn {
+  background-color: #dc3545;
+  border: none;
+}
+
+.cv-delete-btn:hover {
+  background-color: #b52a37;
+}
+
 @media (max-width: 600px) {
     .profile-container {
         padding: 10px;

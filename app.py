@@ -2431,6 +2431,27 @@ def view_cv(username):
         user.cv_file,
         as_attachment=False  # mostrar en navegador si es PDF
     )
+
+@app.route('/delete-cv', methods=['POST'])
+@login_required
+def delete_cv():
+    if not current_user.cv_file:
+        flash('No hay CV para borrar.', 'warning')
+        return redirect(url_for('profile', username=current_user.username))
+
+    cv_path = os.path.join(app.root_path, 'static', current_user.cv_file)
+
+    # Eliminar archivo físico
+    if os.path.exists(cv_path):
+        os.remove(cv_path)
+
+    # Eliminar referencia en BD
+    current_user.cv_file = None
+    db.session.commit()
+
+    flash('CV eliminado correctamente.', 'success')
+    return redirect(url_for('profile', username=current_user.username))
+
 @app.after_request
 def add_security_headers(response):
     # No aplicar estas cabeceras si la ruta es estática o importante para recursos externos
@@ -2729,8 +2750,6 @@ def delete_account():
         db.session.rollback()
         print("ERROR AL ELIMINAR CUENTA:", e)
         return jsonify({"success": False}), 500
-
-
 
 @app.route("/jobs", endpoint="jobs")
 def jobs_view():
