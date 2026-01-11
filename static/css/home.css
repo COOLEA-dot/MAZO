@@ -706,7 +706,7 @@ p {
 }
 
 /* 📱 ESTILOS EXCLUSIVOS PARA MÓVIL */
-@media (max-width: 600px) {
+@media (max-width: 1000px) {
     html, body {
         margin: 0;
         padding: 0;
