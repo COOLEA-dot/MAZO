@@ -445,3 +445,81 @@ class ProjectApplication(db.Model):
 
     __table_args__ = (UniqueConstraint('project_id', 'applicant_id', name='uq_project_applicant'),)
 
+
+
+class Group(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(255))
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    invite_code = db.Column(db.String(32), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    image = db.Column(db.String(255))  # 👈 NUEVO
+
+    members = db.relationship(
+        'GroupMember',
+        backref='group',
+        cascade='all, delete-orphan'
+    )
+
+
+class GroupMember(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    is_admin = db.Column(db.Boolean, default=False)
+
+    user = db.relationship('User', backref='group_memberships')
+
+class CreateGroupForm(FlaskForm):
+    name = StringField(
+        'Nombre del grupo',
+        validators=[DataRequired(), Length(max=100)]
+    )
+    description = TextAreaField(
+        'Descripción',
+        validators=[Length(max=255)]
+    )
+    image = FileField(
+        'Imagen del grupo',
+        validators=[FileAllowed(['jpg', 'jpeg', 'png', 'webp'], 'Solo imágenes')]
+    )
+
+class GroupMessage(db.Model):
+    __tablename__ = "group_messages"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("group.id"),
+        nullable=False
+    )
+
+    sender_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False
+    )
+
+    content = db.Column(db.Text, nullable=True)
+
+    file_url = db.Column(db.String(255), nullable=True)
+    thumbnail_url = db.Column(db.String(255), nullable=True)
+
+    timestamp = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        index=True
+    )
+
+    sender = db.relationship("User", backref="group_messages")
+    group = db.relationship("Group", backref="messages")
+
+class EditGroupForm(FlaskForm):
+    name = StringField(validators=[Length(max=100)])
+    description = TextAreaField(validators=[Length(max=255)])
+    image = FileField()

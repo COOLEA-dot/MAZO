@@ -84,3 +84,154 @@
     color: #007bff;  /* Azul */
 }
 
+.chats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.create-group-btn {
+    background-color: #111;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.create-group-btn:hover {
+    opacity: 0.9;
+}
+
+/* =========================
+   MODAL CREAR GRUPO
+   ========================= */
+
+.hidden {
+    display: none !important;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.modal-content input,
+.modal-content textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.modal-content textarea {
+    resize: none;
+    height: 80px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.modal-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.modal-actions button[type="submit"] {
+    background-color: #111;
+    color: #fff;
+}
+
+.modal-actions button[type="button"] {
+    background-color: #e0e0e0;
+}
+/* =========================
+   SECCIONES
+   ========================= */
+
+.chat-section-title {
+    max-width: 600px;
+    margin: 20px auto 10px;
+    font-size: 15px;
+    font-weight: bold;
+    color: #555;
+}
+
+/* =========================
+   GRUPOS
+   ========================= */
+
+.group-item {
+    background-color: #eef1ff;
+}
+
+.group-item:hover {
+    background-color: #e1e6ff;
+}
+
+.group-avatar img {
+    border-radius: 12px;
+}
+
+.group-label {
+    font-size: 13px;
+    color: #666;
+}
+
+/* =========================
+   CREATE GROUP AVATAR
+========================= */
+.create-group-avatar {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+
+.create-group-avatar img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px dashed #ccc;
+    padding: 3px;
+    transition: opacity 0.2s, border-color 0.2s;
+}
+
+.create-group-avatar img:hover {
+    opacity: 0.85;
+    border-color: #007bff;
+}

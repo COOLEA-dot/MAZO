@@ -128,6 +128,11 @@ from models import (
     ProjectForm,
     JobApplication,
     JobForm,
+    Group,
+    GroupMember,
+    CreateGroupForm,
+    GroupMessage,
+    EditGroupForm,
     CURRENCY_CHOICES,
 )
 
@@ -250,6 +255,8 @@ EXEMPT_PATHS = {
     "/auth/google/callback",
     "/mobile/login/google",
 }
+
+invite_code = secrets.token_urlsafe(16)
 
 def _wrap_before_request_funcs():
     """
@@ -1265,7 +1272,6 @@ def get_replies(comment_id):
 
     return jsonify(reply_list)
 
-
 @app.route('/home')
 def home():
     user = None
@@ -1551,15 +1557,39 @@ def get_user_chats(user_id):
 @app.route('/chats')
 @login_required
 def chats():
-    # current_user ya está disponible y autenticado gracias a @login_required
-    print("CHATS VIEW - current_user:", current_user, "is_authenticated:", current_user.is_authenticated, "id:", getattr(current_user, 'id', None))
+    # Debug útil
+    print(
+        "CHATS VIEW - current_user:",
+        current_user,
+        "is_authenticated:",
+        current_user.is_authenticated,
+        "id:",
+        getattr(current_user, 'id', None)
+    )
 
     user_id = current_user.id
-    # get_user_chats debe devolver una lista de objetos/dicts con los campos que usas en la plantilla
+
+    # Chats privados (como hasta ahora)
     chats = get_user_chats(user_id)
 
-    # Pasamos current_user.username para consistencia (aunque en plantilla también podemos usar current_user)
-    return render_template('chat_list.html', username=current_user.username, chats=chats)
+    # 🔹 Grupos donde el usuario es miembro
+    groups = (
+        db.session.query(Group)
+        .join(GroupMember, GroupMember.group_id == Group.id)
+        .filter(GroupMember.user_id == user_id)
+        .all()
+    )
+
+    # Formulario para crear grupo (FlaskForm)
+    form = CreateGroupForm()
+
+    return render_template(
+        'chat_list.html',
+        username=current_user.username,
+        chats=chats,
+        groups=groups,   # 👈 IMPORTANTE
+        form=form
+    )
 
 def _run(cmd):
     subprocess.run(cmd, check=True)
@@ -1598,55 +1628,90 @@ def probe_duration(src_path):
 def _abs_folder(base_folder):
     # Asegura ruta absoluta basada en app.root_path
     return base_folder if os.path.isabs(base_folder) else os.path.join(app.root_path, base_folder)
+from flask import Response, abort, request
+import os
+import mimetypes
+from datetime import datetime
 
-def partial_response(abs_path, content_type=None, cache_seconds=60*60*24*7):
+
+def partial_response(abs_path, content_type=None, cache_seconds=60 * 60 * 24 * 7):
     if not os.path.exists(abs_path):
         abort(404)
 
     file_size = os.path.getsize(abs_path)
-    range_header = request.headers.get('Range')
-    content_type = content_type or mimetypes.guess_type(abs_path)[0] or 'application/octet-stream'
+    range_header = request.headers.get("Range")
+    content_type = content_type or mimetypes.guess_type(abs_path)[0] or "application/octet-stream"
 
-    headers = {
+    base_headers = {
         "Accept-Ranges": "bytes",
         "Cache-Control": f"public, max-age={cache_seconds}",
-        "Last-Modified": datetime.utcfromtimestamp(os.path.getmtime(abs_path)).strftime('%a, %d %b %Y %H:%M:%S GMT')
+        "Last-Modified": datetime.utcfromtimestamp(
+            os.path.getmtime(abs_path)
+        ).strftime("%a, %d %b %Y %H:%M:%S GMT"),
     }
 
+    # =========================
+    # SIN RANGE → 200
+    # =========================
     if not range_header:
-        return Response(open(abs_path, 'rb'), 200, headers=headers, mimetype=content_type, direct_passthrough=True)
+        response = Response(
+            open(abs_path, "rb"),
+            200,
+            mimetype=content_type,
+            direct_passthrough=True
+        )
+        for k, v in base_headers.items():
+            response.headers[k] = v
+        return response
 
+    # =========================
+    # CON RANGE → 206
+    # =========================
     try:
         units, rng = range_header.split("=")
         if units != "bytes":
-            return Response(status=416)
+            abort(416)
+
         start_str, end_str = rng.split("-")
         start = int(start_str) if start_str else 0
         end = int(end_str) if end_str else file_size - 1
     except Exception:
-        return Response(status=416)
+        abort(416)
 
     if start >= file_size or end >= file_size or start > end:
-        return Response(status=416)
+        abort(416)
 
     length = end - start + 1
-    with open(abs_path, 'rb') as f:
+    with open(abs_path, "rb") as f:
         f.seek(start)
         data = f.read(length)
 
-    headers.update({
+    response = Response(
+        data,
+        206,
+        mimetype=content_type,
+        direct_passthrough=True
+    )
+
+    base_headers.update({
         "Content-Range": f"bytes {start}-{end}/{file_size}",
         "Content-Length": str(length),
     })
-    return Response(data, 206, headers=headers, mimetype=content_type, direct_passthrough=True)
 
-@app.route('/files/<path:filename>')
+    for k, v in base_headers.items():
+        response.headers[k] = v
+
+    return response
+
+
+@app.route("/files/<path:filename>")
 def serve_file(filename):
-    # Sirve cualquier fichero bajo tu proyecto (p.ej. 'static/...' o 'uploads/...').
     abs_path = os.path.normpath(os.path.join(app.root_path, filename))
+
     # Seguridad: evita path traversal
     if not abs_path.startswith(app.root_path):
         abort(403)
+
     return partial_response(abs_path)
 
 def generate_thumbnail(video_path, thumbnail_path):
@@ -1820,12 +1885,469 @@ def socket_connect():
         return False
     print("-> conexión aceptada para", current_user.username)
 
+@app.route('/groups/create', methods=['POST'])
+@login_required
+def create_group():
+    form = CreateGroupForm()
+
+    if not form.validate_on_submit():
+        print(form.errors)
+        abort(400)
+
+    invite_code = secrets.token_urlsafe(16)
+
+    group = Group(
+        name=form.name.data,
+        description=form.description.data,
+        owner_id=current_user.id,
+        invite_code=invite_code
+    )
+
+    # 📸 Imagen opcional
+    if form.image.data:
+        file = form.image.data
+        filename = secure_filename(file.filename)
+
+        upload_folder = os.path.join(
+            current_app.root_path,
+            'static',
+            'group_pics'
+        )
+        os.makedirs(upload_folder, exist_ok=True)
+
+        file_path = os.path.join(upload_folder, filename)
+        file.save(file_path)
+
+        group.image = f'group_pics/{filename}'
+    else:
+        group.image = None  # se usará la default en el frontend
+
+    db.session.add(group)
+    db.session.flush()
+
+    # Creador como admin
+    member = GroupMember(
+        group_id=group.id,
+        user_id=current_user.id,
+        is_admin=True
+    )
+    db.session.add(member)
+
+    db.session.commit()
+
+    return redirect(url_for('view_group', group_id=group.id))
+
+@app.route('/groups/<int:group_id>')
+@login_required
+def group_info(group_id):
+    group = Group.query.get_or_404(group_id)
+
+    # obtener miembros del grupo
+    members = GroupMember.query.filter_by(group_id=group.id).all()
+
+    # 🔑 usar la función correcta
+    is_admin = is_group_admin(group.id, current_user.id)
+
+    form = EditGroupForm() 
+
+    return render_template(
+        'group_info.html',
+        group=group,
+        members=members,
+        is_admin=is_admin,
+        form=form,
+    )
+
+def is_group_admin(group_id, user_id):
+    group = Group.query.get(group_id)
+    if not group:
+        return False
+
+    if group.owner_id == user_id:
+        return True
+
+    return GroupMember.query.filter_by(
+        group_id=group_id,
+        user_id=user_id,
+        is_admin=True
+    ).first() is not None
+
+@app.route('/groups/<int:group_id>/edit', methods=['POST'])
+@login_required
+def edit_group(group_id):
+    group = Group.query.get_or_404(group_id)
+
+    # Seguridad: solo admins u owner
+    if not is_group_admin(group_id, current_user.id):
+        abort(403)
+
+    form = EditGroupForm()
+
+    # CSRF + validación básica
+    if not form.validate_on_submit():
+        abort(400)
+
+    # Nombre
+    if form.name.data:
+        group.name = form.name.data.strip()
+
+    # Descripción (puede ser string vacío)
+    if form.description.data is not None:
+        group.description = form.description.data.strip()
+
+    # Imagen
+    if form.image.data:
+        file = form.image.data
+        filename = secure_filename(file.filename)
+
+        upload_folder = os.path.join('static', 'group_pics')
+        os.makedirs(upload_folder, exist_ok=True)
+
+        path = os.path.join(upload_folder, filename)
+        file.save(path)
+
+        group.image = f'group_pics/{filename}'
+
+    db.session.commit()
+
+    return redirect(url_for('group_info', group_id=group.id, form=form))
+
+
+@app.route('/groups/<int:group_id>/remove/<int:user_id>', methods=['POST'])
+@login_required
+def remove_group_member(group_id, user_id):
+    if not is_group_admin(group_id, current_user.id):
+        abort(403)
+
+    group = Group.query.get_or_404(group_id)
+
+    if user_id == group.owner_id:
+        abort(400)  # no se puede eliminar al owner
+
+    member = GroupMember.query.filter_by(
+        group_id=group_id,
+        user_id=user_id
+    ).first_or_404()
+
+    db.session.delete(member)
+    db.session.commit()
+
+    return redirect(url_for('group_info', group_id=group_id))
+@app.route('/groups/<int:group_id>/toggle-admin/<int:user_id>', methods=['POST'])
+@login_required
+def toggle_group_admin(group_id, user_id):
+    group = Group.query.get_or_404(group_id)
+
+    # 🔐 Solo el owner puede asignar/quitar admins
+    if group.owner_id != current_user.id:
+        abort(403)
+
+    # No se puede modificar al owner
+    if user_id == group.owner_id:
+        abort(400)
+
+    member = GroupMember.query.filter_by(
+        group_id=group_id,
+        user_id=user_id
+    ).first_or_404()
+
+    # Toggle admin
+    member.is_admin = not member.is_admin
+
+    db.session.commit()
+
+    return redirect(url_for('group_info', group_id=group_id))
+
+
+@app.route('/group/join/<invite_code>')
+@login_required
+def join_group(invite_code):
+    group = Group.query.filter_by(invite_code=invite_code).first_or_404()
+
+    already_member = GroupMember.query.filter_by(
+        group_id=group.id,
+        user_id=current_user.id
+    ).first()
+
+    if not already_member:
+        db.session.add(GroupMember(
+            group_id=group.id,
+            user_id=current_user.id
+        ))
+        db.session.commit()
+
+    return redirect(url_for('view_group', group_id=group.id))
+
 # send_message (reemplaza handle_send_message): usa current_user en vez de 'sender' del cliente
 # Imports necesarios (añádelos si no están ya en tu módulo)
-import os
-import time
-from flask import url_for, current_app
-# Asegúrate de tener: socketio, db, User, Message, Conversation, upload_file, handle_small_file, generate_thumbnail, CHAT_UPLOAD_FOLDER, THUMBNAIL_FOLDER
+@app.route('/group/<int:group_id>')
+@login_required
+def view_group(group_id):
+    group = Group.query.get_or_404(group_id)
+
+    member = GroupMember.query.filter_by(
+        group_id=group.id,
+        user_id=current_user.id
+    ).first()
+
+    if not member:
+        abort(403)
+
+    members = GroupMember.query.filter_by(group_id=group.id).all()
+
+    messages = (
+        GroupMessage.query
+        .filter_by(group_id=group.id)
+        .order_by(GroupMessage.timestamp.asc())
+        .all()
+    )
+
+    # 🔥 NORMALIZAR URLs (ESTO ES LO QUE FALTABA)
+    for msg in messages:
+        if msg.file_url:
+            msg.file_url = normalize_and_wait_file_url(msg.file_url)
+
+        if msg.thumbnail_url:
+            msg.thumbnail_url = normalize_and_wait_file_url(msg.thumbnail_url)
+
+    return render_template(
+        'group_chat.html',
+        group=group,
+        members=members,
+        messages=messages
+    )
+
+@socketio.on('join_group')
+def join_group_room(data):
+    join_room(f"group_{data['group_id']}")
+@socketio.on('send_group_message')
+def handle_send_group_message(data):
+    print("📩 Recibiendo mensaje de grupo:", data)
+
+    # =========================
+    # Seguridad
+    # =========================
+    sender = current_user
+    if not sender or not sender.is_authenticated:
+        return {'ok': False, 'error': 'not_authenticated'}
+
+    group_id = data.get('group_id')
+    message_text = (data.get('message') or '').strip()
+    file = data.get('file')
+    filename = data.get('filename')
+
+    if not group_id or (not message_text and not file):
+        return {'ok': False, 'error': 'missing_fields'}
+
+    # =========================
+    # Comprobar pertenencia al grupo
+    # =========================
+    member = GroupMember.query.filter_by(
+        group_id=group_id,
+        user_id=sender.id
+    ).first()
+
+    if not member:
+        return {'ok': False, 'error': 'not_group_member'}
+
+    file_path = None
+    thumbnail_path = None
+    file_base64_payload = None
+    upload_stream_url = None
+
+    # =========================
+    # Procesar archivo
+    # =========================
+    if file:
+        try:
+            # -------------------------
+            # Caso: string
+            # -------------------------
+            if isinstance(file, str):
+
+                # Ruta relativa ya válida
+                if file.startswith("static/"):
+                    file_path = file
+
+                # Archivo pequeño en Base64
+                elif file.startswith("data:") and "," in file:
+                    if not filename:
+                        return {'ok': False, 'error': 'missing_filename'}
+                    try:
+                        saved = handle_small_file(file, filename)
+                        file_path = saved
+                    except Exception:
+                        file_base64_payload = file
+
+                # URL absoluta (viene de /upload_file)
+                elif file.startswith("http://") or file.startswith("https://"):
+                    upload_stream_url = file
+
+                    # 🔥 CONVERTIR URL → RUTA RELATIVA PARA BD
+                    parsed = urlparse(file)
+                    if parsed.path.startswith('/files/'):
+                        file_path = parsed.path.replace('/files/', '', 1)
+                    else:
+                        file_path = None
+
+                else:
+                    return {'ok': False, 'error': 'unknown_file_format'}
+
+            # -------------------------
+            # Caso: FileStorage (HTTP)
+            # -------------------------
+            elif hasattr(file, 'filename'):
+                uploaded = upload_file(file, CHAT_UPLOAD_FOLDER)
+                if isinstance(uploaded, dict):
+                    file_path = uploaded.get('file_path')
+                    upload_stream_url = uploaded.get('stream_url')
+                else:
+                    file_path = uploaded
+
+            else:
+                return {'ok': False, 'error': 'unsupported_file_object'}
+
+        except Exception as e:
+            print("❌ Error procesando archivo grupo:", e)
+            return {'ok': False, 'error': 'file_process_error'}
+
+        # =========================
+        # Thumbnail si es vídeo
+        # =========================
+        if file_path and file_path.lower().endswith(('.mp4', '.webm', '.mov', '.avi', '.mpg')):
+            try:
+                base = os.path.basename(file_path)
+                thumb_name = f"thumb_{base}.png"
+                thumb_full = os.path.join(THUMBNAIL_FOLDER, thumb_name)
+                generate_thumbnail(file_path, thumb_full)
+                thumbnail_path = thumb_full.replace("\\", "/")
+            except Exception as e:
+                print("⚠️ No se pudo generar thumbnail:", e)
+
+    # =========================
+    # Guardar en BD (🔥 CLAVE 🔥)
+    # =========================
+    try:
+        group_message = GroupMessage(
+            group_id=group_id,
+            sender_id=sender.id,
+            content=message_text if message_text else None,
+            file_url=file_path,          # 👈 RUTA RELATIVA
+            thumbnail_url=thumbnail_path
+        )
+        db.session.add(group_message)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print("❌ Error guardando mensaje de grupo:", e)
+        return {'ok': False, 'error': 'db_error'}
+
+    # =========================
+    # Normalizar URLs públicas
+    # =========================
+    public_file_url = normalize_and_wait_file_url(
+        file_path,
+        fallback_stream_url=upload_stream_url
+    )
+
+    public_thumb_url = (
+        normalize_and_wait_file_url(thumbnail_path)
+        if thumbnail_path else ""
+    )
+
+    # =========================
+    # Payload al frontend
+    # =========================
+    payload = {
+        'message_id': group_message.id,
+        'group_id': group_id,
+        'message': message_text,
+        'file_url': public_file_url or "",
+        'thumbnail_url': public_thumb_url,
+        'timestamp': group_message.timestamp.isoformat(),
+        'username': sender.username,
+        'profile_pic': sender.profile_pic,
+        'sender': {
+            'id': sender.id,
+            'username': sender.username,
+            'profile_pic': sender.profile_pic
+        }
+    }
+
+    if file_base64_payload:
+        payload['file_base64'] = file_base64_payload
+        payload['file_name'] = filename
+
+    # =========================
+    # Emitir al grupo
+    # =========================
+    room = f"group_{group_id}"
+    socketio.emit('group_message', payload, to=room, include_self=True)
+
+    print(f"✅ Mensaje de grupo emitido a {room}")
+
+    return {
+        'ok': True,
+        'message_id': group_message.id,
+        'file_url': public_file_url,
+        'thumbnail_url': public_thumb_url
+    }
+
+@socketio.on('edit_group_message')
+def handle_edit_group_message(data):
+    message_id = data.get('message_id')
+    new_content = data.get('new_content')
+
+    if not message_id or new_content is None:
+        return {'ok': False, 'error': 'missing_fields'}
+
+    msg = GroupMessage.query.get(message_id)
+    if not msg:
+        return {'ok': False, 'error': 'not_found'}
+
+    if msg.sender_id != current_user.id:
+        return {'ok': False, 'error': 'forbidden'}
+
+    msg.content = new_content
+    db.session.commit()
+
+    room = f'group_{msg.group_id}'
+
+    socketio.emit('group_message_edited', {
+        'message_id': message_id,
+        'new_message': new_content,
+        'username': current_user.username
+    }, to=room)
+
+    return {'ok': True}
+
+@socketio.on('delete_group_message')
+def handle_delete_group_message(data):
+    message_id = data.get('message_id')
+
+    if not message_id:
+        return {'ok': False}
+
+    msg = GroupMessage.query.get(message_id)
+    if not msg:
+        return {'ok': False}
+
+    if msg.sender_id != current_user.id:
+        return {'ok': False}
+
+    group_id = msg.group_id
+
+    db.session.delete(msg)
+    db.session.commit()
+
+    socketio.emit(
+        'group_message_deleted',
+        {'message_id': message_id},
+        to=f'group_{group_id}'
+    )
+
+    return {'ok': True}
+
 
 def normalize_and_wait_file_url(file_path, wait_attempts=6, wait_delay=0.4, fallback_stream_url=None):
     """

@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Grupo') }} {{ group.name }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+
+<!-- HEADER -->
+<h2 class="chat-header group-chat-header">
+    <a href="{{ url_for('group_info', group_id=group.id) }}" class="chat-profile-link group-chat-profile-link">
+        <div class="chat-avatar group-chat-avatar">
+            <img
+                src="{{ url_for('static', filename=group.image or 'profile_pics/default.jpg') }}"
+                alt="{{ group.name }}"
+            >
+        </div>
+        <div class="chat-info group-chat-info">
+            <h3>{{ group.name }}</h3>
+            <small>{{ members|length }} {{ _('miembros') }}</small>
+        </div>
+    </a>
+</h2>
+
+<!-- CHAT -->
+<div id="chat-box"
+     data-my-username="{{ current_user.username }}"
+     data-group-id="{{ group.id }}"
+     data-chat-type="group"
+     style="min-height:100px; overflow-y:auto; padding:1rem; border-radius:8px; background:#fff;">
+
+    <!-- fallback hidden -->
+    <input type="hidden" id="chat-my-username" value="{{ current_user.username }}">
+    <input type="hidden" id="chat-group-id" value="{{ group.id }}">
+
+    {% for message in messages %}
+        <div class="chat-message {% if message.sender.username == current_user.username %}my-message{% else %}other-message{% endif %}"
+             data-message-id="{{ message.id }}">
+
+            <div class="message-content">
+
+                {% if message.sender.username != current_user.username %}
+                    <strong style="font-size:12px; display:block; margin-bottom:4px;">
+                        {{ message.sender.username }}
+                    </strong>
+                {% endif %}
+
+                {% if message.file_url %}
+                    {% if message.file_url.startswith('http') %}
+                        {% set file_url = message.file_url %}
+                    {% else %}
+                        {% set file_url = '/' + message.file_url.lstrip('/') %}
+                    {% endif %}
+                    {% set ext = file_url.split('.')[-1].lower() %}
+
+                    {% if ext in ['mp4','webm','mov','avi','mpg'] %}
+                        <div class="video-thumbnail" data-file-url="{{ file_url }}">
+                            <img src="{{ message.thumbnail_url or url_for('static', filename='chat_uploads/thumbnails/default-thumbnail.jpg') }}"
+                                 class="chat-thumbnail">
+                            <i class="fa fa-play play-icon"></i>
+                        </div>
+
+                    {% elif ext in ['jpg','jpeg','png','gif','webp'] %}
+                        <img src="{{ file_url }}" class="chat-thumbnail" data-file-url="{{ file_url }}">
+
+                    {% else %}
+                        <div class="file-thumbnail" data-file-url="{{ file_url }}">
+                            <i class="fas fa-file file-icon"></i>
+                            <div class="file-name">{{ file_url.split('/')[-1] }}</div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="message-text">{{ message.content }}</p>
+                {% endif %}
+
+                {% if message.sender.username == current_user.username %}
+                    <div class="message-options">
+                        <span class="options-icon">⋮</span>
+                        <div class="options-menu">
+                            <button class="edit-message" data-message-id="{{ message.id }}">Editar</button>
+                            <button class="delete-message" data-message-id="{{ message.id }}">Borrar</button>
+                        </div>
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- INPUT -->
+<form id="group-message-form" autocomplete="off">
+    <div id="chat-input" style="display:flex; gap:8px; align-items:center; margin-top:12px;">
+        <label for="file-input" class="file-label">
+            <i class="fas fa-paperclip"></i>
+        </label>
+
+        <input type="file"
+               id="file-input"
+               multiple
+               accept="image/*,video/*,.pdf,.docx,.pptx,.xls,.xlsx,.avi,.mpg,.mov,.webm"
+               style="display:none">
+
+        <div id="file-preview-container"></div>
+
+        <textarea id="message"
+                  placeholder="{{ _('Escribe un mensaje...') }}"
+                  rows="2"
+                  style="flex:1; padding:8px; border-radius:6px; border:1px solid #ccc;"></textarea>
+
+        <button id="send-btn" type="submit" title="Enviar"></button>
+    </div>
+</form>
+
+<!-- IMAGE MODAL -->
+<div id="image-modal" class="modal" style="display:none;">
+  <div class="modal-inner">
+    <div class="modal-controls">
+      <a id="download-link" href="#" download style="display:none;">Descargar</a>
+      <button type="button" class="close-modal">✕</button>
+    </div>
+    <img class="modal-content" id="modal-image">
+  </div>
+</div>
+
+<!-- VIDEO MODAL -->
+<!-- VIDEO MODAL -->
+<div id="video-modal" class="modal" style="display:none;">
+  <div class="modal-inner">
+
+    <div class="modal-controls">
+      <a id="video-download-link" href="#" download style="display:none;">
+        Descargar
+      </a>
+      <button type="button" class="close-modal">✕</button>
+    </div>
+
+    <video
+      id="modal-video"
+      class="modal-video"
+      controls
+      playsinline
+      preload="auto">
+    </video>
+
+  </div>
+</div>
+
+
+
+<!-- SOCKET + JS -->
+<script src="{{ url_for('static', filename='vendor/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/group_chat.js') }}"></script>
+
+{% endblock %}

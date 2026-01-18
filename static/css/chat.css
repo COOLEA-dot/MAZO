@@ -38,6 +38,46 @@
     width: 100%;
 }
 
+/* ======================
+   GROUP CHAT HEADER
+====================== */
+
+.group-chat-header {
+    padding: 10px;
+}
+
+.group-chat-profile-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+    width: 100%;
+    cursor: pointer;
+}
+
+.group-chat-profile-link:hover {
+    opacity: 0.85;
+}
+
+.group-chat-avatar img {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.group-chat-info h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.group-chat-info small {
+    font-size: 13px;
+    color: #777;
+}
+
 /* Mensajes del usuario actual */
 .my-message .message-content {
     background: #007bff;
@@ -534,6 +574,16 @@
 #send-btn:hover {
     background-color: #0056b3;
 }
+
+.chat-thumbnail,
+.video-thumbnail,
+.file-thumbnail {
+    pointer-events: auto !important;
+    cursor: pointer;
+    z-index: 5;
+    position: relative;
+}
+
 @media (max-width: 600px) {
     /* Contenedor del input de chat */
     #chat-input {

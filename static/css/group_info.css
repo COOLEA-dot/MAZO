@@ -1,0 +1,185 @@
+/* =========================
+   CONTENEDOR
+========================= */
+.group-info-container {
+    max-width: 600px;
+    margin: auto;
+    padding: 16px;
+}
+
+/* =========================
+   CONTADOR DE MIEMBROS
+========================= */
+.group-info-members-count {
+    text-align: center;
+    font-size: 14px;
+    color: #777;
+    margin-bottom: 12px;
+}
+
+/* =========================
+   HEADER
+========================= */
+.group-info-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+/* Avatar del grupo */
+.group-info-avatar img {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 12px;
+}
+
+/* Avatar clicable (solo admin) */
+.clickable-avatar {
+    cursor: pointer;
+}
+
+.clickable-avatar:hover {
+    opacity: 0.85;
+}
+
+/* Nombre del grupo */
+.group-info-name {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+/* =========================
+   LINK DEL GRUPO
+========================= */
+.group-info-link {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.group-info-link input {
+    width: 70%;
+    padding: 6px;
+    font-size: 13px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.group-info-link button {
+    padding: 6px 10px;
+    font-size: 13px;
+    border: none;
+    border-radius: 6px;
+    background: #007bff;
+    color: #fff;
+    cursor: pointer;
+}
+
+.group-info-link button:hover {
+    background: #0069d9;
+}
+
+/* =========================
+   LISTA DE MIEMBROS
+========================= */
+.group-info-section h3 {
+    margin-bottom: 10px;
+}
+
+.group-members-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Item genérico */
+.group-member a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 6px;
+}
+
+.group-member a:hover {
+    background: rgba(0,0,0,0.04);
+}
+
+/* Avatar miembro */
+.group-member img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* =========================
+   ADMINS
+========================= */
+.admin-name {
+    color: #2e9e4f;
+    font-weight: 600;
+}
+
+/* (opcional) fila admin ligeramente distinta */
+.admin-member a {
+    background: rgba(46, 158, 79, 0.05);
+}
+
+.admin-member a:hover {
+    background: rgba(46, 158, 79, 0.12);
+}
+/* =========================
+   EDICIÓN (ADMIN)
+========================= */
+
+/* Input nombre del grupo */
+.group-name-input {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto 10px auto;
+    padding: 8px 12px;
+    font-size: 20px;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+}
+
+/* Focus nombre */
+.group-name-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.15);
+}
+
+/* Textarea descripción */
+.group-description-input {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto 14px auto;
+    padding: 8px 12px;
+    font-size: 14px;
+    resize: vertical;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+    display: block;
+}
+
+/* Focus descripción */
+.group-description-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.15);
+}
+
+/* Texto descripción (no admin) */
+.group-description-text {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 10px;
+}

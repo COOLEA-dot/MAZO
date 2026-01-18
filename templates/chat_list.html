@@ -5,11 +5,47 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat_list.css') }}">
 
-<!-- Cargar Socket.IO antes del script de mensajes -->
+<!-- Socket.IO -->
 <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='js/new_messages.js') }}"></script>
 
-<h2>{{ _('Tus Chats') }}</h2>
+<!-- HEADER -->
+<div class="chats-header">
+    <h2>{{ _('Tus Chats') }}</h2>
+
+    <button class="create-group-btn" onclick="openCreateGroupModal()">
+        ➕ {{ _('Crear grupo') }}
+    </button>
+</div>
+
+<!-- ========================= -->
+<!-- GRUPOS -->
+<!-- ========================= -->
+{% if groups %}
+<h3 class="chat-section-title">{{ _('Grupos') }}</h3>
+
+<div class="chat-list">
+    {% for group in groups %}
+        <a href="{{ url_for('view_group', group_id=group.id) }}"
+           class="chat-item group-item">
+
+            <div class="chat-avatar group-avatar">
+                <img src="{{ url_for('static', filename='profile_pics/default.jpg') }}" alt="{{ group.name }}">
+            </div>
+
+            <div class="chat-info">
+                <h3>{{ group.name }}</h3>
+                <p class="group-label">{{ _('Grupo') }}</p>
+            </div>
+        </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- ========================= -->
+<!-- CHATS PRIVADOS -->
+<!-- ========================= -->
+<h3 class="chat-section-title">{{ _('Chats') }}</h3>
 
 <div class="chat-list">
     {% if chats %}
@@ -40,7 +76,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Badge para mensajes no leídos -->
                 {% if chat.has_unread %}
                     <span class="unread-badge">{{ _('¡Nuevo!') }}</span>
                 {% endif %}
@@ -50,4 +85,93 @@
         <p class="no-chats">{{ _('No tienes chats previos.') }}</p>
     {% endif %}
 </div>
+
+<!-- ========================= -->
+<!-- MODAL CREAR GRUPO -->
+<!-- ========================= -->
+<div id="createGroupModal" class="modal hidden">
+    <div class="modal-content">
+        <h3>{{ _('Crear grupo') }}</h3>
+
+        <form
+            method="POST"
+            action="{{ url_for('create_group') }}"
+            enctype="multipart/form-data"
+        >
+            {{ form.hidden_tag() }}
+
+            <!-- AVATAR DEL GRUPO -->
+            <div class="create-group-avatar">
+                <img
+                    src="{{ url_for('static', filename='profile_pics/default.jpg') }}"
+                    id="create-group-avatar-preview"
+                    alt="Group avatar"
+                >
+
+                {{ form.image(
+                    id="create-group-avatar-input",
+                    style="display:none"
+                ) }}
+            </div>
+
+            {{ form.name(
+                placeholder=_('Nombre del grupo'),
+                required=True
+            ) }}
+
+            {{ form.description(
+                placeholder=_('Descripción (opcional)')
+            ) }}
+
+            <div class="modal-actions">
+                <button type="submit">{{ _('Crear') }}</button>
+                <button type="button" onclick="closeCreateGroupModal()">
+                    {{ _('Cancelar') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- JS CREATE GROUP AVATAR -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const avatarPreview = document.getElementById('create-group-avatar-preview');
+    const avatarInput = document.getElementById('create-group-avatar-input');
+
+    if (!avatarPreview || !avatarInput) {
+        console.warn('Create group avatar elements not found');
+        return;
+    }
+
+    // Click en la imagen -> abrir selector
+    avatarPreview.addEventListener('click', function () {
+        avatarInput.click();
+    });
+
+    // Preview de la imagen seleccionada
+    avatarInput.addEventListener('change', function () {
+        const file = avatarInput.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            avatarPreview.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+});
+</script>
+
+<!-- JS MODAL -->
+<script>
+function openCreateGroupModal() {
+    document.getElementById("createGroupModal").classList.remove("hidden");
+}
+
+function closeCreateGroupModal() {
+    document.getElementById("createGroupModal").classList.add("hidden");
+}
+</script>
+
 {% endblock %}

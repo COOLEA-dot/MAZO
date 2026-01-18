@@ -1,0 +1,31 @@
+.message {
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+.message.mine {
+    background: #007bff;
+    color: white;
+    margin-left: auto;
+}
+
+.message.other {
+    background: #f1f1f1;
+    color: #333;
+}
+
+.message-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.message-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}

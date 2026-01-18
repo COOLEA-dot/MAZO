@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Grupo') }} {{ group.name }}{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/group_info.css') }}">
+
+<div class="group-info-container">
+
+    <!-- Número de miembros -->
+    <div class="group-info-members-count">
+        {{ members|length }} {{ _('miembros') }}
+    </div>
+
+    <!-- HEADER -->
+    <div class="group-info-header">
+
+        {% if is_admin %}
+        <!-- FORM EDITAR GRUPO -->
+        <form
+            id="group-edit-form"
+            method="POST"
+            action="{{ url_for('edit_group', group_id=group.id) }}"
+            enctype="multipart/form-data"
+        >
+            {{ form.hidden_tag() }}
+        {% endif %}
+
+            <!-- Avatar del grupo -->
+            <div class="group-info-avatar">
+                <img
+                    src="{{ url_for('static', filename=group.image or 'profile_pics/default.jpg') }}"
+                    alt="{{ group.name }}"
+                    id="group-avatar"
+                    {% if is_admin %}class="clickable-avatar"{% endif %}
+                >
+            </div>
+
+            {% if is_admin %}
+            <!-- Input oculto imagen -->
+            <input
+                type="file"
+                name="image"
+                id="group-avatar-input"
+                accept="image/*"
+                hidden
+            >
+
+            <!-- Nombre editable -->
+            <input
+                type="text"
+                name="name"
+                value="{{ group.name }}"
+                class="group-name-input"
+                placeholder="{{ _('Nombre del grupo') }}"
+            >
+
+            <!-- Descripción editable -->
+            <textarea
+                name="description"
+                class="group-description-input"
+                placeholder="{{ _('Descripción del grupo') }}"
+                rows="3"
+            >{{ group.description or '' }}</textarea>
+
+            {% else %}
+
+                <h2 class="group-info-name">{{ group.name }}</h2>
+
+                {% if group.description %}
+                    <p class="group-description-text">{{ group.description }}</p>
+                {% endif %}
+
+            {% endif %}
+
+        {% if is_admin %}
+        </form>
+        {% endif %}
+
+        <!-- URL del grupo -->
+        {% set invite_url = url_for('join_group', invite_code=group.invite_code, _external=True) %}
+
+        <div class="group-info-link">
+            <input
+                type="text"
+                value="{{ invite_url }}"
+                readonly
+                onclick="this.select()"
+            >
+            <button onclick="navigator.clipboard.writeText('{{ invite_url }}')">
+                {{ _('Copiar') }}
+            </button>
+        </div>
+    </div>
+
+    <!-- LISTA DE MIEMBROS -->
+    <div class="group-info-section">
+        <h3>{{ _('Miembros') }}</h3>
+
+        <ul class="group-members-list">
+
+            <!-- ADMINS -->
+            {% for member in members if member.is_admin %}
+                <li class="group-member admin-member">
+                    <a href="{{ url_for('profile', username=member.user.username) }}">
+                        <img src="{{ member.user.profile_image or url_for('static', filename='profile_pics/default.jpg') }}">
+                        <span class="admin-name">{{ member.user.username }}</span>
+                    </a>
+                </li>
+            {% endfor %}
+
+            <!-- MIEMBROS NORMALES -->
+            {% for member in members if not member.is_admin %}
+                <li class="group-member">
+                    <a href="{{ url_for('profile', username=member.user.username) }}">
+                        <img src="{{ member.user.profile_image or url_for('static', filename='profile_pics/default.jpg') }}">
+                        <span>{{ member.user.username }}</span>
+                    </a>
+                </li>
+            {% endfor %}
+
+        </ul>
+    </div>
+
+</div>
+
+{% if is_admin %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const avatar = document.getElementById('group-avatar');
+    const input = document.getElementById('group-avatar-input');
+    const form = document.getElementById('group-edit-form');
+
+    if (!avatar || !input || !form) return;
+
+    avatar.addEventListener('click', () => {
+        input.click();
+    });
+
+    input.addEventListener('change', () => {
+        if (input.files.length > 0) {
+            form.submit();
+        }
+    });
+
+    form.querySelectorAll('input[name="name"], textarea[name="description"]')
+        .forEach(el => {
+            el.addEventListener('blur', () => {
+                form.submit();
+            });
+        });
+});
+</script>
+{% endif %}
+
+{% endblock %}
