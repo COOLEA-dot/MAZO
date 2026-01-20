@@ -1,0 +1,123 @@
+/* Overlay negro */
+.join-group-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* Modal */
+.join-group-modal {
+  background: #111;
+  border-radius: 20px;
+  padding: 2.2rem 1.8rem;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: scaleIn 0.25s ease-out;
+  color: #fff;
+}
+/* 🔥 FORZAR tamaño avatar grupo (override CSS global) */
+.join-group-modal img.group-avatar {
+  width: 96px !important;
+  height: 96px !important;
+  max-width: 96px !important;
+  max-height: 96px !important;
+
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 1rem;
+
+  border: 3px solid #6366f1;
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.45);
+  background: #1f2937;
+}
+.group-members-avatars img {
+  width: 34px !important;
+  height: 34px !important;
+  max-width: 34px !important;
+  max-height: 34px !important;
+
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Animación */
+@keyframes scaleIn {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Avatar del grupo */
+.group-avatar {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  border: 3px solid #6366f1;
+}
+
+/* Nombre */
+.group-name {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+/* Descripción */
+.group-description {
+  font-size: 0.95rem;
+  color: #c7c7c7;
+  margin-bottom: 1.8rem;
+  line-height: 1.4;
+}
+
+/* Acciones */
+.join-group-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Botón aceptar */
+.btn-accept {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #fff;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-accept:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.45);
+}
+
+/* Botón cancelar */
+.btn-cancel {
+  text-decoration: none;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.btn-cancel:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+

@@ -5,6 +5,11 @@
 {% block content %}
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/group_info.css') }}">
+<script src="{{ url_for('static', filename='js/group_info.js') }}"></script>
+<script src="{{ url_for('static', filename='js/invite_code.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+
+
 
 <div class="group-info-container">
 
@@ -78,52 +83,110 @@
         </form>
         {% endif %}
 
-        <!-- URL del grupo -->
-        {% set invite_url = url_for('join_group', invite_code=group.invite_code, _external=True) %}
-
-        <div class="group-info-link">
-            <input
-                type="text"
-                value="{{ invite_url }}"
-                readonly
-                onclick="this.select()"
+        {% if is_admin %}
+        <!-- INVITAR A USUARIOS -->
+        <div class="group-invite-actions">
+            <button
+                class="btn-invite"
+                onclick="openInviteGroupModal('{{ group.id }}')"
             >
-            <button onclick="navigator.clipboard.writeText('{{ invite_url }}')">
-                {{ _('Copiar') }}
+            👥 {{ _('Invitar a más usuarios') }}
             </button>
+
+            <small class="invite-hint">
+                {{ _('Selecciona un chat para enviar la invitación') }}
+            </small>
         </div>
+        {% endif %}
     </div>
 
-    <!-- LISTA DE MIEMBROS -->
-    <div class="group-info-section">
-        <h3>{{ _('Miembros') }}</h3>
+    {% for member in members %}
+    <li class="group-member {% if member.is_admin %}admin-member{% endif %}">
 
-        <ul class="group-members-list">
+        <!-- INFO USUARIO -->
+        <div class="member-info">
+            <a href="{{ url_for('profile', username=member.user.username) }}">
+                <img src="{{ member.user.profile_image or url_for('static', filename='profile_pics/default.jpg') }}">
+                <span {% if member.is_admin %}class="admin-name"{% endif %}>
+                    {{ member.user.username }}
+                </span>
+            </a>
+        </div>
 
-            <!-- ADMINS -->
-            {% for member in members if member.is_admin %}
-                <li class="group-member admin-member">
-                    <a href="{{ url_for('profile', username=member.user.username) }}">
-                        <img src="{{ member.user.profile_image or url_for('static', filename='profile_pics/default.jpg') }}">
-                        <span class="admin-name">{{ member.user.username }}</span>
-                    </a>
-                </li>
-            {% endfor %}
+        <!-- BOTONES (solo admins y no sobre sí mismo) -->
+        {% if is_admin and member.user.id != current_user.id %}
+        <div class="member-actions">
 
-            <!-- MIEMBROS NORMALES -->
-            {% for member in members if not member.is_admin %}
-                <li class="group-member">
-                    <a href="{{ url_for('profile', username=member.user.username) }}">
-                        <img src="{{ member.user.profile_image or url_for('static', filename='profile_pics/default.jpg') }}">
-                        <span>{{ member.user.username }}</span>
-                    </a>
-                </li>
-            {% endfor %}
+            {% if member.is_admin %}
+            <button
+                class="btn-remove-admin"
+                onclick="removeAdmin('{{ group.id }}', '{{ member.user.id }}')"
+                title="Quitar admin"
+            >
+               ⭐
+            </button>
+            {% else %}
+            <button
+                class="btn-make-admin"
+                onclick="makeAdmin('{{ group.id }}', '{{ member.user.id }}')"
+                title="Hacer admin"
+            >
+               ⭐
+            </button>
+            {% endif %}
+            <button
+                class="btn-remove-member"
+                onclick="removeMember('{{ group.id }}', '{{ member.user.id }}')"
+                title="Eliminar del grupo"
+            >
+               🗑
+            </button>
 
-        </ul>
+        </div>
+        {% endif %}
+
+    </li>
+    {% endfor %}
+
+<div id="invite-group-modal" class="invite-modal hidden">
+  <div class="invite-modal-content">
+
+    <h3 class="invite-title">👥 Invitar a un grupo</h3>
+
+    <!-- COMPARTIR FUERA (WhatsApp / Instagram) -->
+    <div class="invite-external">
+      <button class="external-btn whatsapp" onclick="copyInviteLink()">
+        <i class="fab fa-whatsapp"></i> WhatsApp
+      </button>
+
+      <button class="external-btn instagram" onclick="copyInviteLink()">
+        <i class="fab fa-instagram"></i> Instagram
+      </button>
     </div>
 
+    <div class="invite-section-title">
+      Compartir en MAZO
+    </div>
+
+    <!-- LISTA DE CHATS -->
+    <div id="invite-chats-list">
+      <!-- Aquí se cargan los chats -->
+    </div>
+    <button
+        id="invite-confirm-btn"
+        class="invite-confirm-btn"
+        disabled
+        onclick="confirmGroupInvite()"
+    >
+        Compartir
+    </button>
+    <button class="invite-close-btn" onclick="closeInviteModal()">
+      Cerrar
+    </button>
+  </div>
 </div>
+
+
 
 {% if is_admin %}
 <script>

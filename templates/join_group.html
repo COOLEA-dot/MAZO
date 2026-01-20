@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/join_group.css') }}">
+
+<div class="join-group-overlay">
+  <div class="join-group-modal">
+
+    {# Imagen del grupo #}
+    {% if group.image %}
+      <img
+        src="{% if group.image.startswith('http') %}
+               {{ group.image }}
+             {% elif group.image.startswith('static/') %}
+               /{{ group.image }}
+             {% else %}
+               {{ url_for('static', filename=group.image) }}
+             {% endif %}"
+        class="group-avatar"
+        alt="{{ group.name }}"
+      >
+    {% endif %}
+
+    {# Nombre del grupo #}
+    <h2 class="group-name">
+      {{ group.name }}
+    </h2>
+
+    {# Descripción #}
+    {% if group.description %}
+      <p class="group-description">
+        {{ group.description }}
+      </p>
+    {% endif %}
+
+    {# Info miembros #}
+    <div class="group-members-info">
+      👥 {{ members|length }} miembros en el grupo
+    </div>
+
+    {# Avatares de miembros #}
+    <div class="group-members-avatars">
+      {% for member in members[:5] %}
+        <img
+          src="{{ member.user.profile_image or url_for('static', filename='profile_pics/default.jpg') }}"
+          alt="{{ member.user.username }}"
+          title="{{ member.user.username }}"
+        >
+      {% endfor %}
+
+      {% if members|length > 5 %}
+        <span class="more-members">
+          +{{ members|length - 5 }}
+        </span>
+      {% endif %}
+    </div>
+
+    {# Acciones #}
+    <form
+      method="POST"
+      action="{{ url_for('accept_group_invite', group_id=group.id) }}"
+      class="join-group-actions"
+    >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+       
+      <button type="submit" class="btn-accept">
+        ✅ Unirme al grupo
+      </button>
+
+      <a href="{{ url_for('home') }}" class="btn-cancel">
+        ❌ Rechazar
+      </a>
+    </form>
+
+  </div>
+</div>
+
+{% endblock %}

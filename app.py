@@ -1425,6 +1425,7 @@ def _rel_from_root(abs_path):
         print("_rel_from_root error", e)
         return None
 
+
 @app.route('/chat/<recipient_identifier>', methods=['GET'])
 @login_required
 def chat_with_user(recipient_identifier):
@@ -1493,6 +1494,22 @@ def chat_with_user(recipient_identifier):
         conversation_id=conversation.id
     )
 
+@app.route('/api/chats')
+@login_required
+def api_chats():
+    chats = get_user_chats(current_user.id)
+
+    data = []
+    for chat in chats:
+        data.append({
+            'id': chat['conversation_id'],        # 👈 ahora sí existe
+            'name': chat['username'],
+            'avatar': f"/static/profile_pics/{chat['profile_pic']}"
+        })
+
+    return jsonify(data)
+
+
 @socketio.on('join')
 def handle_join(data):
     room = data.get('room')
@@ -1545,6 +1562,7 @@ def get_user_chats(user_id):
             sent_by_user = False
 
         chat_data.append({
+            'conversation_id': conv.id,
             'username': other_user.username,
             'profile_pic': other_user.profile_pic.split('/')[-1] if other_user.profile_pic else 'default.jpg',
             'last_message': last_message.content if last_message else "No hay mensajes",
@@ -2012,17 +2030,39 @@ def edit_group(group_id):
 
     return redirect(url_for('group_info', group_id=group.id, form=form))
 
-
-@app.route('/groups/<int:group_id>/remove/<int:user_id>', methods=['POST'])
+@app.route('/groups/<int:group_id>/make-admin/<int:user_id>', methods=['POST'])
 @login_required
-def remove_group_member(group_id, user_id):
-    if not is_group_admin(group_id, current_user.id):
+def make_group_admin(group_id, user_id):
+    member = GroupMember.query.filter_by(
+        group_id=group_id,
+        user_id=user_id
+    ).first_or_404()
+
+    admin = GroupMember.query.filter_by(
+        group_id=group_id,
+        user_id=current_user.id,
+        is_admin=True
+    ).first()
+
+    if not admin:
         abort(403)
 
-    group = Group.query.get_or_404(group_id)
+    member.is_admin = True
+    db.session.commit()
 
-    if user_id == group.owner_id:
-        abort(400)  # no se puede eliminar al owner
+    return {"success": True}
+
+@app.route('/groups/<int:group_id>/remove-member/<int:user_id>', methods=['POST'])
+@login_required
+def remove_group_member(group_id, user_id):
+    admin = GroupMember.query.filter_by(
+        group_id=group_id,
+        user_id=current_user.id,
+        is_admin=True
+    ).first()
+
+    if not admin or current_user.id == user_id:
+        abort(403)
 
     member = GroupMember.query.filter_by(
         group_id=group_id,
@@ -2032,37 +2072,91 @@ def remove_group_member(group_id, user_id):
     db.session.delete(member)
     db.session.commit()
 
-    return redirect(url_for('group_info', group_id=group_id))
-@app.route('/groups/<int:group_id>/toggle-admin/<int:user_id>', methods=['POST'])
+    return {"success": True}
+
+
+@app.route('/groups/invite/<invite_code>')
+def group_invite(invite_code):
+    group = Group.query.filter_by(invite_code=invite_code).first_or_404()
+
+    if not current_user.is_authenticated:
+        return redirect(
+            url_for('login', next=url_for('group_invite', invite_code=invite_code))
+        )
+
+    already_member = GroupMember.query.filter_by(
+        group_id=group.id,
+        user_id=current_user.id
+    ).first()
+
+    if already_member:
+        return redirect(url_for('view_group', group_id=group.id))
+
+    # 👇 OBTENER MIEMBROS DEL GRUPO
+    members = (
+        GroupMember.query
+        .filter_by(group_id=group.id)
+        .join(User)
+        .all()
+    )
+
+    return render_template(
+        'join_group.html',
+        group=group,
+        members=members
+    )
+
+@app.route('/groups/send-invite/<int:group_id>', methods=['POST'])
 @login_required
-def toggle_group_admin(group_id, user_id):
+def send_group_invite(group_id):
     group = Group.query.get_or_404(group_id)
 
-    # 🔐 Solo el owner puede asignar/quitar admins
-    if group.owner_id != current_user.id:
+    # Solo admins del grupo
+    is_admin = GroupMember.query.filter_by(
+        group_id=group.id,
+        user_id=current_user.id,
+        is_admin=True
+    ).first()
+
+    if not is_admin:
         abort(403)
 
-    # No se puede modificar al owner
-    if user_id == group.owner_id:
+    data = request.get_json()
+    conversation_id = data.get('conversation_id')
+
+    if not conversation_id:
         abort(400)
 
-    member = GroupMember.query.filter_by(
-        group_id=group_id,
-        user_id=user_id
-    ).first_or_404()
+    invite_url = url_for(
+        'group_invite',
+        invite_code=group.invite_code,
+        _external=True
+    )
 
-    # Toggle admin
-    member.is_admin = not member.is_admin
+    content = f"""
+    <div class="group-invite-message">
+      <p>👥 Te han invitado a un grupo en MAZO</p>
+      <a href="{invite_url}" class="group-invite-link">
+        🚀 ¡Únete a mi grupo!
+      </a>
+    </div>
+    """
 
+    message = ChatMessage(
+        conversation_id=conversation_id,
+        sender_id=current_user.id,
+        content=content
+    )
+
+    db.session.add(message)
     db.session.commit()
 
-    return redirect(url_for('group_info', group_id=group_id))
-
-
-@app.route('/group/join/<invite_code>')
+    return {"success": True}
+@app.route('/groups/invite/accept/<int:group_id>', methods=['POST'])
 @login_required
-def join_group(invite_code):
-    group = Group.query.filter_by(invite_code=invite_code).first_or_404()
+@csrf.exempt
+def accept_group_invite(group_id):
+    group = Group.query.get_or_404(group_id)
 
     already_member = GroupMember.query.filter_by(
         group_id=group.id,
@@ -2072,11 +2166,13 @@ def join_group(invite_code):
     if not already_member:
         db.session.add(GroupMember(
             group_id=group.id,
-            user_id=current_user.id
+            user_id=current_user.id,
+            is_admin=False
         ))
         db.session.commit()
 
     return redirect(url_for('view_group', group_id=group.id))
+
 
 # send_message (reemplaza handle_send_message): usa current_user en vez de 'sender' del cliente
 # Imports necesarios (añádelos si no están ya en tu módulo)

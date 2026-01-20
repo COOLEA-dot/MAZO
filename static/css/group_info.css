@@ -183,3 +183,252 @@
     color: #555;
     margin-bottom: 10px;
 }
+
+/* Botón invitar */
+.group-invite-actions {
+  margin-top: 1.2rem;
+  text-align: center;
+}
+
+.btn-invite {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.6rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-invite:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(99, 102, 241, 0.45);
+  opacity: 0.95;
+}
+
+.btn-invite:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.3);
+}
+
+/* Texto pequeño debajo */
+.invite-hint {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.invite-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.invite-modal-content {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.invite-title {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.invite-external {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+
+.external-btn {
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.external-btn.whatsapp {
+  background: #25D366;
+}
+
+.external-btn.instagram {
+  background: linear-gradient(45deg, #f58529, #dd2a7b, #8134af);
+}
+/* 🔥 FIX DEFINITIVO PARA IMÁGENES DEL MODAL DE INVITACIÓN */
+#invite-group-modal .invite-chat-item img {
+  width: 36px !important;
+  height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+
+/* 🔥 FIX: permitir seleccionar chats */
+#invite-group-modal .invite-chat-item {
+  cursor: pointer;
+}
+
+/* 🔥 MUY IMPORTANTE: la imagen NO debe capturar el click */
+#invite-group-modal .invite-chat-item img {
+  pointer-events: none;
+}
+/* Chat seleccionado */
+.invite-chat-item.selected {
+  background: #eef2ff;
+  border: 1px solid #6366f1;
+}
+
+/* Botón compartir */
+.invite-confirm-btn {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 999px;
+  border: none;
+  background: #6366f1;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.invite-confirm-btn:enabled {
+  opacity: 1;
+}
+
+.invite-confirm-btn:disabled {
+  cursor: not-allowed;
+}
+
+/* Botón cerrar modal invitación */
+.invite-close-btn {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  border: none;
+  background: #e5e7eb;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.invite-close-btn:hover {
+  background: #d1d5db;
+}
+
+.invite-close-btn:active {
+  transform: scale(0.97);
+}
+
+.group-members-info {
+  margin: 0.8rem 0 0.4rem;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.group-members-avatars {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.group-members-avatars img {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #111;
+  margin-left: -8px;
+}
+
+.group-members-avatars img:first-child {
+  margin-left: 0;
+}
+
+.more-members {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #6366f1;
+  color: #fff;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -8px;
+  font-weight: 600;
+}
+
+.group-member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.member-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.btn-make-admin {
+  background: #16a34a; /* verde */
+  border: none;
+  color: #fff;
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-remove-admin {
+  background: #dc2626; /* rojo */
+  border: none;
+  color: #fff;
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-remove-member {
+  background: #dc2626;
+  border: none;
+  color: #fff;
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-make-admin:hover,
+.btn-remove-admin:hover,
+.btn-remove-member:hover {
+  opacity: 0.85;
+}

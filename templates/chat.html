@@ -86,7 +86,7 @@
                         </div>
                     {% endif %}
                 {% else %}
-                    <p class="message-text">{{ message.content }}</p>
+                    <p class="message-text">{{ message.content | safe }}</p>
                 {% endif %}
 
                 {% if message.sender.username == username %}

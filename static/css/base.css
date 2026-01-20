@@ -105,6 +105,10 @@ body {
     margin-left: 6px;
 }
 
+.hidden {
+  display: none !important;
+}
+
 @media (max-width: 600px) {
     .navbar {
         flex-direction: column;

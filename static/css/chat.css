@@ -584,6 +584,36 @@
     position: relative;
 }
 
+.group-invite-message {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  padding: 0.9rem;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.group-invite-message p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.group-invite-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1.2rem;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #fff;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.group-invite-link:hover {
+  opacity: 0.95;
+}
+
+
 @media (max-width: 600px) {
     /* Contenedor del input de chat */
     #chat-input {
