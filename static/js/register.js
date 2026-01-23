@@ -8,17 +8,48 @@ document.querySelector('form').addEventListener('submit', function (e) {
     }
 });
 
-// Vista previa de imagen de perfil
-document.getElementById('profile_pic').addEventListener('change', function (e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (evt) {
-            document.getElementById('profilePreview').src = evt.target.result;
+// Vista previa SEGURA de imagen de perfil (Apple-proof)
+document.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("profile_pic");
+    const preview = document.getElementById("profilePreview");
+
+    if (!input || !preview) return;
+
+    const MAX_SIZE = 3 * 1024 * 1024; // 3MB (ideal para iOS)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    input.addEventListener("change", () => {
+        const file = input.files[0];
+        if (!file) return;
+
+        // Validar tipo
+        if (!file.type.startsWith("image/")) {
+            alert("El archivo seleccionado no es una imagen válida");
+            input.value = "";
+            return;
+        }
+
+        // Validar tamaño
+        if (file.size > MAX_SIZE) {
+            alert(
+                isIOS
+                    ? "En iPhone/iPad la imagen no puede superar los 3MB"
+                    : "La imagen no puede superar los 3MB"
+            );
+            input.value = "";
+            return;
+        }
+
+        // Preview sin Base64 (clave para iOS)
+        const url = URL.createObjectURL(file);
+        preview.src = url;
+
+        preview.onload = () => {
+            URL.revokeObjectURL(url); // 🔑 libera memoria
         };
-        reader.readAsDataURL(file);
-    }
+    });
 });
+
 
 // Ocultar mensajes flash
 setTimeout(() => {
