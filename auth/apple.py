@@ -1,5 +1,5 @@
 ﻿import os, time, json, traceback
-from flask import Blueprint, request, redirect, session, current_app
+from flask import Blueprint, request, redirect, session, current_app, url_for
 from flask_login import login_user
 from app import db
 from models import User
@@ -150,7 +150,8 @@ def auth_apple_callback():
         login_user(user)
         current_app.logger.error(f"[APPLE] LOGIN OK → id={user.id}")
 
-        return redirect("/home")
+        return redirect(url_for("home", _external=True))
+
 
     except Exception as e:
         current_app.logger.exception("❌ ERROR GENERAL EN APPLE CALLBACK")
