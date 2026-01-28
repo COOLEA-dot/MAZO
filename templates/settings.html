@@ -28,8 +28,18 @@
         <h3>{{ _('🔔 Notificaciones') }}</h3>
         <p><em>{{ _('Próximamente podrás ajustar notificaciones por email o push') }}</em></p>
     </div>
-
-   <div class="settings-section danger-zone">
+        <div class="settings-section">
+        <h3>{{ _('🆘 Soporte') }}</h3>
+        <ul>
+            <li>
+                <a href="{{ url_for('support') }}">
+                    {{ _('Centro de ayuda y contacto') }}
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="settings-section danger-zone">
         <h3 class="danger-title">Zona de peligro</h3>
 
         <p class="danger-text">

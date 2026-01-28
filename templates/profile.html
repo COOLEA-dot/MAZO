@@ -21,8 +21,9 @@
         <img src="{{ url_for('static', filename=user.profile_pic if user.profile_pic else 'profile_pics/default.jpg') }}" 
              alt="Foto de perfil" class="profile-pic">
         {# Define is_owner una sola vez #}
-{% set is_owner = current_user.is_authenticated and current_user.username == user.username %}
 
+        {% set is_owner = current_user.is_authenticated and current_user.username == user.username %}
+ 
 <div class="cv-actions">
   {% if is_owner %}
     <form action="{{ url_for('upload_cv') }}" method="post" enctype="multipart/form-data" class="cv-form-inline">
@@ -210,30 +211,74 @@
         </form>
         {% endif %}
     </div>
-   <h2>{{ _('Videos Subidos') }}</h2>
-   <div class="video-grid">
-    {% for video in videos %}
-        <div class="video">
-            <a href="{{ url_for('view_video', video_id=video.id) }}">
-                <video>
-                    <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
-                    {{ _('Tu navegador no soporta el video.') }}
-                </video>
-            </a>
-            {% if current_user.id == user.id %}
-                <form action="{{ url_for('delete_video', video_id=video.id) }}" method="POST">
-                    {{ form.hidden_tag() }}
-                    <button type="submit" class="delete-video-btn">{{ _('Eliminar') }}</button>
-                </form>
-            {% endif %}
-        </div>
-    {% endfor %}
+    <!-- 🔀 Pestañas Videos / Productos -->
+<div class="profile-tabs">
+    <button class="profile-tab active" data-tab="videos">
+        {{ _('Videos') }}
+    </button>
+    <button class="profile-tab" data-tab="products">
+        {{ _('Productos') }}
+    </button>
 </div>
-{% if current_user.id == user.id %}
-    <a href="{{ url_for('upload') }}" class="upload-button">
-        <i class="fas fa-upload"></i> {{ _('Subir video') }}
-    </a>
-{% endif %}
+
+<!-- 🎥 TAB VIDEOS -->
+<div id="tab-videos" class="profile-tab-content active">
+
+    <div class="video-grid">
+        {% for video in videos %}
+            <div class="video">
+                <a href="{{ url_for('view_video', video_id=video.id) }}">
+                    <video>
+                        <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
+                        {{ _('Tu navegador no soporta el video.') }}
+                    </video>
+                </a>
+
+                {% if current_user.id == user.id %}
+                    <form action="{{ url_for('delete_video', video_id=video.id) }}" method="POST">
+                        {{ form.hidden_tag() }}
+                        <button type="submit" class="delete-video-btn">
+                            {{ _('Eliminar') }}
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if current_user.id == user.id %}
+        <a href="{{ url_for('upload') }}" class="upload-button">
+            <i class="fas fa-upload"></i> {{ _('Subir video') }}
+        </a>
+    {% endif %}
+
+</div>
+
+<!-- 🛍️ TAB PRODUCTOS -->
+<div id="tab-products" class="profile-tab-content hidden">
+
+    {% if products %}
+        <div class="products-grid">
+            {% for product in products %}
+                <div class="product-card">
+                    <img src="{{ url_for('static', filename=product.image) if product.image else url_for('static', filename='img/product_placeholder.png') }}">
+                    <h4>{{ product.title }}</h4>
+                    <p class="product-price">{{ product.price }} €</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="no-products">{{ _('Aún no hay productos publicados.') }}</p>
+    {% endif %}
+
+    {% if current_user.id == user.id %}
+        <a href="{{ url_for('create_product') }}" class="upload-button product-upload">
+            <i class="fas fa-plus"></i> {{ _('Subir producto') }}
+        </a>
+    {% endif %}
+
+</div>
+
 
 
 <script>
@@ -250,5 +295,26 @@
         });
     });
     </script>
+
+<script>
+document.querySelectorAll('.profile-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+
+        document.querySelectorAll('.profile-tab').forEach(t =>
+            t.classList.remove('active')
+        );
+
+        document.querySelectorAll('.profile-tab-content').forEach(c =>
+            c.classList.add('hidden')
+        );
+
+        tab.classList.add('active');
+        document
+            .getElementById('tab-' + tab.dataset.tab)
+            .classList.remove('hidden');
+    });
+});
+</script>
+
      
 {% endblock %}

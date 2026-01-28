@@ -7,7 +7,7 @@ from sqlalchemy.orm import backref
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField, IntegerField, PasswordField, SubmitField, SelectField, DecimalField
 from wtforms.validators import DataRequired, Optional, NumberRange, Length, EqualTo
-from flask_wtf.file import FileField, FileAllowed
+from flask_wtf.file import FileField, FileAllowed, MultipleFileField
 from slugify import slugify 
 
 
@@ -523,3 +523,59 @@ class EditGroupForm(FlaskForm):
     name = StringField(validators=[Length(max=100)])
     description = TextAreaField(validators=[Length(max=255)])
     image = FileField()
+
+class Product(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Relación con la empresa (usuario)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    # Datos básicos
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    price = db.Column(db.Float, nullable=False)
+
+    # Imagen principal del producto
+    image = db.Column(db.String(255), nullable=True)
+
+    # Estado
+    is_active = db.Column(db.Boolean, default=True)
+
+    # Métricas (para futuro premium)
+    views = db.Column(db.Integer, default=0)
+    clicks = db.Column(db.Integer, default=0)
+    sales = db.Column(db.Integer, default=0)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='products')
+
+class ProductImage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    image = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    product = db.relationship('Product', backref='images')
+
+class CreateProductForm(FlaskForm):
+    images = MultipleFileField(
+        'Imágenes del producto',
+        validators=[
+            FileAllowed(['jpg', 'jpeg', 'png', 'webp'], 'Solo imágenes')
+        ]
+    )
+
+    title = StringField(
+        'Nombre del producto',
+        validators=[DataRequired()]
+    )
+
+    description = TextAreaField('Descripción')
+
+    price = DecimalField(
+        'Precio (€)',
+        validators=[DataRequired(), NumberRange(min=0)]
+    )
+
+    submit = SubmitField('Publicar producto')

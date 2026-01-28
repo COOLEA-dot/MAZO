@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Subir producto') }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+
+<div class="create-product-container">
+
+    <h2 class="create-product-title">
+        {{ _('Nuevo producto') }}
+    </h2>
+
+    <form action="{{ url_for('create_product') }}"
+          method="POST"
+          enctype="multipart/form-data"
+          class="create-product-form">
+
+        {{ form.hidden_tag() }}
+
+
+        <!-- 📸 Imágenes del producto -->
+        <div class="form-group">
+            <label>
+                {{ _('Imágenes del producto') }}
+                <small style="color:#777;">
+                    ({{ _('la primera será la portada') }})
+                </small>
+            </label>
+
+            <input type="file"
+                   id="product-images-input"
+                   name="images"
+                   accept="image/*"
+                   multiple
+                   required>
+
+            <!-- 👁️ Previsualización -->
+            <div id="images-preview" class="images-preview"></div>
+        </div>
+
+        <!-- 🏷️ Título -->
+        <div class="form-group">
+            <label>{{ _('Nombre del producto') }}</label>
+            <input type="text"
+                   name="title"
+                   placeholder="{{ _('Ej: Camiseta MAZO') }}"
+                   maxlength="120"
+                   required>
+        </div>
+
+        <!-- 📝 Descripción -->
+        <div class="form-group">
+            <label>{{ _('Descripción') }}</label>
+            <textarea name="description"
+                      rows="4"
+                      placeholder="{{ _('Describe tu producto…') }}"></textarea>
+        </div>
+
+        <!-- 💰 Precio -->
+        <div class="form-group">
+            <label>{{ _('Precio (€)') }}</label>
+            <input type="number"
+                   name="price"
+                   step="0.01"
+                   min="0"
+                   placeholder="0.00"
+                   required>
+        </div>
+
+        <!-- ✅ Botón -->
+        <button type="submit" class="btn-create-product">
+            {{ _('Publicar producto') }}
+        </button>
+
+    </form>
+
+</div>
+
+<!-- 🧠 JS PREVISUALIZACIÓN (FUNCIONA CON base.html) -->
+<script>
+const input = document.getElementById('product-images-input');
+const preview = document.getElementById('images-preview');
+
+let selectedFiles = [];
+
+if (input && preview) {
+    input.addEventListener('change', function () {
+        const newFiles = Array.from(input.files);
+
+        newFiles.forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+            if (!selectedFiles.some(f => f.name === file.name)) {
+                selectedFiles.push(file);
+            }
+        });
+
+        updateInputFiles();
+        renderPreview();
+    });
+}
+
+function updateInputFiles() {
+    const dataTransfer = new DataTransfer();
+    selectedFiles.forEach(file => dataTransfer.items.add(file));
+    input.files = dataTransfer.files;
+}
+
+function renderPreview() {
+    preview.innerHTML = '';
+
+    selectedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'image-preview-wrapper';
+
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = index === 0
+                ? 'image-preview-main'
+                : 'image-preview-secondary';
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'image-remove-btn';
+            removeBtn.innerHTML = '×';
+
+            removeBtn.addEventListener('click', () => {
+                selectedFiles.splice(index, 1);
+                updateInputFiles();
+                renderPreview();
+            });
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(removeBtn);
+            preview.appendChild(wrapper);
+        };
+
+        reader.readAsDataURL(file);
+    });
+}
+</script>
+
+
+{% endblock %}
+

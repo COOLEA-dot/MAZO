@@ -133,6 +133,9 @@ from models import (
     CreateGroupForm,
     GroupMessage,
     EditGroupForm,
+    Product,
+    ProductImage,
+    CreateProductForm,
     CURRENCY_CHOICES,
 )
 
@@ -3292,7 +3295,68 @@ def delete_response(response_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "message": "Error al eliminar la respuesta"}), 500
-    
+
+@app.route('/products/create', methods=['GET', 'POST'])
+@login_required
+def create_product():
+    form = CreateProductForm()
+
+    # 👉 POST válido (incluye CSRF)
+    if form.validate_on_submit():
+
+        # 1️⃣ Crear producto (sin imágenes)
+        product = Product(
+            user_id=current_user.id,
+            title=form.title.data,
+            description=form.description.data,
+            price=float(form.price.data)
+        )
+
+        db.session.add(product)
+        db.session.commit()  # necesario para obtener product.id
+
+        # 2️⃣ Guardar imágenes
+        for image in form.images.data:
+            if image and image.filename:
+                filename = secure_filename(image.filename)
+                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+                product_image = ProductImage(
+                    product_id=product.id,
+                    image=filename
+                )
+                db.session.add(product_image)
+
+        db.session.commit()
+
+        flash('Producto creado correctamente', 'success')
+        return redirect(url_for('profile', username=current_user.username))
+
+    # 👉 GET o POST inválido (errores de validación)
+    return render_template('create_product.html', form=form)
+
+@app.route('/profile/<username>/products')
+def user_products(username):
+    user = User.query.filter_by(username=username).first_or_404()
+
+    products = Product.query.filter_by(
+        user_id=user.id,
+        is_active=True
+    ).order_by(Product.created_at.desc()).all()
+
+    return render_template(
+        'products_grid.html',
+        products=products,
+        user=user
+    )
+
+@app.route('/products/<int:product_id>/view', methods=['POST'])
+def product_view(product_id):
+    product = Product.query.get_or_404(product_id)
+    product.views += 1
+    db.session.commit()
+    return '', 204
+
 @app.route('/delete_video/<int:video_id>', methods=['POST'])
 @login_required
 def delete_video(video_id):
@@ -3589,6 +3653,9 @@ def cancel_project_application(project_id):
 
     return redirect(url_for("project_detail", project_id=project.id))
 
+@app.route('/support')
+def support():
+    return render_template('support.html')
 
 
 

@@ -1,10 +1,25 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const videoItems = document.querySelectorAll(".video-item");
-    const videos = document.querySelectorAll(".video-element");
-    let currentIndex = 0;
-    let startY = 0;
     console.log("✅ home.js cargado");
 
+    function isIPad() {
+        return (
+            /iPad|Macintosh/.test(navigator.userAgent) &&
+            'ontouchend' in document
+        );
+    }
+
+    const ipadMode = isIPad();
+    if (ipadMode) {
+        document.documentElement.classList.add("ipad-mode");
+        console.warn("🟡 iPad mode enabled");
+        return; // ⛔ NO ejecutamos lógica de vídeos
+    }
+
+    const videoItems = document.querySelectorAll(".video-item");
+    const videos = document.querySelectorAll(".video-element");
+
+    let currentIndex = 0;
+    let startY = 0;
 
     function updateClasses() {
         videoItems.forEach((item, index) => {
@@ -23,13 +38,16 @@ document.addEventListener("DOMContentLoaded", () => {
         pauseOtherVideos(videos[currentIndex]);
     }
 
-    console.log("Index actual:", currentIndex);
-    console.log("Clases video-items:", [...videoItems].map(item => item.className));
-
-
     function playVideo(video) {
-        if (video && video.paused) {
-            video.play().catch(err => console.error("No se pudo reproducir:", err));
+        if (!video) return;
+
+        video.muted = true; // 🔑 obligatorio para autoplay
+        const promise = video.play();
+
+        if (promise !== undefined) {
+            promise.catch(err => {
+                console.warn("Autoplay bloqueado:", err);
+            });
         }
     }
 
@@ -51,27 +69,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const container = document.querySelector(".video-container");
+    if (!container) return;
 
-    container.addEventListener("touchstart", (e) => {
+    container.addEventListener("touchstart", e => {
         startY = e.touches[0].clientY;
     });
 
-    container.addEventListener("touchend", (e) => {
+    container.addEventListener("touchend", e => {
         const endY = e.changedTouches[0].clientY;
         const deltaY = endY - startY;
 
         if (Math.abs(deltaY) > 50) {
-            if (deltaY > 0) {
-                changeVideo(-1); // abajo
-            } else {
-                changeVideo(1); // arriba
-            }
+            changeVideo(deltaY > 0 ? -1 : 1);
         }
     });
 
-    // Botones
-    document.getElementById("next-video").addEventListener("click", () => changeVideo(1));
-    document.getElementById("prev-video").addEventListener("click", () => changeVideo(-1));
+    document.getElementById("next-video")?.addEventListener("click", () => changeVideo(1));
+    document.getElementById("prev-video")?.addEventListener("click", () => changeVideo(-1));
 
     updateClasses();
 });
