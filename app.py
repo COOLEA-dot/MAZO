@@ -3390,13 +3390,11 @@ def is_ios_request():
 @app.route('/premium')
 @login_required
 def premium():
-    if is_ios_request():
-        return redirect(url_for('profile', username=current_user.username))
-
     return render_template(
         'premium.html',
         STRIPE_PUBLIC_KEY=app.config['STRIPE_PUBLIC_KEY']
     )
+
 @app.route('/premium/success')
 @login_required
 def activate_premium():
