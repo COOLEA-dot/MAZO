@@ -3383,21 +3383,49 @@ def delete_video(video_id):
 
     return redirect(url_for('profile', username=current_user.username))
 
+def is_ios_request():
+    ua = request.headers.get('User-Agent', '')
+    return 'iPhone' in ua or 'iPad' in ua or 'iPod' in ua
+
 @app.route('/premium')
 @login_required
 def premium():
+    if is_ios_request():
+        return redirect(url_for('profile', username=current_user.username))
+
     return render_template(
         'premium.html',
-        STRIPE_PUBLIC_KEY=app.config['STRIPE_PUBLIC_KEY']  # 👈 esto es necesario
+        STRIPE_PUBLIC_KEY=app.config['STRIPE_PUBLIC_KEY']
     )
-
 @app.route('/premium/success')
 @login_required
 def activate_premium():
+    if is_ios_request():
+        abort(403)
+
     current_user.is_premium = True
     db.session.commit()
     flash('¡Felicidades! Ahora eres usuario premium 🎉', 'success')
     return redirect(url_for('profile', username=current_user.username))
+
+
+@app.route('/apple/verify', methods=['POST'])
+@login_required
+def verify_apple_purchase():
+    data = request.get_json()
+    transaction_id = data.get('transaction_id')
+
+    if not transaction_id:
+        return jsonify({'error': 'Missing transaction id'}), 400
+
+    # Activar premium SOLO desde Apple
+    current_user.is_premium = True
+    current_user.premium_source = 'apple'
+    current_user.apple_transaction_id = str(transaction_id)
+
+    db.session.commit()
+
+    return jsonify({'status': 'ok'})
 
 @app.route('/logout')
 def logout():

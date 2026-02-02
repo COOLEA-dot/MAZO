@@ -36,9 +36,22 @@
           <div class="plan-price">{{ _('9,99 € / mes') }}</div>
         </div>
 
-        <a href="https://buy.stripe.com/fZu3cvaUU2ym0iJfoHdfG00" class="btn-premium">
+        <!-- BOTÓN STRIPE (solo web / Android) -->
+        <a
+          href="https://buy.stripe.com/fZu3cvaUU2ym0iJfoHdfG00"
+          class="btn-premium stripe-btn"
+        >
           💳 {{ _('Activar Premium') }}
         </a>
+
+        <!-- BOTÓN APPLE (solo iOS) -->
+        <button
+          class="btn-premium apple-btn"
+          onclick="buyPremiumWithApple()"
+          style="display:none;"
+        >
+           {{ _('Suscribirse con Apple') }}
+        </button>
 
         <p class="note">
           {{ _('Este es un pago mensual. Deberás renovarlo manualmente cada mes para mantener tu cuenta premium.') }}
@@ -48,5 +61,13 @@
   </div>
 </div>
 
-{% endblock %}
+<script>
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
+  if (isIOS) {
+    document.querySelectorAll('.stripe-btn').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.apple-btn').forEach(el => el.style.display = 'block');
+  }
+</script>
+
+{% endblock %}
