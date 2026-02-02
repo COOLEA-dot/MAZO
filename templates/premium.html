@@ -69,5 +69,20 @@
     document.querySelectorAll('.apple-btn').forEach(el => el.style.display = 'block');
   }
 </script>
+<script>
+  function buyPremiumWithApple() {
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iap) {
+      window.webkit.messageHandlers.iap.postMessage("buy_premium");
+    } else {
+      alert("Apple In-App Purchases no están disponibles.");
+    }
+  }
+
+  function restorePremiumWithApple() {
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iap) {
+      window.webkit.messageHandlers.iap.postMessage("restore_premium");
+    }
+  }
+</script>
 
 {% endblock %}
