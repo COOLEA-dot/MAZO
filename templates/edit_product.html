@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Editar producto') }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+
+<div class="create-product-container">
+
+    <h2 class="create-product-title">
+        {{ _('Editar producto') }}
+    </h2>
+
+    <form action="{{ url_for('edit_product', product_id=product.id) }}"
+          method="POST"
+          enctype="multipart/form-data"
+          class="create-product-form">
+
+        {{ form.hidden_tag() }}
+
+        <!-- 📸 Imágenes del producto -->
+        <div class="form-group">
+            <label>
+                {{ _('Imágenes del producto') }}
+                <small style="color:#777;">
+                    ({{ _('la primera será la portada') }})
+                </small>
+            </label>
+
+            <input type="file"
+                   id="product-images-input"
+                   name="images"
+                   accept="image/*"
+                   multiple>
+
+            <!-- 👁️ Imágenes actuales -->
+            {% if product.images %}
+                <div id="images-preview" class="images-preview">
+                    {% for img in product.images %}
+                        <div class="image-preview-wrapper">
+                            <img
+                                src="{{ url_for('static', filename='product_images/' ~ img.image) }}"
+                                class="{% if loop.index0 == 0 %}image-preview-main{% else %}image-preview-secondary{% endif %}">
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div id="images-preview" class="images-preview"></div>
+            {% endif %}
+        </div>
+
+        <!-- 🏷️ Título -->
+        <div class="form-group">
+            <label>{{ _('Nombre del producto') }}</label>
+            <input type="text"
+                   name="title"
+                   value="{{ form.title.data }}"
+                   maxlength="120"
+                   required>
+        </div>
+
+        <!-- 📝 Descripción -->
+        <div class="form-group">
+            <label>{{ _('Descripción') }}</label>
+            <textarea name="description"
+                      rows="4">{{ form.description.data }}</textarea>
+        </div>
+
+        <!-- 💰 Precio -->
+        <div class="form-group">
+            <label>{{ _('Precio (€)') }}</label>
+            <input type="number"
+                   name="price"
+                   step="0.01"
+                   min="0"
+                   value="{{ form.price.data }}"
+                   required>
+        </div>
+
+        <!-- ✅ Botón -->
+        <button type="submit" class="btn-create-product">
+            {{ _('Guardar cambios') }}
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

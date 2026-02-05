@@ -260,15 +260,36 @@
     {% if products %}
         <div class="products-grid">
             {% for product in products %}
-                <div class="product-card">
-                    <img src="{{ url_for('static', filename=product.image) if product.image else url_for('static', filename='img/product_placeholder.png') }}">
-                    <h4>{{ product.title }}</h4>
-                    <p class="product-price">{{ product.price }} €</p>
-                </div>
+
+                <a href="{{ url_for('view_product', product_id=product.id) }}"
+                   class="product-link">
+
+                    <div class="product-card">
+
+                        {% if product.images and product.images|length > 0 %}
+                            <img
+                                src="{{ url_for('static', filename='product_images/' ~ product.images[0].image) }}"
+                                alt="{{ product.title }}"
+                                class="product-image">
+                        {% else %}
+                            <img
+                                src="{{ url_for('static', filename='img/product_placeholder.png') }}"
+                                alt="{{ product.title }}"
+                                class="product-image">
+                        {% endif %}
+
+                        <h4>{{ product.title }}</h4>
+                        <p class="product-price">{{ product.price }} €</p>
+
+                    </div>
+                </a>
+
             {% endfor %}
         </div>
     {% else %}
-        <p class="no-products">{{ _('Aún no hay productos publicados.') }}</p>
+        <p class="no-products">
+            {{ _('Aún no hay productos publicados.') }}
+        </p>
     {% endif %}
 
     {% if current_user.id == user.id %}
@@ -278,8 +299,6 @@
     {% endif %}
 
 </div>
-
-
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {

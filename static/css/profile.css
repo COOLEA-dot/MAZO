@@ -826,6 +826,65 @@ video {
 .image-remove-btn:hover {
     background: red;
 }
+/* 🛍️ GRID DE PRODUCTOS */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+}
+
+/* 📦 TARJETA DE PRODUCTO */
+.product-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+/* ✨ HOVER */
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.14);
+}
+
+/* 🖼️ IMAGEN */
+.product-image {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+/* 🏷️ TÍTULO */
+.product-card h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 6px 0;
+    color: #111;
+}
+
+/* 💰 PRECIO */
+.product-price {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0a7cff;
+}
+
+.product-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* 📱 TABLET → SIGUE EN 4 */
+@media (max-width: 1024px) {
+    .products-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
 
 @media (max-width: 600px) {
     .profile-container {
@@ -982,6 +1041,21 @@ video {
     .btn-send-message:hover {
         background-color: #0056b3;
     } 
+    .products-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .product-image {
+        height: 120px;
+    }
+
+    .product-card h4 {
+        font-size: 13px;
+    }
+
+    .product-price {
+        font-size: 12px;
+    }
 }
 .cv-actions { display: flex; gap: .5rem; align-items: center; margin-top: .75rem; position: relative; z-index: 5;  }
 .cv-form-inline { display: inline-block !important; }

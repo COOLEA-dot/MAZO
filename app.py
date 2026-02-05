@@ -91,16 +91,18 @@ UPLOAD_FOLDER = 'static/uploads/videos'
 CHAT_UPLOAD_FOLDER = 'static/chat_uploads'
 THUMBNAIL_FOLDER = "static/chat_uploads/thumbnails"
 PROFILE_PICS_FOLDER = 'static/profile_pics'  # <--- Añadido
+PRODUCT_IMAGES_FOLDER = 'static/product_images'
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['CHAT_UPLOAD_FOLDER'] = CHAT_UPLOAD_FOLDER
 app.config['PROFILE_PICS_FOLDER'] = PROFILE_PICS_FOLDER  
+app.config['PRODUCT_IMAGES_FOLDER'] = PRODUCT_IMAGES_FOLDER
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm', 'mov', 'pdf', 'docx', 'pptx', 'avi', 'mpg'}
 
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500 MB
 
-for folder in [UPLOAD_FOLDER, CHAT_UPLOAD_FOLDER, PROFILE_PICS_FOLDER]:  # <--- Incluido aquí
+for folder in [UPLOAD_FOLDER, CHAT_UPLOAD_FOLDER, PROFILE_PICS_FOLDER, PRODUCT_IMAGES_FOLDER]:  # <--- Incluido aquí
     if not os.path.exists(folder):
         os.makedirs(folder)
 
@@ -1724,7 +1726,6 @@ def partial_response(abs_path, content_type=None, cache_seconds=60 * 60 * 24 * 7
 
     return response
 
-
 @app.route("/files/<path:filename>")
 def serve_file(filename):
     abs_path = os.path.normpath(os.path.join(app.root_path, filename))
@@ -2925,8 +2926,69 @@ def profile(username):
     opinions = Opinion.query.filter_by(profile_user_id=user.id).all()
 
     videos = Video.query.filter_by(user_id=user.id).all()
+    products = Product.query.filter_by(
+        user_id=user.id,
+        is_active=True
+    ).order_by(Product.created_at.desc()).all()
 
-    return render_template('profile.html', user=user, opinions=opinions, form=form, average_rating=average_rating, videos=videos)
+    return render_template('profile.html', user=user, opinions=opinions, form=form, average_rating=average_rating, videos=videos, products=products)
+
+@app.route('/product/<int:product_id>')
+def view_product(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    # solo mostrar productos activos
+    if not product.is_active:
+        abort(404)
+
+    return render_template(
+        'view_product.html',
+        product=product
+    )
+@app.route('/products/<int:product_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_product(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    if product.user_id != current_user.id:
+        abort(403)
+
+    form = CreateProductForm(obj=product)
+
+    if form.validate_on_submit():
+        product.title = form.title.data
+        product.description = form.description.data
+        product.price = float(form.price.data)
+
+        db.session.commit()
+        flash('Producto actualizado', 'success')
+        return redirect(url_for('view_product', product_id=product.id))
+
+    return render_template('edit_product.html', form=form, product=product)
+
+@app.route('/products/<int:product_id>/delete', methods=['POST'])
+@login_required
+def delete_product(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    if product.user_id != current_user.id:
+        abort(403)
+
+    # Borrar imágenes del disco
+    for image in product.images:
+        image_path = os.path.join(
+            app.config['PRODUCT_IMAGES_FOLDER'],
+            image.image
+        )
+        if os.path.exists(image_path):
+            os.remove(image_path)
+        db.session.delete(image)
+
+    db.session.delete(product)
+    db.session.commit()
+
+    flash('Producto eliminado', 'success')
+    return redirect(url_for('profile', username=current_user.username))
 
 @app.route('/video/<int:video_id>')
 def view_video(video_id):
@@ -3309,7 +3371,8 @@ def create_product():
             user_id=current_user.id,
             title=form.title.data,
             description=form.description.data,
-            price=float(form.price.data)
+            price=float(form.price.data),
+            is_active=True,
         )
 
         db.session.add(product)
@@ -3319,7 +3382,9 @@ def create_product():
         for image in form.images.data:
             if image and image.filename:
                 filename = secure_filename(image.filename)
-                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                print("PRODUCT_IMAGES_FOLDER =", app.config.get('PRODUCT_IMAGES_FOLDER'))
+                print("Existe carpeta?", os.path.exists(app.config.get('PRODUCT_IMAGES_FOLDER')))
+                image.save(os.path.join(app.config['PRODUCT_IMAGES_FOLDER'], filename))
 
                 product_image = ProductImage(
                     product_id=product.id,
