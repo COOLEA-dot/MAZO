@@ -3452,13 +3452,12 @@ def is_ios_request():
     ua = request.headers.get('User-Agent', '')
     return 'iPhone' in ua or 'iPad' in ua or 'iPod' in ua
 
-@app.route('/premium')
-@login_required
+@app.route("/premium")
 def premium():
-    return render_template(
-        'premium.html',
-        STRIPE_PUBLIC_KEY=app.config['STRIPE_PUBLIC_KEY']
-    )
+    if is_ios_request():
+        return redirect(url_for("home"))
+    return render_template("premium.html")
+
 
 @app.route('/premium/success')
 @login_required

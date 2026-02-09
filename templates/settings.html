@@ -6,29 +6,26 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
 <script src="{{ url_for('static', filename='js/account.js') }}"></script>
 
-
 <div class="settings-container">
     <h2>{{ _('⚙️ Configuración') }}</h2>
 
-    <div class="settings-section">
-        <h3>💎 MAZO Premium</h3>
-        <p>{{ _('Disfruta de beneficios exclusivos con MAZO Premium.') }}</p>
-        <a href="{{ url_for('premium') }}" class="btn secondary">Ir a MAZO Premium</a>
-    </div>
-
+    <!-- 🔐 SEGURIDAD -->
     <div class="settings-section">
         <h3>{{ _('🔐 Seguridad') }}</h3>
         <ul>
             <li><a href="{{ url_for('edit_profile') }}">{{ _('Editar perfil') }}</a></li>
-            <li><a href="{{ url_for('change_password') }}">{{ _('Cambiar contraseña') }}</a></li>
+            <li><a href="{{ url_for('change_password')') }}">{{ _('Cambiar contraseña') }}</a></li>
         </ul>
     </div>
 
+    <!-- 🔔 NOTIFICACIONES -->
     <div class="settings-section">
         <h3>{{ _('🔔 Notificaciones') }}</h3>
         <p><em>{{ _('Próximamente podrás ajustar notificaciones por email o push') }}</em></p>
     </div>
-        <div class="settings-section">
+
+    <!-- 🆘 SOPORTE -->
+    <div class="settings-section">
         <h3>{{ _('🆘 Soporte') }}</h3>
         <ul>
             <li>
@@ -38,7 +35,8 @@
             </li>
         </ul>
     </div>
-    
+
+    <!-- ⚠️ ZONA DE PELIGRO -->
     <div class="settings-section danger-zone">
         <h3 class="danger-title">Zona de peligro</h3>
 
@@ -56,7 +54,7 @@
         </p>
     </div>
 
-
+    <!-- 🚪 LOGOUT -->
     <div class="logout-container">
         <button class="logout-trigger" onclick="openLogoutModal(event)">
             <i class="fas fa-sign-out-alt"></i>
@@ -91,10 +89,13 @@
     </script>
 
     <div style="margin-top: 2em;">
-        <a href="{{ url_for('profile', username=current_user.username) }}" class="btn-back">{{ _('← Volver al perfil') }}</a>
+        <a href="{{ url_for('profile', username=current_user.username) }}" class="btn-back">
+            {{ _('← Volver al perfil') }}
+        </a>
     </div>
 </div>
 
+<!-- 🌐 IDIOMA -->
 <form id="language-form" class="language-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label for="language">🌐 {{ _('Idioma de la Aplicación') }}:</label>
