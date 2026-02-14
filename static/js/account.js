@@ -1,16 +1,23 @@
 document.addEventListener("DOMContentLoaded", () => {
   const deleteBtn = document.getElementById("deleteAccountBtn");
+  const modal = document.getElementById("deleteModal");
+  const confirmBtn = document.getElementById("confirmDelete");
+  const cancelBtn = document.getElementById("cancelDelete");
+
   if (!deleteBtn) return;
 
   deleteBtn.addEventListener("click", () => {
-    const confirmed = confirm(
-      "¿Estás seguro? Esta acción eliminará tu cuenta y todos tus datos."
-    );
-    if (!confirmed) return;
+    modal.style.display = "flex";
+  });
 
+  cancelBtn.addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+
+  confirmBtn.addEventListener("click", () => {
     const csrfToken = document
       .querySelector('meta[name="csrf-token"]')
-      .getAttribute("content");
+      ?.getAttribute("content");
 
     fetch("/delete-account", {
       method: "POST",

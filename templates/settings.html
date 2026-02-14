@@ -44,7 +44,15 @@
             Eliminar tu cuenta borrará de forma permanente tu perfil, vídeos,
             comentarios y toda la información asociada.
         </p>
-
+        <div id="deleteModal" class="logout-modal" style="display:none;">
+            <div class="logout-modal-content">
+                <p>¿Estás seguro? Esta acción eliminará tu cuenta y todos tus datos.</p>
+                <div class="logout-modal-buttons">
+                    <button id="confirmDelete" class="btn confirm">Sí, eliminar</button>
+                    <button id="cancelDelete" class="btn cancel">Cancelar</button>
+                </div>
+            </div>
+        </div>
         <button id="deleteAccountBtn" class="danger-btn">
             Eliminar cuenta
         </button>
