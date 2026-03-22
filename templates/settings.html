@@ -15,6 +15,12 @@
         <ul>
             <li><a href="{{ url_for('edit_profile') }}">{{ _('Editar perfil') }}</a></li>
             <li><a href="{{ url_for('change_password') }}">{{ _('Cambiar contraseña') }}</a></li>
+            <!-- 🔥 NUEVO -->
+            <li>
+                <a href="{{ url_for('blocked_users') }}">
+                    🚫 {{ _('Usuarios bloqueados') }}
+                </a>
+            </li>
         </ul>
     </div>
 

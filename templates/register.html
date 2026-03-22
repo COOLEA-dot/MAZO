@@ -261,11 +261,23 @@
         <label for="confirm_password">{{ _('Repite la Contraseña:') }}</label>
         <input type="password" id="confirm_password" name="confirm_password" required>
 
+        <!-- ✅ TÉRMINOS Y CONDICIONES -->
+        <div style="margin-top: 10px;">
+            <input type="checkbox" name="terms" required>
+            <label>
+                Acepto los 
+                <a href="{{ url_for('terms') }}" target="_blank">
+                    Términos y Condiciones
+                </a>
+            </label>
+        </div>
+        
         <button type="submit" style="margin-top: 15px;">{{ _('Registrarse') }}</button>
     </form>
 
     <p>{{ _('¿Ya tienes una cuenta?') }} <a href="/login">{{ _('Inicia sesión aquí') }}</a></p>
 </div>
+
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="{{ url_for('static', filename='js/register.js') }}"></script>

@@ -99,12 +99,29 @@
                 <div class="modal-content">
                     <span class="close-share-modal" data-video-id="{{ video.id }}">&times;</span>
                     <h3>Compartir este video</h3>
+
                     <ul>
                         <li><a href="https://wa.me/?text={{ url_for('view_video', video_id=video.id, _external=True) }}" target="_blank">WhatsApp</a></li>
                         <li><a href="https://www.instagram.com/sharer.php?u={{ url_for('view_video', video_id=video.id, _external=True) }}" target="_blank">Instagram</a></li>
                         <li><a href="mailto:?subject=Video interesante&body={{ url_for('view_video', video_id=video.id, _external=True) }}" target="_blank">Gmail</a></li>
                         <li><a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('view_video', video_id=video.id, _external=True) }}" target="_blank">Facebook</a></li>
                     </ul>
+
+                    <!-- 🚨 NUEVA SECCIÓN -->
+                    {% if current_user.id != video.user_id %}
+                    <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
+                        <h4>Opciones</h4>
+
+                        <button onclick="reportVideo('{{ video.id }}')" class="report-btn">
+                            🚩 
+                        </button>
+
+                        <button onclick="blockUser('{{ video.user_id }}')" class="block-btn">
+                            🚫 
+                        </button>                        
+                    </div>
+
+                    {% endif %}
 
                     {% if chats %}
                     <h4>{{ _('Compartir con usuarios') }}</h4>
@@ -122,7 +139,6 @@
                     {% endif %}
                 </div>
             </div>
-
         </div>
         {% endfor %}
     </div>
@@ -144,5 +160,47 @@
         <button id="prev-video">⬆</button>
         <button id="next-video">⬇</button>
     </div>
+
+ <!-- 🧩 FORM GLOBAL PARA BLOQUEO -->
+<form id="blockForm" method="POST">
+    {{ block_form.csrf_token }}
+    {{ block_form.user_id(id="blockUserId") }}
+</form>
+<!-- 🧩 FORM GLOBAL PARA REPORT -->
+<form id="reportForm" method="POST">
+    {{ report_form.csrf_token }}
+    {{ report_form.video_id(id="reportVideoId") }}
+</form>
+<!-- 🚩 Modal reportar (GLOBAL) -->
+<div id="reportModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h3>Reportar contenido</h3>
+
+        <textarea 
+            id="reportReason" 
+            placeholder="¿Qué quieres reportar?"
+            style="width:100%; height:80px; margin-top:10px;"
+        ></textarea>
+
+        <div class="modal-actions">
+            <button onclick="closeReportModal()" class="cancel-btn">Cancelar</button>
+            <button onclick="submitReport()" class="confirm-btn">Enviar</button>
+        </div>
+    </div>
+</div>
+
+<!-- 🔒 Modal bloquear usuario (GLOBAL) -->
+<div id="blockModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h3>¿Bloquear usuario?</h3>
+        <p>Si bloqueas este usuario, no podrás ver su contenido ni interactuar con él.</p>
+
+        <div class="modal-actions">
+            <button class="cancel-btn" onclick="closeBlockModal()">Cancelar</button>
+            <button class="confirm-btn" onclick="confirmBlock()">Bloquear</button>
+        </div>
+    </div>
+</div>
+
 </main>
 {% endblock %}

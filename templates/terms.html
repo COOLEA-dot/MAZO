@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Términos y Condiciones{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+
+<div class="settings-container">
+    <h2>📄 Términos y Condiciones</h2>
+
+    <p>Última actualización: 2026</p>
+
+    <h3>1. Aceptación de los términos</h3>
+    <p>
+        Al registrarte y utilizar MAZO, aceptas cumplir con estos términos y condiciones.
+        Si no estás de acuerdo con alguno de ellos, no debes utilizar la plataforma.
+    </p>
+
+    <h3>2. Uso de la plataforma</h3>
+    <ul>
+        <li>No se permite contenido ofensivo, abusivo o ilegal.</li>
+        <li>No se permite contenido de odio, violencia o discriminación.</li>
+        <li>No se permite acoso ni comportamiento abusivo hacia otros usuarios.</li>
+        <li>No se permite spam o contenido engañoso.</li>
+    </ul>
+
+    <h3>3. Contenido generado por usuarios</h3>
+    <p>
+        Los usuarios son responsables del contenido que publican en MAZO.
+        Nos reservamos el derecho de eliminar cualquier contenido que incumpla estas normas
+        sin previo aviso.
+    </p>
+
+    <h3>4. Moderación y eliminación de contenido</h3>
+    <p>
+        MAZO revisa los reportes de contenido y actúa en un plazo máximo de 24 horas.
+        Podemos eliminar contenido o suspender cuentas que incumplan estas normas.
+    </p>
+
+    <h3>5. Sistema de reportes</h3>
+    <p>
+        Los usuarios pueden reportar contenido inapropiado directamente desde la plataforma.
+        Todos los reportes serán revisados por el equipo de MAZO.
+    </p>
+
+    <h3>6. Bloqueo de usuarios</h3>
+    <p>
+        Los usuarios pueden bloquear a otros usuarios abusivos. El contenido de usuarios bloqueados
+        dejará de mostrarse en la aplicación.
+    </p>
+
+    <h3>7. Responsabilidad</h3>
+    <p>
+        MAZO no se hace responsable del contenido publicado por los usuarios, pero tomará
+        medidas activas para mantener un entorno seguro.
+    </p>
+
+    <h3>8. Cambios en los términos</h3>
+    <p>
+        Nos reservamos el derecho de modificar estos términos en cualquier momento.
+        Los cambios serán efectivos tras su publicación.
+    </p>
+
+    <h3>9. Contacto</h3>
+    <p>
+        Si tienes dudas o necesitas ayuda, puedes contactarnos a través de la aplicación.
+    </p>
+
+    <div style="margin-top: 2em;">
+        <a href="{{ url_for('register') }}" class="btn-back">← Volver</a>
+    </div>
+</div>
+{% endblock %}

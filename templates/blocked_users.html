@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}Usuarios bloqueados{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+
+<div class="settings-container">
+    <h2>🚫 Usuarios bloqueados</h2>
+
+    <!-- 🧩 FORM PARA CSRF + USER_ID -->
+    <form id="unblockForm" method="POST">
+        {{ unblock_form.csrf_token }}
+        {{ unblock_form.user_id(id="unblockUserId") }}
+    </form>
+
+    <div id="blocked-users-list">
+
+        {% for user in blocked_users %}
+        <div class="blocked-user-card" id="blocked-user-{{ user.id }}">
+
+            <!-- 👤 INFO USUARIO -->
+            <div class="blocked-user-info">
+                <a href="{{ url_for('profile', username=user.username) }}">
+                    <img 
+                        src="{{ url_for('static', filename='profile_pics/' + (user.profile_picture if user.profile_picture else 'default.jpg')) }}" 
+                        class="blocked-user-pic"
+                    >
+                </a>
+
+                <div class="blocked-user-text">
+                    <a href="{{ url_for('profile', username=user.username) }}">
+                        <strong>{{ user.username }}</strong>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 🔓 BOTÓN DESBLOQUEAR -->
+            <button onclick="unblockUser('{{ user.id }}')" class="unblock-btn">
+                Desbloquear
+            </button>
+
+        </div>
+        {% else %}
+        <!-- 🧊 ESTADO VACÍO -->
+        <div class="empty-state">
+            <p>🚫 No tienes usuarios bloqueados</p>
+        </div>
+        {% endfor %}
+
+    </div>
+
+    <!-- 🔙 VOLVER -->
+    <div style="margin-top: 2em;">
+        <a href="{{ url_for('settings') }}" class="btn-back">
+            ← Volver a configuración
+        </a>
+    </div>
+</div>
+
+<script>
+function unblockUser(userId) {
+    console.log("🔓 Desbloqueando usuario:", userId);
+
+    const form = document.getElementById("unblockForm");
+
+    if (!form) {
+        console.error("❌ unblockForm no encontrado");
+        return;
+    }
+
+    const formData = new FormData(form);
+
+    fetch(`/unblock_user/${userId}`, {
+        method: "POST",
+        body: formData
+    })
+    .then(async res => {
+        const text = await res.text();
+
+        try {
+            const data = JSON.parse(text);
+
+            if (!res.ok) {
+                console.error("❌ ERROR BACKEND:", data);
+                throw new Error("Error backend");
+            }
+
+            return data;
+
+        } catch (e) {
+            console.error("❌ RESPUESTA NO JSON:", text);
+            throw new Error("Respuesta inválida");
+        }
+    })
+    .then(data => {
+        if (data.success) {
+            showFlashMessage("✅ Usuario desbloqueado");
+
+            const el = document.getElementById(`blocked-user-${userId}`);
+            if (el) {
+                el.style.opacity = "0";
+                el.style.transform = "translateX(20px)";
+                setTimeout(() => el.remove(), 300);
+            }
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        showFlashMessage("❌ Error al desbloquear usuario");
+    });
+}
+function showFlashMessage(message) {
+    const flash = document.createElement("div");
+    flash.className = "flash-message";
+    flash.textContent = message;
+    document.body.appendChild(flash);
+
+    setTimeout(() => {
+        flash.classList.add("show");
+        setTimeout(() => {
+            flash.classList.remove("show");
+            setTimeout(() => flash.remove(), 500);
+        }, 3000);
+    }, 100);
+}
+</script>
+
+<style>
+.blocked-user-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    transition: all 0.3s ease;
+}
+
+.blocked-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.blocked-user-pic {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.blocked-user-text a {
+    text-decoration: none;
+    color: black;
+}
+
+.unblock-btn {
+    background: #ff3b30;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.unblock-btn:hover {
+    background: #e12e25;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 30px;
+    color: #888;
+}
+
+.flash-message {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    
+    padding: 12px 20px;
+    border-radius: 12px;
+    
+    font-size: 14px;
+    font-weight: 500;
+    
+    opacity: 0;
+    pointer-events: none;
+    
+    transition: all 0.3s ease;
+    
+    z-index: 9999;
+    
+    backdrop-filter: blur(10px);
+}
+
+.flash-message.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.flash-message.success {
+    background: rgba(46, 204, 113, 0.9);
+}
+
+.flash-message.error {
+    background: rgba(231, 76, 60, 0.9);
+}
+</style>
+
+{% endblock %}

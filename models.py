@@ -5,7 +5,7 @@ from flask_login import UserMixin
 from sqlalchemy import func, UniqueConstraint, Numeric
 from sqlalchemy.orm import backref
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, TextAreaField, IntegerField, PasswordField, SubmitField, SelectField, DecimalField
+from wtforms import StringField, PasswordField, TextAreaField, IntegerField, PasswordField, SubmitField, SelectField, DecimalField, HiddenField
 from wtforms.validators import DataRequired, Optional, NumberRange, Length, EqualTo
 from flask_wtf.file import FileField, FileAllowed, MultipleFileField
 from slugify import slugify 
@@ -579,3 +579,36 @@ class CreateProductForm(FlaskForm):
     )
 
     submit = SubmitField('Publicar producto')
+
+class Report(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    reporter_id = db.Column(db.Integer)
+    reported_user_id = db.Column(db.Integer)
+    video_id = db.Column(db.Integer, nullable=True)
+    reason = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ReportForm(FlaskForm):
+    video_id = HiddenField()
+    reason = TextAreaField(validators=[DataRequired(), Length(max=255)])
+    
+class Block(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    blocker_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id'),
+        nullable=False
+    )
+
+    blocked_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id'),
+        nullable=False
+    )
+
+class BlockForm(FlaskForm):
+    user_id = HiddenField()
+
+class UnblockForm(FlaskForm):
+    user_id = HiddenField()

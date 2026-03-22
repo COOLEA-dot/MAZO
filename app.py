@@ -45,7 +45,8 @@ import traceback
 import logging
 from extensions import db
 from algorithms.feed_algorithm import get_feed_videos
-
+from email.mime.text import MIMEText
+import smtplib
 
 # Helper seguro para hacer strip sin fallar si value es None
 def _safe_strip(value):
@@ -139,6 +140,11 @@ from models import (
     ProductImage,
     CreateProductForm,
     CURRENCY_CHOICES,
+    Block,
+    BlockForm,
+    UnblockForm,
+    Report,
+    ReportForm,
 )
 
 csrf = CSRFProtect(app)
@@ -575,6 +581,12 @@ def validate_offer():
 def settings():
     stripe_key = current_app.config.get("STRIPE_PUBLISHABLE_KEY") or current_app.config.get("STRIPE_PUBLIC_KEY") or ""
     price_display = "9.99 €"
+    
+    blocked_users = db.session.query(User).join(
+        Block, Block.blocked_id == User.id
+    ).filter(
+        Block.blocker_id == current_user.id
+    ).all()
 
     # URL de redirección
     try:
@@ -588,7 +600,8 @@ def settings():
         validate_url=url_for('validate_offer'),
         subscribe_url=url_for('subscribe'),
         price_display=price_display,
-        redirect_url=redirect_url
+        redirect_url=redirect_url, 
+        blocked_users = blocked_users,
     )
 
 @app.route('/create-checkout-session', methods=['POST'])
@@ -902,6 +915,13 @@ def register():
 
     # Si se envió el formulario y pasó la validación de WTForms
     if form.validate_on_submit():
+
+        # ✅ VALIDACIÓN DE TÉRMINOS (OBLIGATORIO PARA APPLE)
+        if not request.form.get("terms"):
+            flash("Debes aceptar los Términos y Condiciones.", "error")
+            professions = [p.name for p in Profession.query.order_by(Profession.name).all()]
+            return render_template("register.html", form=form, user=None, professions=professions)
+
         # Extraer datos de forma segura (evita AttributeError por None)
         name = _safe_strip(request.form.get("name") or getattr(form, "name", None) and getattr(form.name, "data", ""))
         username = _safe_strip(getattr(form.username, "data", ""))
@@ -944,14 +964,12 @@ def register():
             if getattr(form, "profile_pic", None) and getattr(form.profile_pic, "data", None):
                 profile_picture = form.profile_pic.data
             else:
-                # fallback si usas request.files directamente
                 profile_picture = request.files.get("profile_pic")
         except Exception:
             profile_picture = None
 
         if profile_picture and getattr(profile_picture, "filename", None):
             safe_name = secure_filename(profile_picture.filename)
-            # generar nombre único para evitar colisiones
             ext = safe_name.rsplit(".", 1)[-1] if "." in safe_name else ""
             filename = f"{uuid.uuid4().hex}.{ext}" if ext else uuid.uuid4().hex
             picture_folder = app.config.get("PROFILE_PICS_FOLDER", os.path.join("static", "profile_pics"))
@@ -959,7 +977,6 @@ def register():
             picture_path = os.path.join(picture_folder, filename)
             try:
                 profile_picture.save(picture_path)
-                # Guardaremos la ruta relativa en el modelo
                 profile_pic_db_value = f"profile_pics/{filename}"
             except Exception as e:
                 print("Error guardando foto de perfil:", e)
@@ -980,10 +997,10 @@ def register():
             profile_pic=profile_pic_db_value
         )
 
-        # Guardar la contraseña (tu método set_password)
+        # Guardar la contraseña
         new_user.set_password(password)
 
-        # 🔥 Lógica de referido (si existe)
+        # 🔥 Lógica de referido
         if referral_code:
             referrer = User.query.filter_by(referral_code=referral_code).first()
             if referrer:
@@ -991,15 +1008,14 @@ def register():
                 db.session.add(referrer)
                 db.session.commit()
 
-                # 🎁 Si alcanzó 3 referidos → enviar correo con promoción
                 if referrer.referred_count == 3:
                     send_referral_reward_email(referrer.email)
 
-        # Guardar nuevo usuario en BD
+        # Guardar usuario
         db.session.add(new_user)
         db.session.commit()
 
-        # Enviar verificación por email (si lo tienes)
+        # Enviar verificación
         try:
             send_verification_email(new_user.email)
         except Exception as e:
@@ -1008,10 +1024,9 @@ def register():
         flash("Registro exitoso. Verifica tu email para activar tu cuenta.", "info")
         return redirect(url_for("login"))
 
-    # Si no es POST o la validación falló, mostrar formulario
+    # GET o fallo validación
     professions = [p.name for p in Profession.query.order_by(Profession.name).all()]
     return render_template("register.html", form=form, user=None, professions=professions)
-
 @app.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
@@ -1281,7 +1296,8 @@ def get_replies(comment_id):
 def home():
     user = None
     chats = []
-
+    block_form = BlockForm()
+    report_form = ReportForm()
     user_id = session.get('user_id')
     if user_id:
         user = User.query.get(user_id)
@@ -1310,6 +1326,8 @@ def home():
         'home.html',
         user=user,
         videos=videos,
+        block_form = block_form,
+        report_form = report_form,
         chats=chats
     )
 
@@ -2881,12 +2899,15 @@ def send_message_http(recipient_id):
 
 @app.route('/profile/<username>', methods=['GET', 'POST'])
 def profile(username):
+    block_form = BlockForm()
+    report_form = ReportForm()
     user = User.query.filter_by(username=username).first()
     if not user:
         flash('Usuario no encontrado', 'error')
         return redirect(url_for('home'))
 
     form = OpinionForm()
+   
     average_rating = db.session.query(db.func.avg(Opinion.rating)).filter_by(profile_user_id=user.id).scalar()
 
     # Procesar formulario de opinión
@@ -2931,7 +2952,7 @@ def profile(username):
         is_active=True
     ).order_by(Product.created_at.desc()).all()
 
-    return render_template('profile.html', user=user, opinions=opinions, form=form, average_rating=average_rating, videos=videos, products=products)
+    return render_template('profile.html', user=user, opinions=opinions, form=form, average_rating=average_rating, videos=videos, products=products, report_form = report_form, block_form = block_form)
 
 @app.route('/product/<int:product_id>')
 def view_product(product_id):
@@ -2943,8 +2964,10 @@ def view_product(product_id):
 
     return render_template(
         'view_product.html',
-        product=product
+        product=product,
+      
     )
+
 @app.route('/products/<int:product_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_product(product_id):
@@ -3743,11 +3766,176 @@ def cancel_project_application(project_id):
 
     return redirect(url_for("project_detail", project_id=project.id))
 
+@app.route('/report_video/<int:video_id>', methods=['POST'])
+@login_required
+def report_video(video_id):
+    form = ReportForm()
+
+    if not form.validate_on_submit():
+        return jsonify({"success": False, "error": "CSRF inválido"}), 400
+
+    try:
+        video = Video.query.get(video_id)
+
+        # 🔗 URL del video
+        video_url = url_for('view_video', video_id=video_id, _external=True)
+
+        # 🔥 guardar en DB
+        new_report = Report(
+            reporter_id=current_user.id,
+            reported_user_id=video.user_id if video else None,
+            video_id=video_id,
+            reason=request.form.get("reason")
+        )
+
+        db.session.add(new_report)
+        db.session.commit()
+
+        # 🔥 EMAIL
+        message = f"""
+🚩 NUEVO REPORTE
+
+👤 Usuario que reporta: {current_user.username}
+🎥 Video ID: {video_id}
+📍 URL: {video_url}
+👤 Usuario reportado: {video.user.username if video else "Desconocido"}
+
+📝 Motivo:
+{request.form.get("reason")}
+"""
+
+        msg = MIMEText(message)
+        msg["Subject"] = "🚩 Nuevo reporte en MAZO"
+        msg["From"] = "mazo.app.es@gmail.com"
+        msg["To"] = "mazo.app.es@gmail.com"
+
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+
+        # 🔥 AQUÍ VA TU APP PASSWORD
+        server.login("mazo.app.es@gmail.com", "wuuvsqlospvdtuzw")
+
+        server.send_message(msg)
+        server.quit()
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        print("❌ ERROR REPORT:", e)
+        return jsonify({"success": False}), 500
+    
+@app.route('/block_user/<int:user_id>', methods=['POST'])
+@login_required
+def block_user(user_id):
+    form = BlockForm()
+
+    # 🔒 Validar CSRF correctamente
+    if not form.validate_on_submit():
+        return jsonify({
+            "success": False,
+            "error": "CSRF token inválido"
+        }), 400
+
+    try:
+        # 🚫 No permitir bloquearse a sí mismo
+        if user_id == current_user.id:
+            return jsonify({
+                "success": False,
+                "error": "No puedes bloquearte a ti mismo"
+            }), 400
+
+        # 🔍 Verificar que el usuario existe
+        user_to_block = User.query.get(user_id)
+        if not user_to_block:
+            return jsonify({
+                "success": False,
+                "error": "Usuario no encontrado"
+            }), 404
+
+        # 🔍 Comprobar si ya está bloqueado
+        existing_block = Block.query.filter_by(
+            blocker_id=current_user.id,
+            blocked_id=user_id
+        ).first()
+
+        if existing_block:
+            return jsonify({
+                "success": True,
+                "message": "Usuario ya bloqueado"
+            })
+
+        # ✅ Crear bloqueo
+        new_block = Block(
+            blocker_id=current_user.id,
+            blocked_id=user_id
+        )
+
+        db.session.add(new_block)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Usuario bloqueado"
+        })
+
+    except Exception as e:
+        print("❌ ERROR EN BLOCK_USER:", e)
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@app.route('/blocked_users')
+@login_required
+def blocked_users():
+    block_form = BlockForm()
+    unblock_form = UnblockForm()
+
+    blocked_users = db.session.query(User).join(
+        Block, Block.blocked_id == User.id
+    ).filter(
+        Block.blocker_id == current_user.id
+    ).all()
+
+    return render_template(
+        "blocked_users.html",
+        blocked_users=blocked_users,
+        block_form=block_form,
+        unblock_form = unblock_form,
+    )
+
+@app.route('/unblock_user/<int:user_id>', methods=['POST'])
+@login_required
+def unblock_user(user_id):
+    form = UnblockForm()
+    try:
+        block = Block.query.filter_by(
+            blocker_id=current_user.id,
+            blocked_id=user_id
+        ).first()
+
+        if not block:
+            return jsonify({"success": False, "error": "No existe bloqueo"}), 404
+
+        db.session.delete(block)
+        db.session.commit()
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        print("❌ ERROR UNBLOCK:", e)
+        return jsonify({"success": False}), 500
+    
 @app.route('/support')
 def support():
     return render_template('support.html')
 
-
+@app.route('/terms')
+def terms():
+    return render_template('terms.html')
 
 
 

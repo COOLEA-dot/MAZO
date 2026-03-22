@@ -5,6 +5,7 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
 <script src="{{ url_for('static', filename='js/opinions.js') }}"></script>
+<script src="{{ url_for('static', filename='js/share.js') }}" defer></script>
 
 {% if current_user.is_authenticated and current_user.id == user.id %}
     <a href="{{ url_for('settings') }}" class="settings-icon" title="Configuración">⚙️</a>
@@ -90,7 +91,22 @@
                 {% endif %}
             {% endif %} 
         </div>
+        {% if current_user.is_authenticated and current_user.id != user.id %}
+        <div class="extra-actions">
 
+            <!-- 🚩 REPORTAR -->
+            <button onclick="reportUser('{{ user.id }}')" class="btn-report">
+                🚩
+            </button>
+
+            <!-- 🚫 BLOQUEAR -->
+            <button onclick="blockUser('{{ user.id }}')" class="btn-block">
+                🚫
+            </button>
+
+        </div>
+
+        {% endif %}
         <div class="profile-details">
             <p><strong>{{ _('Nombre:') }}</strong> {{ user.name }}
             {% if user.is_premium %}
@@ -299,6 +315,45 @@
     {% endif %}
 
 </div>
+ <!-- 🧩 FORM GLOBAL PARA BLOQUEO -->
+<form id="blockForm" method="POST">
+    {{ block_form.csrf_token }}
+    {{ block_form.user_id(id="blockUserId") }}
+</form>
+<!-- 🧩 FORM GLOBAL PARA REPORT -->
+<form id="reportForm" method="POST">
+    {{ report_form.csrf_token }}
+    {{ report_form.video_id(id="reportVideoId") }}
+</form>
+<!-- 🚩 Modal reportar (GLOBAL) -->
+<div id="reportModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h3>Reportar contenido</h3>
+
+        <textarea 
+            id="reportReason" 
+            placeholder="¿Qué quieres reportar?"
+            style="width:100%; height:80px; margin-top:10px;"
+        ></textarea>
+
+        <div class="modal-actions">
+            <button onclick="closeReportModal()" class="cancel-btn">Cancelar</button>
+            <button onclick="submitReport()" class="confirm-btn">Enviar</button>
+        </div>
+    </div>
+</div>
+
+<div id="blockModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h3>¿Bloquear usuario?</h3>
+        <p>Si bloqueas este usuario, no podrás ver su contenido ni interactuar con él.</p>
+
+        <div class="modal-actions">
+            <button class="cancel-btn" onclick="closeBlockModal()">Cancelar</button>
+            <button class="confirm-btn" onclick="confirmBlock()">Bloquear</button>
+        </div>
+    </div>
+</div> <!-- 🔥 ESTO FALTABA -->
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {

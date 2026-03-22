@@ -4,7 +4,6 @@ from app import db
 from models import Video, Comment, User
 
 
-
 def get_feed_videos(user):
     """
     Algoritmo principal del feed.
@@ -31,6 +30,23 @@ def get_feed_videos(user):
     commented_video_ids = [v[0] for v in commented_video_ids]
 
     # =========================
+    # 🚫 Usuarios bloqueados
+    # =========================
+
+    # Usuarios que YO he bloqueado
+    blocked_users = [
+        b.blocked_id for b in user.blocked_users
+    ] if hasattr(user, "blocked_users") else []
+
+    # Usuarios que me han bloqueado (opcional pero recomendado)
+    blocked_by_users = [
+        b.blocker_id for b in user.blocked_by
+    ] if hasattr(user, "blocked_by") else []
+
+    # Unión de todos los bloqueos
+    all_blocked_ids = set(blocked_users + blocked_by_users)
+
+    # =========================
     # 2️⃣ Obtener vídeos
     # =========================
 
@@ -45,8 +61,12 @@ def get_feed_videos(user):
     for video in videos:
         score = 0
 
-        # ❌ No mostrar vídeos propios (recomendado)
+        # ❌ No mostrar vídeos propios
         if video.user_id == user.id:
+            continue
+
+        # 🚫 No mostrar vídeos de usuarios bloqueados
+        if video.user_id in all_blocked_ids:
             continue
 
         # 👍 Likes
