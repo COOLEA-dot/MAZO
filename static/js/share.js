@@ -230,9 +230,17 @@ function confirmBlock() {
 
         showFlashMessage("🚫 Usuario bloqueado");
 
-        setTimeout(() => {
-            location.reload();
-        }, 1000);
+        // 🔥 eliminar video actual inmediatamente
+        const videoElement = document.querySelector(".video-container.active");
+
+        if (videoElement) {
+            videoElement.remove();
+        }       
+
+        // 🔥 pasar al siguiente video (tipo TikTok)
+        if (typeof goToNextVideo === "function") {
+            goToNextVideo();
+        }
     })
     .catch(err => {
         console.error(err);
