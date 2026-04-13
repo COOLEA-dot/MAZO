@@ -1298,36 +1298,38 @@ def home():
     chats = []
     block_form = BlockForm()
     report_form = ReportForm()
+
     user_id = session.get('user_id')
+
     if user_id:
-        user = User.query.get(user_id)
+        user = db.session.get(User, user_id)
         if user is None:
             session.pop('user_id', None)
             session.pop('username', None)
         else:
+            db.session.refresh(user)  # 🔥 asegurar datos actualizados
             chats = get_user_chats(user.id)
 
     # 🎬 Vídeo introductorio
     intro_video = Video.query.filter_by(is_intro=True).first()
 
-    # 🧠 ALGORITMO DEL FEED
+    # 🧠 FEED
     if user:
         videos = get_feed_videos(user)
     else:
-        # Usuario no logueado → fallback simple
         videos = Video.query.order_by(Video.id.desc()).all()
 
-    # ❌ Evitar que el intro se repita
+    # ❌ Intro solo si hay más vídeos
     if intro_video and videos:
         videos = [v for v in videos if v.id != intro_video.id]
         videos.insert(0, intro_video)
-        
+
     return render_template(
         'home.html',
         user=user,
         videos=videos,
-        block_form = block_form,
-        report_form = report_form,
+        block_form=block_form,
+        report_form=report_form,
         chats=chats
     )
 

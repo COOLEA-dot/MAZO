@@ -1,7 +1,7 @@
 # app/algorithms/feed_algorithm.py
 
 from app import db
-from models import Video, Comment, User, Block  # 👈 añadimos Block
+from models import Video, Comment, User, Block
 
 
 def get_feed_videos(user):
@@ -17,10 +17,8 @@ def get_feed_videos(user):
     # 1️⃣ Gustos del usuario
     # =========================
 
-    # Vídeos a los que el usuario dio like
     liked_video_ids = [video.id for video in user.liked_videos]
 
-    # Vídeos donde el usuario comentó
     commented_video_ids = (
         Comment.query
         .filter(Comment.user_id == user.id)
@@ -30,29 +28,29 @@ def get_feed_videos(user):
     commented_video_ids = [v[0] for v in commented_video_ids]
 
     # =========================
-    # 🚫 Usuarios bloqueados (FIX REAL)
+    # 🚫 Usuarios bloqueados
     # =========================
 
-    # 🔥 Usuarios que YO he bloqueado
     blocked_users = db.session.query(Block.blocked_id).filter(
         Block.blocker_id == user.id
     ).all()
     blocked_users = [b[0] for b in blocked_users]
 
-    # 🔥 Usuarios que me han bloqueado
     blocked_by_users = db.session.query(Block.blocker_id).filter(
         Block.blocked_id == user.id
     ).all()
     blocked_by_users = [b[0] for b in blocked_by_users]
 
-    # Unión de todos los bloqueos
     all_blocked_ids = set(blocked_users + blocked_by_users)
 
     # =========================
-    # 2️⃣ Obtener vídeos
+    # 2️⃣ Obtener vídeos (🔥 FIX REAL)
     # =========================
 
-    videos = Video.query.join(User).all()
+    videos = Video.query.join(User).filter(
+        ~Video.user_id.in_(all_blocked_ids),
+        Video.user_id != user.id
+    ).all()
 
     # =========================
     # 3️⃣ Calcular puntuación
@@ -62,14 +60,6 @@ def get_feed_videos(user):
 
     for video in videos:
         score = 0
-
-        # ❌ No mostrar vídeos propios
-        if video.user_id == user.id:
-            continue
-
-        # 🚫 No mostrar vídeos de usuarios bloqueados
-        if video.user_id in all_blocked_ids:
-            continue
 
         # 👍 Likes
         if video.id in liked_video_ids:
@@ -91,7 +81,7 @@ def get_feed_videos(user):
         scored_videos.append((video, score))
 
     # =========================
-    # 4️⃣ Ordenar el feed
+    # 4️⃣ Ordenar
     # =========================
 
     scored_videos.sort(key=lambda x: x[1], reverse=True)
