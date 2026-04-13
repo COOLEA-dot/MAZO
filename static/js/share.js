@@ -230,17 +230,32 @@ function confirmBlock() {
 
         showFlashMessage("🚫 Usuario bloqueado");
 
-        // 🔥 eliminar video actual inmediatamente
-        const videoElement = document.querySelector(".video-container.active");
+        // 🔥 DETECTAR SI ESTÁS EN PERFIL
+        const isProfilePage = window.location.pathname.includes("/profile");
 
-        if (videoElement) {
-            videoElement.remove();
-        }       
-
-        // 🔥 pasar al siguiente video (tipo TikTok)
-        if (typeof goToNextVideo === "function") {
-            goToNextVideo();
+        if (isProfilePage) {
+            // 💥 REDIRIGIR AL HOME (CLAVE PARA APPLE)
+            window.location.href = "/";
+            return;
         }
+
+        // 🔥 HOME (eliminar video actual correctamente)
+        const activeVideoItem = document.querySelector(".video-item");
+
+        if (activeVideoItem) {
+            activeVideoItem.remove(); // 💥 elimina el video actual
+        }
+
+        // 🔥 SCROLL al siguiente video (efecto TikTok)
+        window.scrollBy({
+            top: window.innerHeight,
+            behavior: "smooth"
+        });
+
+        // 🔥 FALLBACK por seguridad (Apple-friendly)
+        setTimeout(() => {
+            location.reload();
+        }, 800);
     })
     .catch(err => {
         console.error(err);
@@ -267,7 +282,10 @@ document.addEventListener("click", function (e) {
 });
 
 
+// ===============================
 // ✅ FLASH MESSAGE
+// ===============================
+
 function showFlashMessage(message) {
     const flash = document.createElement("div");
     flash.className = "flash-message";

@@ -3825,6 +3825,31 @@ def report_video(video_id):
     except Exception as e:
         print("❌ ERROR REPORT:", e)
         return jsonify({"success": False}), 500
+
+@app.route('/report_user/<int:user_id>', methods=['POST'])
+@login_required
+def report_user(user_id):
+    form = ReportForm()
+
+    if not form.validate_on_submit():
+        return jsonify({"success": False, "error": "CSRF inválido"}), 400
+
+    try:
+        new_report = Report(
+            reporter_id=current_user.id,
+            reported_user_id=user_id,
+            video_id=None,
+            reason=request.form.get("reason")
+        )
+
+        db.session.add(new_report)
+        db.session.commit()
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        print("❌ ERROR REPORT USER:", e)
+        return jsonify({"success": False}), 500
     
 @app.route('/block_user/<int:user_id>', methods=['POST'])
 @login_required
