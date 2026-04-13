@@ -1318,10 +1318,10 @@ def home():
         videos = Video.query.order_by(Video.id.desc()).all()
 
     # ❌ Evitar que el intro se repita
-    if intro_video:
+    if intro_video and videos:
         videos = [v for v in videos if v.id != intro_video.id]
         videos.insert(0, intro_video)
-
+        
     return render_template(
         'home.html',
         user=user,
