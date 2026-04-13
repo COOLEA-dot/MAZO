@@ -829,6 +829,15 @@ p {
     display: none !important;
 }
 
+.no-videos-message {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+    color: white;
+}
 /* 📱 ESTILOS EXCLUSIVOS PARA MÓVIL */
 @media (max-width: 1000px) {
     html, body {

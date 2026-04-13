@@ -1,7 +1,7 @@
 # app/algorithms/feed_algorithm.py
 
 from app import db
-from models import Video, Comment, User
+from models import Video, Comment, User, Block  # 👈 añadimos Block
 
 
 def get_feed_videos(user):
@@ -30,18 +30,20 @@ def get_feed_videos(user):
     commented_video_ids = [v[0] for v in commented_video_ids]
 
     # =========================
-    # 🚫 Usuarios bloqueados
+    # 🚫 Usuarios bloqueados (FIX REAL)
     # =========================
 
-    # Usuarios que YO he bloqueado
-    blocked_users = [
-        b.blocked_id for b in user.blocked_users
-    ] if hasattr(user, "blocked_users") else []
+    # 🔥 Usuarios que YO he bloqueado
+    blocked_users = db.session.query(Block.blocked_id).filter(
+        Block.blocker_id == user.id
+    ).all()
+    blocked_users = [b[0] for b in blocked_users]
 
-    # Usuarios que me han bloqueado (opcional pero recomendado)
-    blocked_by_users = [
-        b.blocker_id for b in user.blocked_by
-    ] if hasattr(user, "blocked_by") else []
+    # 🔥 Usuarios que me han bloqueado
+    blocked_by_users = db.session.query(Block.blocker_id).filter(
+        Block.blocked_id == user.id
+    ).all()
+    blocked_by_users = [b[0] for b in blocked_by_users]
 
     # Unión de todos los bloqueos
     all_blocked_ids = set(blocked_users + blocked_by_users)

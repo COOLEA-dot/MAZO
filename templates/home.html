@@ -10,7 +10,8 @@
 <script src="{{ url_for('static', filename='js/home.js') }}" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='js/share.js') }}" defer></script>
-
+    
+    {% if videos %}
     <div class="video-container">
         {% for video in videos %}
         <div class="video-item" data-index="{{ loop.index0 }}">
@@ -141,6 +142,12 @@
             </div>
         </div>
         {% endfor %}
+        {% else %}
+        <div class="no-videos-message">
+            <h2>No hay videos disponibles</h2>
+            <p>Prueba a seguir a más usuarios o vuelve más tarde.</p>
+        </div>
+    {% endif %}
     </div>
     <!-- ✅ PANEL DE COMENTARIOS LATERAL (ahora fuera del video-container) -->
     {% for video in videos %}

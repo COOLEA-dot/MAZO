@@ -3835,6 +3835,12 @@ def report_user(user_id):
         return jsonify({"success": False, "error": "CSRF inválido"}), 400
 
     try:
+        user = User.query.get(user_id)
+
+        # 🔗 URL del perfil
+        profile_url = url_for('profile', username=user.username, _external=True) if user else "N/A"
+
+        # 🔥 guardar en DB
         new_report = Report(
             reporter_id=current_user.id,
             reported_user_id=user_id,
@@ -3845,11 +3851,39 @@ def report_user(user_id):
         db.session.add(new_report)
         db.session.commit()
 
+        # 🔥 EMAIL (MISMO FORMATO QUE VIDEO)
+        message = f"""
+🚩 NUEVO REPORTE
+
+👤 Usuario que reporta: {current_user.username}
+👤 Usuario reportado: {user.username if user else "Desconocido"}
+📍 Perfil: {profile_url}
+
+📝 Motivo:
+{request.form.get("reason")}
+"""
+
+        msg = MIMEText(message)
+        msg["Subject"] = "🚩 Nuevo reporte en MAZO"
+        msg["From"] = "mazo.app.es@gmail.com"
+        msg["To"] = "mazo.app.es@gmail.com"
+
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+
+        server.login("mazo.app.es@gmail.com", "wuuvsqlospvdtuzw")
+
+        server.send_message(msg)
+        server.quit()
+
         return jsonify({"success": True})
 
     except Exception as e:
         print("❌ ERROR REPORT USER:", e)
         return jsonify({"success": False}), 500
+    
     
 @app.route('/block_user/<int:user_id>', methods=['POST'])
 @login_required
