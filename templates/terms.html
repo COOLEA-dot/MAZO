@@ -1,101 +1,95 @@
 {% extends 'base.html' %}
 
-{% block title %}Términos y Condiciones{% endblock %}
+{% block title %}{{ _('Términos y Condiciones') }}{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
 
 <div class="settings-container">
-    <h2>📄 Términos y Condiciones</h2>
+    <h2>📄 {{ _('Términos y Condiciones') }}</h2>
 
-    <p>Última actualización: 2026</p>
+    <p>{{ _('Última actualización: 2026') }}</p>
 
-    <h3>1. Aceptación de los términos</h3>
+    <h3>{{ _('1. Aceptación de los términos') }}</h3>
     <p>
-        Al registrarte y utilizar MAZO, aceptas cumplir con estos términos y condiciones.
-        Si no estás de acuerdo con alguno de ellos, no debes utilizar la plataforma.
+        {{ _('Al registrarte y utilizar MAZO, aceptas cumplir con estos términos y condiciones. Si no estás de acuerdo con alguno de ellos, no debes utilizar la plataforma.') }}
     </p>
 
-    <h3>2. Uso de la plataforma</h3>
+    <h3>{{ _('2. Uso de la plataforma') }}</h3>
     <p>
-        MAZO tiene una política de <strong>tolerancia cero</strong> frente a contenido inapropiado o comportamiento abusivo.
+        {{ _('MAZO tiene una política de tolerancia cero frente a contenido inapropiado o comportamiento abusivo.') }}
     </p>
     <ul>
-        <li>Contenido ofensivo, abusivo o ilegal.</li>
-        <li>Contenido de odio, violencia o discriminación.</li>
-        <li>Acoso, amenazas o comportamiento hostil hacia otros usuarios.</li>
-        <li>Spam, estafas o contenido engañoso.</li>
+        <li>{{ _('Contenido ofensivo, abusivo o ilegal.') }}</li>
+        <li>{{ _('Contenido de odio, violencia o discriminación.') }}</li>
+        <li>{{ _('Acoso, amenazas o comportamiento hostil hacia otros usuarios.') }}</li>
+        <li>{{ _('Spam, estafas o contenido engañoso.') }}</li>
     </ul>
     <p>
-        El incumplimiento de estas normas puede resultar en la eliminación del contenido
-        y/o la suspensión permanente de la cuenta.
+        {{ _('El incumplimiento de estas normas puede resultar en la eliminación del contenido y/o la suspensión permanente de la cuenta.') }}
     </p>
 
-    <h3>3. Contenido generado por usuarios</h3>
+    <h3>{{ _('3. Contenido generado por usuarios') }}</h3>
     <p>
-        Los usuarios son responsables del contenido que publican en MAZO.
+        {{ _('Los usuarios son responsables del contenido que publican en MAZO.') }}
     </p>
     <p>
-        MAZO no tolera contenido objetable y se reserva el derecho de:
+        {{ _('MAZO no tolera contenido objetable y se reserva el derecho de:') }}
     </p>
     <ul>
-        <li>Eliminar cualquier contenido que infrinja estas normas.</li>
-        <li>Suspender o eliminar cuentas sin previo aviso.</li>
+        <li>{{ _('Eliminar cualquier contenido que infrinja estas normas.') }}</li>
+        <li>{{ _('Suspender o eliminar cuentas sin previo aviso.') }}</li>
     </ul>
 
-    <h3>4. Moderación y eliminación de contenido</h3>
+    <h3>{{ _('4. Moderación y eliminación de contenido') }}</h3>
     <p>
-        MAZO cuenta con un sistema activo de moderación.
+        {{ _('MAZO cuenta con un sistema activo de moderación.') }}
     </p>
     <p>
-        Todos los reportes serán revisados en un plazo máximo de <strong>24 horas</strong>,
-        pudiendo implicar la eliminación del contenido o la expulsión del usuario responsable.
-    </p>
-
-    <h3>5. Sistema de reportes</h3>
-    <p>
-        Los usuarios pueden reportar contenido inapropiado directamente desde la plataforma
-        mediante las herramientas disponibles.
+        {{ _('Todos los reportes serán revisados en un plazo máximo de 24 horas, pudiendo implicar la eliminación del contenido o la expulsión del usuario responsable.') }}
     </p>
 
-    <h3>6. Bloqueo de usuarios</h3>
+    <h3>{{ _('5. Sistema de reportes') }}</h3>
     <p>
-        Los usuarios pueden bloquear a otros usuarios abusivos.
+        {{ _('Los usuarios pueden reportar contenido inapropiado directamente desde la plataforma mediante las herramientas disponibles.') }}
+    </p>
+
+    <h3>{{ _('6. Bloqueo de usuarios') }}</h3>
+    <p>
+        {{ _('Los usuarios pueden bloquear a otros usuarios abusivos.') }}
     </p>
     <ul>
-        <li>El contenido del usuario bloqueado dejará de mostrarse inmediatamente.</li>
-        <li>Se limitará cualquier interacción futura.</li>
+        <li>{{ _('El contenido del usuario bloqueado dejará de mostrarse inmediatamente.') }}</li>
+        <li>{{ _('Se limitará cualquier interacción futura.') }}</li>
     </ul>
     <p>
-        Los bloqueos también pueden ser utilizados para detectar comportamientos abusivos
-        dentro de la plataforma.
+        {{ _('Los bloqueos también pueden ser utilizados para detectar comportamientos abusivos dentro de la plataforma.') }}
     </p>
 
-    <h3>7. Seguridad de la comunidad</h3>
+    <h3>{{ _('7. Seguridad de la comunidad') }}</h3>
     <p>
-        MAZO trabaja activamente para mantener un entorno seguro mediante herramientas de
-        reporte, bloqueo y moderación continua.
+        {{ _('MAZO trabaja activamente para mantener un entorno seguro mediante herramientas de reporte, bloqueo y moderación continua.') }}
     </p>
 
-    <h3>8. Responsabilidad</h3>
+    <h3>{{ _('8. Responsabilidad') }}</h3>
     <p>
-        MAZO no se hace responsable del contenido publicado por los usuarios, pero adopta
-        medidas activas para detectar, revisar y eliminar contenido inapropiado.
+        {{ _('MAZO no se hace responsable del contenido publicado por los usuarios, pero adopta medidas activas para detectar, revisar y eliminar contenido inapropiado.') }}
     </p>
 
-    <h3>9. Cambios en los términos</h3>
+    <h3>{{ _('9. Cambios en los términos') }}</h3>
     <p>
-        Nos reservamos el derecho de modificar estos términos en cualquier momento.
-        Los cambios serán efectivos tras su publicación.
+        {{ _('Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios serán efectivos tras su publicación.') }}
     </p>
 
-    <h3>10. Contacto</h3>
+    <h3>{{ _('10. Contacto') }}</h3>
     <p>
-        Si tienes dudas o necesitas ayuda, puedes contactarnos a través de la aplicación.
+        {{ _('Si tienes dudas o necesitas ayuda, puedes contactarnos a través de la aplicación.') }}
     </p>
 
     <div style="margin-top: 2em;">
-        <a href="{{ url_for('register') }}" class="btn-back">← Volver</a>
+        <a href="{{ url_for('register') }}" class="btn-back">
+            ← {{ _('Volver') }}
+        </a>
     </div>
 </div>
 {% endblock %}

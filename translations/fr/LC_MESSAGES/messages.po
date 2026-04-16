@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-11-12 18:02+0100\n"
+"POT-Creation-Date: 2026-04-15 19:15+0200\n"
 "PO-Revision-Date: 2025-06-18 12:51+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -18,23 +18,23 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: templates/base.html:26
+#: templates/base.html:31
 msgid "Inicio"
 msgstr "Accueil"
 
-#: templates/base.html:34
+#: templates/base.html:39
 msgid "Perfil"
 msgstr "Profil"
 
-#: templates/base.html:46 templates/jobs.html:2
+#: templates/base.html:51 templates/jobs.html:2
 msgid "Proyectos y Empleos"
 msgstr "Projets et Emplois"
 
-#: templates/base.html:53
+#: templates/base.html:58
 msgid "Entrar"
 msgstr "Connexion"
 
-#: templates/base.html:59 templates/register.html:264
+#: templates/base.html:64 templates/register.html:275
 msgid "Registrarse"
 msgstr "S'inscrire"
 
@@ -46,35 +46,128 @@ msgstr "Discussion avec"
 msgid "Lista de chats"
 msgstr "Liste des discussions"
 
-#: templates/chat_list.html:12
+#: templates/chat_list.html:14
 msgid "Tus Chats"
 msgstr "Vos discussions"
 
-#: templates/chat_list.html:27
+#: templates/chat_list.html:17 templates/chat_list.html:94
+msgid "Crear grupo"
+msgstr "Créer un groupe"
+
+#: templates/chat_list.html:25
+msgid "Grupos"
+msgstr "Groupes"
+
+#: templates/chat_list.html:38 templates/group_chat.html:3
+#: templates/group_info.html:3
+msgid "Grupo"
+msgstr "Groupe"
+
+#: templates/chat_list.html:48
+#, fuzzy
+msgid "Chats"
+msgstr "Vos discussions"
+
+#: templates/chat_list.html:69
 msgid "📩 Mensaje nuevo"
 msgstr "📩 Nouveau message"
 
-#: templates/chat_list.html:30
+#: templates/chat_list.html:72
 msgid "Enviado"
 msgstr "Envoyé"
 
-#: templates/chat_list.html:39
+#: templates/chat_list.html:80
 msgid "¡Nuevo!"
 msgstr "Nouveau !"
 
-#: templates/chat_list.html:43
+#: templates/chat_list.html:85
 msgid "No tienes chats previos."
 msgstr "Vous n'avez pas de discussions précédentes."
+
+#: templates/chat_list.html:118 templates/group_info.html:61
+#, fuzzy
+msgid "Nombre del grupo"
+msgstr "Nom d'utilisateur :"
+
+#: templates/chat_list.html:123
+#, fuzzy
+msgid "Descripción (opcional)"
+msgstr "Localisation (optionnel) :"
+
+#: templates/chat_list.html:127
+#, fuzzy
+msgid "Crear"
+msgstr "Annuler"
+
+#: templates/chat_list.html:129 templates/edit_profile.html:79
+#: templates/jobs_form.html:121 templates/projects_form.html:104
+msgid "Cancelar"
+msgstr "Annuler"
+
+#: templates/create_product.html:3 templates/profile.html:313
+#, fuzzy
+msgid "Subir producto"
+msgstr "Publier le projet"
+
+#: templates/create_product.html:11
+msgid "Nuevo producto"
+msgstr "Nouveau produit"
+
+#: templates/create_product.html:25 templates/edit_product.html:24
+msgid "Imágenes del producto"
+msgstr "Images du produit"
+
+#: templates/create_product.html:27 templates/edit_product.html:26
+msgid "la primera será la portada"
+msgstr "la première sera la couverture"
+
+#: templates/create_product.html:44 templates/edit_product.html:54
+#, fuzzy
+msgid "Nombre del producto"
+msgstr "Nom d'utilisateur :"
+
+#: templates/create_product.html:47
+msgid "Ej: Camiseta MAZO"
+msgstr "Ex : T-shirt MAZO"
+
+#: templates/create_product.html:54 templates/edit_product.html:64
+#, fuzzy
+msgid "Descripción"
+msgstr "Description :"
+
+#: templates/create_product.html:57
+#, fuzzy
+msgid "Describe tu producto…"
+msgstr "Écris et appuie sur Entrée…"
+
+#: templates/create_product.html:62 templates/edit_product.html:71
+#, fuzzy
+msgid "Precio (€)"
+msgstr "Entreprise (optionnel) :"
+
+#: templates/create_product.html:73
+#, fuzzy
+msgid "Publicar producto"
+msgstr "Publier le projet"
+
+#: templates/edit_product.html:3 templates/edit_product.html:11
+#, fuzzy
+msgid "Editar producto"
+msgstr "Postuler au projet"
+
+#: templates/edit_product.html:82 templates/edit_profile.html:78
+msgid "Guardar cambios"
+msgstr "Enregistrer les modifications"
 
 #: templates/edit_profile.html:3 templates/edit_profile.html:9
 msgid "Editar Perfil"
 msgstr "Modifier le profil"
 
-#: templates/edit_profile.html:22 templates/profile.html:66
+#: templates/edit_profile.html:22 templates/profile.html:111
 msgid "Nombre:"
 msgstr "Nom :"
 
-#: templates/edit_profile.html:27 templates/profile.html:74
+#: templates/edit_profile.html:27 templates/profile.html:119
 msgid "Empresa:"
 msgstr "Entreprise :"
 
@@ -87,7 +180,7 @@ msgstr "Profession (optionnel) :"
 msgid "Escribe y pulsa Enter…"
 msgstr "Écris et appuie sur Entrée…"
 
-#: templates/edit_profile.html:54 templates/upload.html:17
+#: templates/edit_profile.html:54 templates/upload.html:31
 msgid "Descripción:"
 msgstr "Description :"
 
@@ -107,40 +200,52 @@ msgstr "Téléphone :"
 msgid "Correo electrónico:"
 msgstr "Adresse e-mail :"
 
-#: templates/edit_profile.html:78
-msgid "Guardar cambios"
-msgstr "Enregistrer les modifications"
-
-#: templates/edit_profile.html:79 templates/jobs_form.html:121
-#: templates/projects_form.html:104
-msgid "Cancelar"
-msgstr "Annuler"
-
 #: templates/edit_profile.html:128 templates/register.html:136
 msgid "Quitar"
 msgstr "Retirer"
+
+#: templates/group_chat.html:20 templates/group_info.html:18
+msgid "miembros"
+msgstr "membres"
+
+#: templates/group_chat.html:107
+msgid "Escribe un mensaje..."
+msgstr "Écrire un message..."
+
+#: templates/group_info.html:68
+#, fuzzy
+msgid "Descripción del grupo"
+msgstr "Description :"
+
+#: templates/group_info.html:93
+msgid "Invitar a más usuarios"
+msgstr "Inviter plus d’utilisateurs"
+
+#: templates/group_info.html:97
+msgid "Selecciona un chat para enviar la invitación"
+msgstr "Sélectionnez un chat pour envoyer l’invitation"
 
 #: templates/home.html:3
 msgid "Página Principal"
 msgstr "Page d'accueil"
 
-#: templates/home.html:34 templates/profile.html:122
+#: templates/home.html:35 templates/profile.html:167
 msgid "Usuario desconocido"
 msgstr "Utilisateur inconnu"
 
-#: templates/home.html:66 templates/view_video.html:53
+#: templates/home.html:67 templates/view_video.html:53
 msgid "Tu navegador no puede reproducir este video."
 msgstr "Votre navigateur ne peut pas lire cette vidéo."
 
-#: templates/home.html:87 templates/view_video.html:73
+#: templates/home.html:88 templates/view_video.html:73
 msgid "Comentarios"
 msgstr "Commentaires"
 
-#: templates/home.html:110 templates/view_video.html:96
+#: templates/home.html:128 templates/view_video.html:96
 msgid "Compartir con usuarios"
 msgstr "Partager avec des utilisateurs"
 
-#: templates/home.html:117 templates/view_video.html:103
+#: templates/home.html:135 templates/view_video.html:103
 msgid "Enviar"
 msgstr "Envoyer"
 
@@ -156,7 +261,7 @@ msgstr "Trouvez ici vos professionnels de confiance"
 msgid "Empezar sin registro"
 msgstr "Commencer sans inscription"
 
-#: templates/inicio.html:28
+#: templates/inicio.html:28 templates/upload.html:49
 msgid "Iniciar sesión"
 msgstr "Se connecter"
 
@@ -285,7 +390,7 @@ msgid "Híbrido"
 msgstr "Hybride"
 
 #: templates/jobs.html:43 templates/jobs.html:114 templates/search.html:6
-#: templates/search.html:11
+#: templates/search.html:18
 msgid "Buscar"
 msgstr "Rechercher"
 
@@ -311,6 +416,7 @@ msgid "Añadir"
 msgstr "Ajouter"
 
 #: templates/jobs_form.html:14 templates/projects_form.html:10
+#: templates/terms.html:91
 msgid "Volver"
 msgstr "Retour"
 
@@ -402,119 +508,113 @@ msgstr "Publier l'emploi"
 msgid "El salario máximo no puede ser menor que el mínimo."
 msgstr "Le salaire maximum ne peut pas être inférieur au salaire minimum."
 
-#: templates/login.html:7 templates/login.html:12
+#: templates/login.html:7 templates/login.html:15
 msgid "Inicio de Sesión"
 msgstr "Connexion"
 
-#: templates/login.html:27
-msgid "Usuario:"
+#: templates/login.html:30
+#, fuzzy
+msgid "Usuario o email:"
 msgstr "Nom d'utilisateur :"
 
-#: templates/login.html:30 templates/register.html:258
+#: templates/login.html:33 templates/register.html:258
 msgid "Contraseña:"
 msgstr "Mot de passe :"
 
-#: templates/login.html:35
+#: templates/login.html:37
 msgid "Recuérdame"
 msgstr "Se souvenir de moi"
 
-#: templates/login.html:38
+#: templates/login.html:40
 msgid "Iniciar Sesión"
 msgstr "Se connecter"
 
-#: templates/login.html:41
+#: templates/login.html:44
 msgid "o"
 msgstr "ou"
 
-#: templates/login.html:51
+#: templates/login.html:57
 msgid "Entrar con Google"
 msgstr "Se connecter avec Google"
 
-#: templates/login.html:54
+#: templates/login.html:67
+#, fuzzy
+msgid "Continuar con Apple"
+msgstr "Se connecter avec Google"
+
+#: templates/login.html:73
 msgid "¿No tienes cuenta?"
 msgstr "Vous n'avez pas de compte ?"
 
-#: templates/login.html:54
+#: templates/login.html:73
 msgid "Regístrate aquí"
 msgstr "Inscrivez-vous ici"
 
-#: templates/premium.html:11
+#: templates/premium.html:12
 msgid "Impulsa tu perfil por solo"
 msgstr "Boostez votre profil pour seulement"
 
-#: templates/premium.html:11
+#: templates/premium.html:13
 #, fuzzy
 msgid "9,99 €/mes"
 msgstr "9,99 €/mois"
 
-#: templates/premium.html:14
+#: templates/premium.html:17
 #, fuzzy
 msgid "Tu perfil aparece primero en la página principal y en búsquedas."
 msgstr ""
 "🔝 Votre profil apparaît en premier sur la page d'accueil et dans les "
 "recherches."
 
-#: templates/premium.html:15
+#: templates/premium.html:18
 #, fuzzy
 msgid "Verificación como empresa titular."
 msgstr "✅ Vérification en tant qu'entreprise propriétaire."
 
-#: templates/premium.html:16
+#: templates/premium.html:19
 #, fuzzy
 msgid "Acceso exclusivo al grupo privado de Telegram (invitación manual)."
 msgstr "💬 Accès exclusif au groupe privé Telegram (invitation manuelle)."
 
-#: templates/premium.html:20
+#: templates/premium.html:24
 #, fuzzy
 msgid "✔ Ya eres usuario Premium"
 msgstr "Vous êtes déjà un utilisateur premium ✔"
 
-#: templates/premium.html:24
+#: templates/premium.html:29
 msgid "💳 Activar suscripción"
 msgstr "💳 Activer l’abonnement"
 
-#: templates/premium.html:28
+#: templates/premium.html:33
 msgid "Suscripción mensual"
 msgstr "Abonnement mensuel"
 
-#: templates/premium.html:29
+#: templates/premium.html:34
 #, fuzzy
 msgid "Acceso MAZO Premium"
 msgstr "Aller à MAZO Premium"
 
-#: templates/premium.html:31
+#: templates/premium.html:36
 #, fuzzy
 msgid "9,99 € / mes"
 msgstr "9,99 €/mois"
 
-#: templates/premium.html:35
+#: templates/premium.html:44
 #, fuzzy
 msgid "Activar Premium"
 msgstr "Aller à MAZO Premium"
 
-#: templates/premium.html:39
+#: templates/premium.html:53
+msgid "Suscribirse con Apple"
+msgstr "S’abonner avec Apple"
+
+#: templates/premium.html:57
 msgid ""
 "Este es un pago mensual. Deberás renovarlo manualmente cada mes para "
 "mantener tu cuenta premium."
 msgstr ""
 "Ceci est un paiement mensuel. Vous devrez le renouveler manuellement "
 "chaque mois pour conserver votre compte premium."
-
-#: templates/premium.html:45
-msgid "🤝 Programa de Referidos"
-msgstr "🤝 Programme de parrainage"
-
-#: templates/premium.html:46
-msgid "Invita a tus amigos a MAZO. Si 3 se suscriben, obtienes"
-msgstr "Invite tes amis à MAZO. Si trois d’entre eux s’abonnent, tu obtiens"
-
-#: templates/premium.html:46
-msgid "3 meses gratis"
-msgstr "3 mois gratuits"
-
-#: templates/premium.html:51
-msgid "Comparte tu enlace por WhatsApp, correo o redes sociales."
-msgstr "Partage ton lien par WhatsApp, e-mail ou réseaux sociaux."
 
 #: templates/privacy.html:6
 msgid "Política de Privacidad"
@@ -672,68 +772,83 @@ msgstr "Site web :"
 msgid "Perfil de Usuario"
 msgstr "Profil de l'utilisateur"
 
-#: templates/profile.html:32
+#: templates/profile.html:34
 #, fuzzy
 msgid "Subir CV"
 msgstr "Téléverser une vidéo"
 
-#: templates/profile.html:39
+#: templates/profile.html:45
 msgid "Ver CV"
 msgstr "Voir le CV"
 
-#: templates/profile.html:46
+#: templates/profile.html:56
+msgid "Borrar CV"
+msgstr "Supprimer le CV"
+
+#: templates/profile.html:69
 msgid "seguidores"
 msgstr "abonnés"
 
-#: templates/profile.html:47
+#: templates/profile.html:74
 msgid "siguiendo"
 msgstr "abonnements"
 
-#: templates/profile.html:54
+#: templates/profile.html:84
 msgid "Dejar de seguir"
 msgstr "Se désabonner"
 
-#: templates/profile.html:59
+#: templates/profile.html:89
 msgid "Seguir"
 msgstr "S'abonner"
 
-#: templates/profile.html:71
+#: templates/profile.html:116
 msgid "Correo:"
 msgstr "E-mail :"
 
-#: templates/profile.html:78
+#: templates/profile.html:123
 msgid "Profesión:"
 msgstr "Profession :"
 
-#: templates/profile.html:100
+#: templates/profile.html:145
 msgid "Opiniones de"
 msgstr "Avis de"
 
-#: templates/profile.html:110 templates/profile.html:198
+#: templates/profile.html:155 templates/profile.html:257
 msgid "Eliminar"
 msgstr "Supprimer"
 
-#: templates/profile.html:132
+#: templates/profile.html:177
 msgid "Mostrar respuestas"
 msgstr "Afficher les réponses"
 
-#: templates/profile.html:166
+#: templates/profile.html:211
 msgid "No hay opiniones aún."
 msgstr "Pas encore d'avis."
 
-#: templates/profile.html:185
-msgid "Videos Subidos"
-msgstr "Vidéos publiées"
+#: templates/profile.html:233
+#, fuzzy
+msgid "Videos"
+msgstr "Envoyé"
 
-#: templates/profile.html:192 templates/search.html:45
+#: templates/profile.html:236
+#, fuzzy
+msgid "Productos"
+msgstr "Projets"
+
+#: templates/profile.html:249 templates/search.html:103
 #: templates/test_video.html:23
 msgid "Tu navegador no soporta el video."
 msgstr "Votre navigateur ne prend pas en charge la vidéo."
 
-#: templates/profile.html:206
+#: templates/profile.html:267
 #, fuzzy
 msgid "Subir video"
 msgstr "Téléverser une vidéo"
+
+#: templates/profile.html:307
+#, fuzzy
+msgid "Aún no hay productos publicados."
+msgstr "Aucune candidature pour le moment."
 
 #: templates/project_detail.html:78 templates/project_detail.html:100
 msgid "Solicitar proyecto"
@@ -797,11 +912,11 @@ msgstr "📍 Utiliser ma position actuelle"
 msgid "Repite la Contraseña:"
 msgstr "Répéter le mot de passe :"
 
-#: templates/register.html:267
+#: templates/register.html:278
 msgid "¿Ya tienes una cuenta?"
 msgstr "Vous avez déjà un compte ?"
 
-#: templates/register.html:267
+#: templates/register.html:278
 msgid "Inicia sesión aquí"
 msgstr "Connectez-vous ici"
 
@@ -809,16 +924,46 @@ msgstr "Connectez-vous ici"
 msgid "Búsqueda"
 msgstr "Recherche"
 
-#: templates/search.html:17
+#: templates/search.html:25
 msgid "Perfiles relacionados con"
 msgstr "Profils liés à"
 
-#: templates/search.html:38
+#: templates/search.html:33
+msgid "Profesión no especificada"
+msgstr "Profession non spécifiée"
+
+#: templates/search.html:34 templates/search.html:82
+#, fuzzy
+msgid "Empresa no especificada"
+msgstr "Entreprise (optionnel) :"
+
+#: templates/search.html:35
+#, fuzzy
+msgid "Ubicación no disponible"
+msgstr "Localisation (optionnel) :"
+
+#: templates/search.html:47
+#, fuzzy
+msgid "Proyectos relacionados con"
+msgstr "Vidéos liées à"
+
+#: templates/search.html:59 templates/search.html:84
+#, fuzzy
+msgid "Ubicación no especificada"
+msgstr "Localisation (optionnel) :"
+
+#: templates/search.html:71
+#, fuzzy
+msgid "Empleos relacionados con"
+msgstr "Profils liés à"
+
+#: templates/search.html:96
 msgid "Videos relacionados con"
 msgstr "Vidéos liées à"
 
-#: templates/search.html:47
-msgid "🎥 Subido por:"
+#: templates/search.html:106
+#, fuzzy
+msgid "Subido por:"
 msgstr "🎥 Téléversé par :"
 
 #: templates/seguridad.html:5 templates/seguridad.html:9
@@ -873,30 +1018,302 @@ msgstr "Contact"
 msgid "Si detectas alguna actividad sospechosa, por favor contáctanos en:"
 msgstr "Si vous détectez une activité suspecte, veuillez nous contacter à :"
 
+#: templates/settings.html:10
+msgid "⚙️ Configuración"
+msgstr "⚙️ Paramètres"
+
+#: templates/settings.html:14
+#, fuzzy
+msgid "🔐 Seguridad"
+msgstr "5. Sécurité"
+
+#: templates/settings.html:16
+#, fuzzy
+msgid "Editar perfil"
+msgstr "Modifier le profil"
+
+#: templates/settings.html:17
+#, fuzzy
+msgid "Cambiar contraseña"
+msgstr "Mot de passe :"
+
+#: templates/settings.html:21
+msgid "Usuarios bloqueados"
+msgstr "Utilisateurs bloqués"
+
+#: templates/settings.html:29
+msgid "🔔 Notificaciones"
+msgstr "🔔 Notifications"
+
+#: templates/settings.html:30
+msgid "Próximamente podrás ajustar notificaciones por email o push"
+msgstr "Bientôt, vous pourrez ajuster les notifications par e-mail ou push"
+
+#: templates/settings.html:35
+msgid "🆘 Soporte"
+msgstr "🆘 Support"
+
+#: templates/settings.html:39
+msgid "Centro de ayuda y contacto"
+msgstr "Centre d’aide et de contact"
+
+#: templates/settings.html:75
+#, fuzzy
+msgid "Cerrar sesión: haz clic aquí"
+msgstr "Connectez-vous ici"
+
+#: templates/settings.html:82
+msgid "¿Estás seguro de que quieres cerrar sesión?"
+msgstr "Êtes-vous sûr de vouloir vous déconnecter ?"
+
+#: templates/settings.html:107
+#, fuzzy
+msgid "← Volver al perfil"
+msgstr "Retour au profil"
+
+#: templates/settings.html:115
+msgid "Idioma de la Aplicación"
+msgstr "Langue de l’application"
+
+#: templates/terms.html:3 templates/terms.html:9
+msgid "Términos y Condiciones"
+msgstr "Conditions générales"
+
+#: templates/terms.html:11
+msgid "Última actualización: 2026"
+msgstr "Dernière mise à jour : 2026"
+
+#: templates/terms.html:13
+msgid "1. Aceptación de los términos"
+msgstr "1. Acceptation des conditions"
+
+#: templates/terms.html:15
+msgid ""
+"Al registrarte y utilizar MAZO, aceptas cumplir con estos términos y "
+"condiciones. Si no estás de acuerdo con alguno de ellos, no debes "
+"utilizar la plataforma."
+msgstr ""
+"En vous inscrivant et en utilisant MAZO, vous acceptez de respecter ces "
+"conditions générales. Si vous n’êtes pas d’accord avec l’une d’elles, vous "
+"ne devez pas utiliser la plateforme."
+
+
+#: templates/terms.html:18
+msgid "2. Uso de la plataforma"
+msgstr "2. Utilisation de la plateforme"
+
+#: templates/terms.html:20
+msgid ""
+"MAZO tiene una política de tolerancia cero frente a contenido inapropiado"
+" o comportamiento abusivo."
+msgstr ""
+"MAZO applique une politique de tolérance zéro envers les contenus inappropriés "
+"ou les comportements abusifs."
+
+
+#: templates/terms.html:23
+msgid "Contenido ofensivo, abusivo o ilegal."
+msgstr "Contenu offensant, abusif ou illégal."
+
+
+#: templates/terms.html:24
+msgid "Contenido de odio, violencia o discriminación."
+msgstr "Contenu de haine, de violence ou de discrimination."
+
+#: templates/terms.html:25
+msgid "Acoso, amenazas o comportamiento hostil hacia otros usuarios."
+msgstr "Harcèlement, menaces ou comportement hostile envers d’autres utilisateurs."
+
+
+#: templates/terms.html:26
+msgid "Spam, estafas o contenido engañoso."
+msgstr "Spam, escroqueries ou contenu trompeur."
+
+
+#: templates/terms.html:29
+msgid ""
+"El incumplimiento de estas normas puede resultar en la eliminación del "
+"contenido y/o la suspensión permanente de la cuenta."
+msgstr ""
+"Le non-respect de ces règles peut entraîner la suppression du contenu et/ou "
+"la suspension permanente du compte."
+
+#: templates/terms.html:32
+msgid "3. Contenido generado por usuarios"
+msgstr "3. Contenu généré par les utilisateurs"
+
+#: templates/terms.html:34
+msgid "Los usuarios son responsables del contenido que publican en MAZO."
+msgstr "Les utilisateurs sont responsables du contenu qu’ils publient sur MAZO."
+
+
+#: templates/terms.html:37
+msgid "MAZO no tolera contenido objetable y se reserva el derecho de:"
+msgstr "MAZO ne tolère pas les contenus répréhensibles et se réserve le droit de :"
+
+
+#: templates/terms.html:40
+#, fuzzy
+msgid "Eliminar cualquier contenido que infrinja estas normas."
+msgstr "Supprimer tout contenu qui enfreint ces règles."
+
+#: templates/terms.html:41
+#, fuzzy
+msgid "Suspender o eliminar cuentas sin previo aviso."
+msgstr "Suspendre ou supprimer des comptes sans préavis."
+
+#: templates/terms.html:44
+msgid "4. Moderación y eliminación de contenido"
+msgstr "4. Modération et suppression de contenu"
+
+
+#: templates/terms.html:46
+msgid "MAZO cuenta con un sistema activo de moderación."
+msgstr "MAZO dispose d’un système actif de modération."
+
+
+#: templates/terms.html:49
+msgid ""
+"Todos los reportes serán revisados en un plazo máximo de 24 horas, "
+"pudiendo implicar la eliminación del contenido o la expulsión del usuario"
+" responsable."
+msgstr ""
+"Tous les signalements seront examinés dans un délai maximal de 24 heures, "
+"pouvant entraîner la suppression du contenu ou l’exclusion de l’utilisateur "
+"responsable."
+
+
+#: templates/terms.html:52
+msgid "5. Sistema de reportes"
+msgstr "5. Système de signalement"
+
+#: templates/terms.html:54
+msgid ""
+"Los usuarios pueden reportar contenido inapropiado directamente desde la "
+"plataforma mediante las herramientas disponibles."
+msgstr ""
+"Les utilisateurs peuvent signaler des contenus inappropriés directement depuis "
+"la plateforme via les outils disponibles."
+
+#: templates/terms.html:57
+#, fuzzy
+msgid "6. Bloqueo de usuarios"
+msgstr "Nom d'utilisateur :"
+
+#: templates/terms.html:59
+msgid "Los usuarios pueden bloquear a otros usuarios abusivos."
+msgstr "Les utilisateurs peuvent bloquer des utilisateurs abusifs."
+
+
+#: templates/terms.html:62
+msgid "El contenido del usuario bloqueado dejará de mostrarse inmediatamente."
+msgstr "Le contenu des utilisateurs bloqués ne sera plus affiché immédiatement."
+
+
+#: templates/terms.html:63
+msgid "Se limitará cualquier interacción futura."
+msgstr "Toute interaction future sera limitée."
+
+
+#: templates/terms.html:66
+msgid ""
+"Los bloqueos también pueden ser utilizados para detectar comportamientos "
+"abusivos dentro de la plataforma."
+msgstr ""
+"Les blocages peuvent également être utilisés pour détecter des comportements "
+"abusifs sur la plateforme."
+
+#: templates/terms.html:69
+msgid "7. Seguridad de la comunidad"
+msgstr "7. Sécurité de la communauté"
+
+#: templates/terms.html:71
+msgid ""
+"MAZO trabaja activamente para mantener un entorno seguro mediante "
+"herramientas de reporte, bloqueo y moderación continua."
+msgstr ""
+"MAZO travaille activement pour maintenir un environnement sûr grâce à des "
+"outils de signalement, de blocage et une modération continue."
+
+
+#: templates/terms.html:74
+msgid "8. Responsabilidad"
+msgstr "8. Responsabilité"
+
+#: templates/terms.html:76
+msgid ""
+"MAZO no se hace responsable del contenido publicado por los usuarios, "
+"pero adopta medidas activas para detectar, revisar y eliminar contenido "
+"inapropiado."
+msgstr ""
+"MAZO n’est pas responsable du contenu publié par les utilisateurs, mais "
+"prend des mesures actives pour détecter, examiner et supprimer les contenus "
+"inappropriés."
+
+#: templates/terms.html:79
+#, fuzzy
+msgid "9. Cambios en los términos"
+msgstr "9. Modifications de cette politique"
+
+#: templates/terms.html:81
+msgid ""
+"Nos reservamos el derecho de modificar estos términos en cualquier "
+"momento. Los cambios serán efectivos tras su publicación."
+msgstr ""
+"Nous nous réservons le droit de modifier ces conditions à tout moment. "
+"Les changements seront effectifs dès leur publication."
+
+
+#: templates/terms.html:84
+#, fuzzy
+msgid "10. Contacto"
+msgstr "10. Contact"
+
+#: templates/terms.html:86
+msgid ""
+"Si tienes dudas o necesitas ayuda, puedes contactarnos a través de la "
+"aplicación."
+msgstr ""
+"Si vous avez des questions ou besoin d’aide, vous pouvez nous contacter via l’application."
+
+
 #: templates/test_video.html:5
 #, fuzzy
 msgid "Prueba Video"
 msgstr "Téléverser une vidéo"
 
-#: templates/upload.html:3 templates/upload.html:26
+#: templates/upload.html:3 templates/upload.html:40
 msgid "Subir Video"
 msgstr "Téléverser une vidéo"
 
-#: templates/upload.html:14
+#: templates/upload.html:8
+#, fuzzy
+msgid "Sube tu Video"
+msgstr "Téléverser une vidéo"
+
+#: templates/upload.html:28
 msgid "Título del Video:"
 msgstr "Titre de la vidéo :"
 
-#: templates/upload.html:20
+#: templates/upload.html:34
 msgid "Hashtags (separados por comas):"
 msgstr "Hashtags (séparés par des virgules) :"
 
-#: templates/upload.html:23
+#: templates/upload.html:37
 msgid "Selecciona un video:"
 msgstr "Sélectionnez une vidéo :"
 
-#: templates/upload.html:30
+#: templates/upload.html:44
 msgid "Volver al perfil"
 msgstr "Retour au profil"
+
+#: templates/upload.html:48
+msgid "Debes iniciar sesión para subir videos."
+msgstr "Vous devez vous connecter pour télécharger des vidéos."
+
+#: templates/upload.html:50
+msgid "Crear cuenta"
+msgstr "Créer un compte"
 
 #: templates/view_video.html:3
 #, fuzzy
@@ -920,4 +1337,19 @@ msgstr "Envoyé"
 
 #~ msgid "Idioma de la Aplicación"
 #~ msgstr "Langue de l'application"
+
+#~ msgid "🤝 Programa de Referidos"
+#~ msgstr "🤝 Programme de parrainage"
+
+#~ msgid "Invita a tus amigos a MAZO. Si 3 se suscriben, obtienes"
+#~ msgstr "Invite tes amis à MAZO. Si trois d’entre eux s’abonnent, tu obtiens"
+
+#~ msgid "3 meses gratis"
+#~ msgstr "3 mois gratuits"
+
+#~ msgid "Comparte tu enlace por WhatsApp, correo o redes sociales."
+#~ msgstr "Partage ton lien par WhatsApp, e-mail ou réseaux sociaux."
+
+#~ msgid "Videos Subidos"
+#~ msgstr "Vidéos publiées"
 
