@@ -109,6 +109,10 @@ body {
   display: none !important;
 }
 
+.ios-app .navbar {
+    display: none !important;
+}
+
 @media (max-width: 600px) {
     .navbar {
         flex-direction: column;

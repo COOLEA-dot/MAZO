@@ -14,6 +14,13 @@
     <link href="https://unpkg.com/cloudinary-video-player@1.9.13/dist/cld-video-player.min.css" rel="stylesheet">
 
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <!-- 🔥 SOLO AÑADE ESTO -->
+    <script>
+    if (navigator.userAgent.includes("MAZO_APP")) {
+        document.documentElement.classList.add("ios-app");
+    }
+    </script>
+    
 </head>
 
 <body>
