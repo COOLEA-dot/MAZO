@@ -2956,6 +2956,11 @@ def profile(username):
 
     return render_template('profile.html', user=user, opinions=opinions, form=form, average_rating=average_rating, videos=videos, products=products, report_form = report_form, block_form = block_form)
 
+@app.route('/profile')
+@login_required
+def my_profile():
+    return redirect(url_for('profile', username=current_user.username))
+
 @app.route('/product/<int:product_id>')
 def view_product(product_id):
     product = Product.query.get_or_404(product_id)
