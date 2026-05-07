@@ -269,8 +269,8 @@ EXEMPT_PATHS = {
 
 invite_code = secrets.token_urlsafe(16)
 
-@app.route('/api/csrf-token')
-@login_required
+@csrf.exempt
+@app.route('/api/csrf-token', methods=['GET'])
 def get_csrf_token():
     return jsonify({
         "csrf_token": generate_csrf()
