@@ -269,6 +269,13 @@ EXEMPT_PATHS = {
 
 invite_code = secrets.token_urlsafe(16)
 
+@app.route('/api/csrf-token')
+@login_required
+def get_csrf_token():
+    return jsonify({
+        "csrf_token": generate_csrf()
+    })
+
 def _wrap_before_request_funcs():
     """
     Envuelve los before_request, pero saltándose las rutas OAuth
