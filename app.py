@@ -736,26 +736,66 @@ def api_videos():
     videos = Video.query.order_by(Video.id.desc()).all()
 
     video_list = []
+
     for video in videos:
-        is_liked = current_user.is_authenticated and current_user in video.liked_by
+
+        is_liked = (
+            current_user.is_authenticated
+            and current_user in video.liked_by
+        )
 
         video_list.append({
-            "url": url_for('uploaded_file', filename=video.video_url, _external=True),
+
+            "url": url_for(
+                'uploaded_file',
+                filename=video.video_url,
+                _external=True
+            ),
+
             "id": video.id,
+
             "title": video.title,
+
             "description": video.description,
+
             "hashtags": video.hashtags,
+
             "likes": video.like_count,
+
             "is_liked": is_liked,
+
             "user": {
-                "username": video.user.username if video.user else "desconocido",
+
+                # ✅ USER ID
+                "id": video.user.id if video.user else 0,
+
+                "username": (
+                    video.user.username
+                    if video.user
+                    else "desconocido"
+                ),
+
                 "profile_picture": url_for(
-                    'static', 
-                    filename='profile_pics/' + (video.user.profile_pic if video.user and video.user.profile_pic else 'default.jpg'),
+                    'static',
+                    filename='profile_pics/' + (
+                        video.user.profile_pic
+                        if video.user and video.user.profile_pic
+                        else 'default.jpg'
+                    ),
                     _external=True
                 ),
-                "company": video.user.company if video.user else "",
-                "name": video.user.name if video.user else ""
+
+                "company": (
+                    video.user.company
+                    if video.user
+                    else ""
+                ),
+
+                "name": (
+                    video.user.name
+                    if video.user
+                    else ""
+                )
             }
         })
 
