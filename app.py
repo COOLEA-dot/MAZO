@@ -784,7 +784,7 @@ def api_videos():
                 # ✅ FOTO PERFIL
                 "profile_picture": url_for(
                     'static',
-                    filename='profile_pics/' + (
+                    filename=(
                         video.user.profile_pic
                         if video.user and video.user.profile_pic
                         else 'default.jpg'
