@@ -733,6 +733,7 @@ def sort_filter(value):
 
 @app.route('/api/videos')
 def api_videos():
+
     videos = Video.query.order_by(Video.id.desc()).all()
 
     video_list = []
@@ -767,14 +768,20 @@ def api_videos():
             "user": {
 
                 # ✅ USER ID
-                "id": video.user.id if video.user else 0,
+                "id": (
+                    video.user.id
+                    if video.user
+                    else 0
+                ),
 
+                # ✅ USERNAME
                 "username": (
                     video.user.username
                     if video.user
                     else "desconocido"
                 ),
 
+                # ✅ FOTO PERFIL
                 "profile_picture": url_for(
                     'static',
                     filename='profile_pics/' + (
@@ -785,12 +792,14 @@ def api_videos():
                     _external=True
                 ),
 
+                # ✅ COMPANY
                 "company": (
                     video.user.company
                     if video.user
                     else ""
                 ),
 
+                # ✅ NAME
                 "name": (
                     video.user.name
                     if video.user
