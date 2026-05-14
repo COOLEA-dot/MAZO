@@ -785,8 +785,8 @@ def api_videos():
                 "profile_picture": url_for(
                     'static',
                     filename='profile_pics/' + (
-                        video.user.profile_picture
-                        if video.user and video.user.profile_picture
+                        video.user.profile_pic
+                        if video.user and video.user.profile_pic
                         else 'default.jpg'
                     ),
                     _external=True
