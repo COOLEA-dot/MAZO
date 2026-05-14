@@ -785,8 +785,8 @@ def api_videos():
                 "profile_picture": url_for(
                     'static',
                     filename='profile_pics/' + (
-                        video.user.profile_pic
-                        if video.user and video.user.profile_pic
+                        video.user.profile_picture
+                        if video.user and video.user.profile_picture
                         else 'default.jpg'
                     ),
                     _external=True
@@ -1083,6 +1083,7 @@ def register():
     # GET o fallo validación
     professions = [p.name for p in Profession.query.order_by(Profession.name).all()]
     return render_template("register.html", form=form, user=None, professions=professions)
+
 @app.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
