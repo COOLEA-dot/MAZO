@@ -734,7 +734,24 @@ def sort_filter(value):
 @app.route('/api/videos')
 def api_videos():
 
-    videos = Video.query.order_by(Video.id.desc()).all()
+    # 🚫 USUARIOS BLOQUEADOS
+    blocked_ids = []
+
+    if current_user.is_authenticated:
+
+        blocked_ids = [
+            block.blocked_id
+            for block in Block.query.filter_by(
+                blocker_id=current_user.id
+            ).all()
+        ]
+
+    # 🎥 VIDEOS DEL FEED
+    videos = Video.query.filter(
+        ~Video.user_id.in_(blocked_ids)
+    ).order_by(
+        Video.id.desc()
+    ).all()
 
     video_list = []
 
@@ -767,39 +784,35 @@ def api_videos():
 
             "user": {
 
-                # ✅ USER ID
                 "id": (
                     video.user.id
                     if video.user
                     else 0
                 ),
 
-                # ✅ USERNAME
                 "username": (
                     video.user.username
                     if video.user
                     else "desconocido"
                 ),
 
-                # ✅ FOTO PERFIL
                 "profile_picture": url_for(
                     'static',
                     filename=(
                         video.user.profile_pic
-                        if video.user and video.user.profile_pic
+                        if video.user
+                        and video.user.profile_pic
                         else 'default.jpg'
                     ),
                     _external=True
                 ),
 
-                # ✅ COMPANY
                 "company": (
                     video.user.company
                     if video.user
                     else ""
                 ),
 
-                # ✅ NAME
                 "name": (
                     video.user.name
                     if video.user
