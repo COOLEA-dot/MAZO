@@ -2973,14 +2973,18 @@ def send_message_http(recipient_id):
 def profile(username):
     block_form = BlockForm()
     report_form = ReportForm()
+
     user = User.query.filter_by(username=username).first()
+
     if not user:
         flash('Usuario no encontrado', 'error')
         return redirect(url_for('home'))
 
     form = OpinionForm()
-   
-    average_rating = db.session.query(db.func.avg(Opinion.rating)).filter_by(profile_user_id=user.id).scalar()
+
+    average_rating = db.session.query(
+        db.func.avg(Opinion.rating)
+    ).filter_by(profile_user_id=user.id).scalar()
 
     # Procesar formulario de opinión
     if request.method == 'POST' and form.validate_on_submit():
@@ -2996,6 +3000,7 @@ def profile(username):
                         user_id=current_user.id,
                         profile_user_id=user.id
                     )
+
                     db.session.add(opinion)
                     db.session.commit()
 
@@ -3003,33 +3008,83 @@ def profile(username):
                         'success': True,
                         'message': 'Opinión añadida exitosamente',
                         'username': current_user.name,
-                        'user_profile_url': url_for('profile', username=current_user.username),
-                        'user_profile_pic': url_for('static', filename=current_user.profile_pic if current_user.profile_pic else 'profile_pics/default.jpg'),
+                        'user_profile_url': url_for(
+                            'profile',
+                            username=current_user.username
+                        ),
+                        'user_profile_pic': url_for(
+                            'static',
+                            filename=current_user.profile_pic
+                            if current_user.profile_pic
+                            else 'profile_pics/default.jpg'
+                        ),
                         'opinion_text': opinion_text,
                         'rating': rating
                     })
+
                 else:
-                    return jsonify({'success': False, 'message': 'La puntuación debe estar entre 0 y 10.'})
+                    return jsonify({
+                        'success': False,
+                        'message': 'La puntuación debe estar entre 0 y 10.'
+                    })
+
             except ValueError:
-                return jsonify({'success': False, 'message': 'La puntuación ingresada no es válida.'})
+                return jsonify({
+                    'success': False,
+                    'message': 'La puntuación ingresada no es válida.'
+                })
+
         else:
-            return jsonify({'success': False, 'message': 'Debes escribir una opinión y asignar una puntuación.'})
+            return jsonify({
+                'success': False,
+                'message': 'Debes escribir una opinión y asignar una puntuación.'
+            })
 
     # Parte GET: cargar perfil y opiniones
-    opinions = Opinion.query.filter_by(profile_user_id=user.id).all()
+    opinions = Opinion.query.filter_by(
+        profile_user_id=user.id
+    ).all()
 
-    videos = Video.query.filter_by(user_id=user.id).all()
+    # Videos subidos
+    videos = Video.query.filter_by(
+        user_id=user.id
+    ).all()
+
+    # ❤️ Videos con like
+    liked_videos = user.liked_videos
+
+    # Productos
     products = Product.query.filter_by(
         user_id=user.id,
         is_active=True
-    ).order_by(Product.created_at.desc()).all()
+    ).order_by(
+        Product.created_at.desc()
+    ).all()
 
-    return render_template('profile.html', user=user, opinions=opinions, form=form, average_rating=average_rating, videos=videos, products=products, report_form = report_form, block_form = block_form)
+    return render_template(
+        'profile.html',
+        user=user,
+        opinions=opinions,
+        form=form,
+        average_rating=average_rating,
+        videos=videos,
+        liked_videos=liked_videos,  # ❤️ NUEVO
+        products=products,
+        report_form=report_form,
+        block_form=block_form
+    )
+
 
 @app.route('/profile')
 @login_required
 def my_profile():
-    return redirect(url_for('profile', username=current_user.username))
+    return redirect(
+        url_for(
+            'profile',
+            username=current_user.username
+        )
+    )
+
 
 @app.route('/product/<int:product_id>')
 def view_product(product_id):
@@ -3042,7 +3097,6 @@ def view_product(product_id):
     return render_template(
         'view_product.html',
         product=product,
-      
     )
 
 @app.route('/products/<int:product_id>/edit', methods=['GET', 'POST'])

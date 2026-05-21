@@ -232,6 +232,9 @@
     <button class="profile-tab active" data-tab="videos">
         {{ _('Videos') }}
     </button>
+    <button class="profile-tab" data-tab="likes">
+        ❤️ {{ _('Likes') }}
+    </button>
     <button class="profile-tab" data-tab="products">
         {{ _('Productos') }}
     </button>
@@ -269,7 +272,31 @@
     {% endif %}
 
 </div>
+<!-- ❤️ TAB LIKES -->
+<div id="tab-likes" class="profile-tab-content hidden">
 
+    {% if liked_videos %}
+        <div class="video-grid">
+
+            {% for video in liked_videos %}
+                <div class="video">
+                    <a href="{{ url_for('view_video', video_id=video.id) }}">
+                        <video muted preload="metadata">
+                            <source src="{{ url_for('uploaded_file', filename=video.video_url) }}" type="video/mp4">
+                            {{ _('Tu navegador no soporta el video.') }}
+                        </video>
+                    </a>
+                </div>
+            {% endfor %}
+
+        </div>
+    {% else %}
+        <p class="no-liked-videos">
+            {{ _('Aún no hay videos con like.') }}
+        </p>
+    {% endif %}
+
+</div>
 <!-- 🛍️ TAB PRODUCTOS -->
 <div id="tab-products" class="profile-tab-content hidden">
 
