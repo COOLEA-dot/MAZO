@@ -643,6 +643,29 @@ video {
   gap: 10px;
   flex-wrap: wrap;
 }
+.btn-create-cv {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #28a745;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-create-cv:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+  color: white;
+}
+
+.btn-create-cv:visited {
+  color: white;
+}
 
 .cv-form-inline {
   display: inline-block;
@@ -976,7 +999,50 @@ video {
         grid-template-columns: repeat(4, 1fr);
     }
 }
+/* ==========================
+   CV CREATED
+========================== */
 
+.cv-success-message {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #eaf8ee;
+    border: 2px solid #28a745;
+    color: #1d5f2e;
+    border-radius: 20px;
+    padding: 18px 22px;
+    margin: 20px auto;
+    max-width: 900px;
+    animation: fadeSlide .35s ease;
+}
+
+.cv-success-icon {
+    font-size: 2rem;
+}
+
+.cv-success-message h3 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.cv-success-message p {
+    margin: 4px 0 0;
+    opacity: .85;
+}
+
+@keyframes fadeSlide {
+
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 @media (max-width: 600px) {
     .profile-container {
         padding: 10px;

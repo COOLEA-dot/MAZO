@@ -6,7 +6,29 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
 <script src="{{ url_for('static', filename='js/opinions.js') }}"></script>
 <script src="{{ url_for('static', filename='js/share.js') }}" defer></script>
+{% if request.args.get('cv_created') == '1' %}
 
+<div class="cv-success-message">
+
+    <div class="cv-success-icon">
+        ✅
+    </div>
+
+    <div>
+
+        <h3>
+            {{ _('CV creado exitosamente') }}
+        </h3>
+
+        <p>
+            {{ _('Tu perfil profesional ya está disponible.') }}
+        </p>
+
+    </div>
+
+</div>
+
+{% endif %}
 {% if current_user.is_authenticated and current_user.id == user.id %}
     <a href="{{ url_for('settings') }}" class="settings-icon" title="Configuración">⚙️</a>
 {% endif %}
@@ -26,38 +48,90 @@
         {% set is_owner = current_user.is_authenticated and current_user.username == user.username %}
  
 <div class="cv-actions">
+
   {% if is_owner %}
-    <form action="{{ url_for('upload_cv') }}" method="post" enctype="multipart/form-data" class="cv-form-inline">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input id="cv-input" type="file" name="cv" accept=".pdf,.doc,.docx" class="hidden" onchange="this.form.submit()">
-      <label for="cv-input" class="btn btn-primary cv-upload-btn">
+
+    <!-- 🟢 Crear / Editar CV Profesional -->
+    <a href="{{ url_for('edit_cv') }}"
+       class="btn-create-cv">
+
+      {% if user.cv_profile %}
+        {{ _('Editar CV') }}
+      {% else %}
+        {{ _('Crear CV') }}
+      {% endif %}
+
+    </a>
+
+    <!-- 📎 Subir CV PDF -->
+    <form action="{{ url_for('upload_cv') }}"
+          method="post"
+          enctype="multipart/form-data"
+          class="cv-form-inline">
+
+      <input type="hidden"
+             name="csrf_token"
+             value="{{ csrf_token() }}">
+
+      <input id="cv-input"
+             type="file"
+             name="cv"
+             accept=".pdf,.doc,.docx"
+             class="hidden"
+             onchange="this.form.submit()">
+
+      <label for="cv-input"
+             class="btn btn-primary cv-upload-btn">
+
         <span>{{ _('Subir CV') }}</span>
+
       </label>
     </form>
+
   {% endif %}
 
+  <!-- 👁️ Ver CV Profesional -->
+  {% if True %}
+    <a class="btn btn-secondary"
+       href="{{ url_for('view_professional_cv', username=user.username) }}">
+
+      {{ _('Ver CV Profesional') }}
+
+    </a>
+  {% endif %}
+
+  <!-- 👁️ Ver CV PDF -->
   {% if user.cv_file %}
-    <!-- 👁️ Ver CV -->
     <a class="btn btn-secondary"
        href="{{ url_for('view_cv', username=user.username) }}"
        target="_blank"
        rel="noopener">
-      {{ _('Ver CV') }}
+
+      {{ _('Ver CV PDF') }}
+
     </a>
 
     {% if is_owner %}
-      <!-- 🗑️ Borrar CV -->
+      <!-- 🗑️ Borrar PDF -->
       <form action="{{ url_for('delete_cv') }}"
             method="post"
             class="cv-form-inline"
             onsubmit="return confirm('Seguro que quieres borrar tu CV?');">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn btn-danger cv-delete-btn">
+
+        <input type="hidden"
+               name="csrf_token"
+               value="{{ csrf_token() }}">
+
+        <button type="submit"
+                class="btn btn-danger cv-delete-btn">
+
           {{ _('Borrar CV') }}
+
         </button>
       </form>
     {% endif %}
   {% endif %}
+
 </div>
 
         <!-- 🔵 Contadores de seguidores -->

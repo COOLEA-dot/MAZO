@@ -47,6 +47,23 @@ from extensions import db
 from algorithms.feed_algorithm import get_feed_videos
 from email.mime.text import MIMEText
 import smtplib
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Spacer,
+    Paragraph,
+    Table,
+    TableStyle,
+    Image
+)
+
+
+from reportlab.lib.units import cm
+from reportlab.lib import colors
+from reportlab.lib.styles import (
+    getSampleStyleSheet
+)
+
+from reportlab.lib import enums
 
 # Helper seguro para hacer strip sin fallar si value es None
 def _safe_strip(value):
@@ -145,6 +162,13 @@ from models import (
     UnblockForm,
     Report,
     ReportForm,
+    UserCV,
+    EmptyForm,
+    CVEducation,
+    CVExperience,
+    CVSkill,
+    CVLanguage,
+    CVEducation,
 )
 
 csrf = CSRFProtect(app)
@@ -3269,25 +3293,976 @@ def view_cv(username):
         as_attachment=False  # mostrar en navegador si es PDF
     )
 
-@app.route('/delete-cv', methods=['POST'])
+@app.route('/cv/edit', methods=['GET', 'POST'])
 @login_required
-def delete_cv():
-    if not current_user.cv_file:
-        flash('No hay CV para borrar.', 'warning')
-        return redirect(url_for('profile', username=current_user.username))
+def edit_cv():
 
-    cv_path = os.path.join(app.root_path, 'static', current_user.cv_file)
+    form = EmptyForm()
 
-    # Eliminar archivo físico
-    if os.path.exists(cv_path):
-        os.remove(cv_path)
+    # 🔢 Paso actual
+    step = request.args.get(
+        'step',
+        '1'
+    )
 
-    # Eliminar referencia en BD
-    current_user.cv_file = None
+    # Buscar CV usuario
+    user_cv = UserCV.query.filter_by(
+        user_id=current_user.id
+    ).first()
+
+    # Crear CV automático
+    if not user_cv:
+
+        user_cv = UserCV(
+            user_id=current_user.id,
+            full_name=current_user.name,
+            email=current_user.email,
+            phone=current_user.phone,
+            location=current_user.location,
+            profile_picture=current_user.profile_pic
+        )
+
+        db.session.add(user_cv)
+        db.session.commit()
+
+    # =================================
+    # GUARDAR FORMULARIO
+    # =================================
+    if request.method == 'POST':
+
+        # ======================
+        # STEP 1 - DATOS PERSONALES
+        # ======================
+        if step == '1':
+
+            user_cv.full_name = request.form.get(
+                'full_name'
+            )
+
+            user_cv.email = request.form.get(
+                'email'
+            )
+
+            user_cv.phone = request.form.get(
+                'phone'
+            )
+
+            user_cv.location = request.form.get(
+                'location'
+            )
+
+            birth_date = request.form.get(
+                'birth_date'
+            )
+
+            if birth_date:
+
+                user_cv.birth_date = (
+                    datetime.strptime(
+                        birth_date,
+                        '%Y-%m-%d'
+                    ).date()
+                )
+
+            # ======================
+            # FOTO DEL CV
+            # ======================
+            cv_photo = request.files.get(
+                'cv_profile_picture'
+            )
+
+            if (
+                cv_photo and
+                cv_photo.filename
+            ):
+
+                filename = secure_filename(
+                    cv_photo.filename
+                )
+
+                extension = filename.split(
+                    '.'
+                )[-1]
+
+                unique_filename = (
+                    f'cv_'
+                    f'{current_user.id}.'
+                    f'{extension}'
+                )
+
+                upload_folder = os.path.join(
+                    app.root_path,
+                    'static',
+                    'cv_profiles'
+                )
+
+                os.makedirs(
+                    upload_folder,
+                    exist_ok=True
+                )
+
+                save_path = os.path.join(
+                    upload_folder,
+                    unique_filename
+                )
+
+                cv_photo.save(
+                    save_path
+                )
+
+                user_cv.profile_picture = (
+                    unique_filename
+                )
+
+        # ======================
+        # STEP 2 - EXPERIENCIA
+        # ======================
+        elif step == '2':
+
+            CVExperience.query.filter_by(
+                user_cv_id=user_cv.id
+            ).delete()
+
+            company_names = request.form.getlist(
+                'company_name[]'
+            )
+
+            job_titles = request.form.getlist(
+                'job_title[]'
+            )
+
+            start_dates = request.form.getlist(
+                'start_date[]'
+            )
+
+            end_dates = request.form.getlist(
+                'end_date[]'
+            )
+
+            descriptions = request.form.getlist(
+                'description[]'
+            )
+
+            for i in range(
+                len(company_names)
+            ):
+
+                if not company_names[i].strip():
+                    continue
+
+                experience = CVExperience(
+                    user_cv_id=user_cv.id,
+                    company_name=company_names[i],
+                    job_title=job_titles[i],
+                    description=descriptions[i]
+                )
+
+                if start_dates[i]:
+
+                    experience.start_date = (
+                        datetime.strptime(
+                            start_dates[i],
+                            '%Y-%m-%d'
+                        ).date()
+                    )
+
+                if end_dates[i]:
+
+                    experience.end_date = (
+                        datetime.strptime(
+                            end_dates[i],
+                            '%Y-%m-%d'
+                        ).date()
+                    )
+
+                db.session.add(
+                    experience
+                )
+
+        # ======================
+        # STEP 3 - EDUCACIÓN
+        # ======================
+        elif step == '3':
+
+            CVEducation.query.filter_by(
+                user_cv_id=user_cv.id
+            ).delete()
+
+            school_names = request.form.getlist(
+                'school_name[]'
+            )
+
+            degree_names = request.form.getlist(
+                'degree_name[]'
+            )
+
+            start_dates = request.form.getlist(
+                'education_start_date[]'
+            )
+
+            end_dates = request.form.getlist(
+                'education_end_date[]'
+            )
+
+            for i in range(
+                len(school_names)
+            ):
+
+                if not school_names[i].strip():
+                    continue
+
+                education = CVEducation(
+                    user_cv_id=user_cv.id,
+                    school_name=school_names[i],
+                    degree_name=degree_names[i],
+                    currently_studying=(
+                        f'currently_studying_{i}'
+                        in request.form
+                    )
+                )
+
+                if start_dates[i]:
+
+                    education.start_date = (
+                        datetime.strptime(
+                            start_dates[i],
+                            '%Y-%m-%d'
+                        ).date()
+                    )
+
+                if end_dates[i]:
+
+                    education.end_date = (
+                        datetime.strptime(
+                            end_dates[i],
+                            '%Y-%m-%d'
+                        ).date()
+                    )
+
+                db.session.add(
+                    education
+                )
+
+        # ======================
+        # STEP 4 - HABILIDADES
+        # ======================
+        elif step == '4':
+
+            CVSkill.query.filter_by(
+                user_cv_id=user_cv.id
+            ).delete()
+
+            skill_names = request.form.getlist(
+                'skill_name[]'
+            )
+
+            for skill_name in skill_names:
+
+                if not skill_name.strip():
+                    continue
+
+                skill = CVSkill(
+                    user_cv_id=user_cv.id,
+                    skill_name=skill_name.strip()
+                )
+
+                db.session.add(skill)
+
+        # ======================
+        # STEP 5 - IDIOMAS
+        # ======================
+        elif step == '5':
+
+            CVLanguage.query.filter_by(
+                user_cv_id=user_cv.id
+            ).delete()
+
+            language_names = request.form.getlist(
+                'language_name[]'
+            )
+
+            levels = request.form.getlist(
+                'language_level[]'
+            )
+
+            for i in range(
+                len(language_names)
+            ):
+
+                if not language_names[i].strip():
+                    continue
+
+                language = CVLanguage(
+                    user_cv_id=user_cv.id,
+                    language_name=language_names[i],
+                    level=levels[i]
+                )
+
+                db.session.add(
+                    language
+                )
+
+        # ======================
+        # STEP 6 - INFO EXTRA
+        # ======================
+        elif step == '6':
+
+            user_cv.additional_information = (
+                request.form.get(
+                    'additional_information'
+                )
+            )
+
+        db.session.commit()
+
+        # ======================
+        # NAVEGACIÓN
+        # ======================
+
+        if step == '1':
+            return redirect(
+                url_for(
+                    'edit_cv',
+                    step='2'
+                )
+            )
+
+        elif step == '2':
+            return redirect(
+                url_for(
+                    'edit_cv',
+                    step='3'
+                )
+            )
+
+        elif step == '3':
+            return redirect(
+                url_for(
+                    'edit_cv',
+                    step='4'
+                )
+            )
+
+        elif step == '4':
+            return redirect(
+                url_for(
+                    'edit_cv',
+                    step='5'
+                )
+            )
+
+        elif step == '5':
+            return redirect(
+                url_for(
+                    'edit_cv',
+                    step='6'
+                )
+            )
+
+        elif step == '6':
+            return redirect(
+                url_for(
+                    'cv_design'
+                )
+            )
+
+    return render_template(
+        'edit_cv.html',
+        user_cv=user_cv,
+        step=step,
+        form=form
+    )
+
+@app.route('/cv/design')
+@login_required
+def cv_design():
+
+    user_cv = UserCV.query.filter_by(
+        user_id=current_user.id
+    ).first_or_404()
+
+    return render_template(
+        'cv_design.html',
+        user_cv=user_cv
+    )
+
+
+def generate_cv_pdf(user_cv):
+
+    # ==========================
+    # CARPETA PDF
+    # ==========================
+    pdf_folder = os.path.join(
+        app.root_path,
+        'static',
+        'cv_pdfs'
+    )
+
+    os.makedirs(
+        pdf_folder,
+        exist_ok=True
+    )
+
+    filename = (
+        f'cv_{user_cv.user_id}.pdf'
+    )
+
+    pdf_path = os.path.join(
+        pdf_folder,
+        filename
+    )
+
+    # ==========================
+    # CONFIG DOCUMENTO
+    # ==========================
+    doc = SimpleDocTemplate(
+        pdf_path,
+        rightMargin=20,
+        leftMargin=20,
+        topMargin=20,
+        bottomMargin=20
+    )
+
+    styles = getSampleStyleSheet()
+
+    # ==========================
+    # ESTILOS
+    # ==========================
+    title_style = styles['Title']
+    title_style.textColor = colors.black
+    title_style.fontSize = 24
+    title_style.alignment = 1
+
+    subtitle_style = styles['BodyText']
+    subtitle_style.textColor = colors.black
+    subtitle_style.fontSize = 12
+    subtitle_style.alignment = 1
+
+    heading_style = styles['Heading2']
+    heading_style.textColor = colors.black
+    heading_style.spaceAfter = 8
+
+    normal_style = styles['BodyText']
+    normal_style.textColor = colors.black
+
+    story = []
+
+    # ==========================
+    # FOTO PERFIL
+    # ==========================
+    profile_image = Spacer(
+        3*cm,
+        3*cm
+    )
+
+    if user_cv.profile_picture:
+
+        image_path = os.path.join(
+            app.root_path,
+            'static',
+            'cv_profiles',
+            user_cv.profile_picture
+        )
+
+        if os.path.exists(
+            image_path
+        ):
+
+            profile_image = Image(
+                image_path,
+                width=3*cm,
+                height=3*cm
+            )
+
+    # ==========================
+    # HEADER VERDE MAZO
+    # ==========================
+    header_content = [
+
+        Spacer(1, 6),
+
+        Paragraph(
+            user_cv.full_name or '',
+            title_style
+        ),
+
+        Paragraph(
+            (
+                user_cv.professional_title
+                or 'Profesional'
+            ),
+            subtitle_style
+        )
+    ]
+
+    header_table = Table([
+        [
+            profile_image,
+            header_content
+        ]
+    ],
+    colWidths=[4*cm, 12*cm])
+
+    header_table.setStyle(
+        TableStyle([
+
+            (
+                'BACKGROUND',
+                (0, 0),
+                (-1, -1),
+                colors.HexColor(
+                    '#1FA03D'
+                )
+            ),
+
+            (
+                'VALIGN',
+                (0, 0),
+                (-1, -1),
+                'MIDDLE'
+            ),
+
+            (
+                'LEFTPADDING',
+                (0, 0),
+                (-1, -1),
+                18
+            ),
+
+            (
+                'RIGHTPADDING',
+                (0, 0),
+                (-1, -1),
+                18
+            ),
+
+            (
+                'TOPPADDING',
+                (0, 0),
+                (-1, -1),
+                18
+            ),
+
+            (
+                'BOTTOMPADDING',
+                (0, 0),
+                (-1, -1),
+                18
+            )
+
+        ])
+    )
+
+    story.append(
+        header_table
+    )
+
+    story.append(
+        Spacer(1, 12)
+    )
+
+    # ==========================
+    # SIDEBAR
+    # ==========================
+    sidebar_content = []
+
+    # UBICACIÓN
+    if user_cv.location:
+
+        sidebar_content.append(
+            Paragraph(
+                '📍 Ubicación',
+                heading_style
+            )
+        )
+
+        sidebar_content.append(
+            Paragraph(
+                user_cv.location,
+                normal_style
+            )
+        )
+
+        sidebar_content.append(
+            Spacer(1, 8)
+        )
+
+    # CONTACTO
+    if user_cv.phone:
+
+        sidebar_content.append(
+            Paragraph(
+                '📞 Contacto',
+                heading_style
+            )
+        )
+
+        sidebar_content.append(
+            Paragraph(
+                user_cv.phone,
+                normal_style
+            )
+        )
+
+        sidebar_content.append(
+            Spacer(1, 8)
+        )
+
+    # EMAIL
+    if user_cv.email:
+
+        sidebar_content.append(
+            Paragraph(
+                '📧 Email',
+                heading_style
+            )
+        )
+
+        sidebar_content.append(
+            Paragraph(
+                user_cv.email,
+                normal_style
+            )
+        )
+
+        sidebar_content.append(
+            Spacer(1, 8)
+        )
+
+    # IDIOMAS
+    if user_cv.languages:
+
+        sidebar_content.append(
+            Paragraph(
+                '🌍 Idiomas',
+                heading_style
+            )
+        )
+
+        for language in user_cv.languages:
+
+            sidebar_content.append(
+                Paragraph(
+                    f'{language.language_name} - {language.level}',
+                    normal_style
+                )
+            )
+
+        sidebar_content.append(
+            Spacer(1, 8)
+        )
+
+    # HABILIDADES
+    if user_cv.skills:
+
+        sidebar_content.append(
+            Paragraph(
+                '⭐ Habilidades',
+                heading_style
+            )
+        )
+
+        for skill in user_cv.skills:
+
+            sidebar_content.append(
+                Paragraph(
+                    skill.skill_name,
+                    normal_style
+                )
+            )
+
+    # ==========================
+    # MAIN CONTENT
+    # ==========================
+    main_content = []
+
+    # SOBRE MÍ
+    if user_cv.about_me:
+
+        main_content.append(
+            Paragraph(
+                'Sobre mí',
+                heading_style
+            )
+        )
+
+        main_content.append(
+            Paragraph(
+                user_cv.about_me,
+                normal_style
+            )
+        )
+
+        main_content.append(
+            Spacer(1, 8)
+        )
+
+    # EXPERIENCIA
+    if user_cv.experiences:
+
+        main_content.append(
+            Paragraph(
+                'Experiencia',
+                heading_style
+            )
+        )
+
+        for exp in user_cv.experiences:
+
+            main_content.append(
+                Paragraph(
+                    f'<b>{exp.job_title}</b>',
+                    normal_style
+                )
+            )
+
+            main_content.append(
+                Paragraph(
+                    exp.company_name,
+                    normal_style
+                )
+            )
+
+            if exp.description:
+
+                main_content.append(
+                    Paragraph(
+                        exp.description,
+                        normal_style
+                    )
+                )
+
+            main_content.append(
+                Spacer(1, 6)
+            )
+
+    # EDUCACIÓN
+    if user_cv.educations:
+
+        main_content.append(
+            Paragraph(
+                'Educación',
+                heading_style
+            )
+        )
+
+        for edu in user_cv.educations:
+
+            main_content.append(
+                Paragraph(
+                    f'<b>{edu.degree_name}</b>',
+                    normal_style
+                )
+            )
+
+            main_content.append(
+                Paragraph(
+                    edu.school_name,
+                    normal_style
+                )
+            )
+
+            main_content.append(
+                Spacer(1, 5)
+            )
+
+    # INFO EXTRA
+    if user_cv.additional_information:
+
+        main_content.append(
+            Paragraph(
+                'Información adicional',
+                heading_style
+            )
+        )
+
+        main_content.append(
+            Paragraph(
+                user_cv.additional_information,
+                normal_style
+            )
+        )
+
+    # ==========================
+    # TABLA PRINCIPAL
+    # ==========================
+    content_table = Table([
+        [
+            sidebar_content,
+            main_content
+        ]
+    ],
+    colWidths=[4.5*cm, 11.5*cm])
+
+    content_table.setStyle(
+        TableStyle([
+
+            (
+                'BACKGROUND',
+                (0, 0),
+                (0, -1),
+                colors.HexColor(
+                    '#F1F1F1'
+                )
+            ),
+
+            (
+                'BOX',
+                (0, 0),
+                (-1, -1),
+                1,
+                colors.HexColor(
+                    '#DDDDDD'
+                )
+            ),
+
+            (
+                'VALIGN',
+                (0, 0),
+                (-1, -1),
+                'TOP'
+            ),
+
+            (
+                'LEFTPADDING',
+                (0, 0),
+                (-1, -1),
+                14
+            ),
+
+            (
+                'RIGHTPADDING',
+                (0, 0),
+                (-1, -1),
+                14
+            ),
+
+            (
+                'TOPPADDING',
+                (0, 0),
+                (-1, -1),
+                14
+            ),
+
+            (
+                'BOTTOMPADDING',
+                (0, 0),
+                (-1, -1),
+                14
+            )
+
+        ])
+    )
+
+    story.append(
+        content_table
+    )
+
+    # ==========================
+    # GENERAR PDF
+    # ==========================
+    doc.build(story)
+
+    return (
+        f'cv_pdfs/{filename}'
+    )
+
+@app.route('/cv/select-design/<design>')
+@login_required
+def select_cv_design(design):
+
+    user_cv = UserCV.query.filter_by(
+        user_id=current_user.id
+    ).first_or_404()
+
+    # ==========================
+    # DISEÑOS DISPONIBLES
+    # ==========================
+    allowed_designs = [
+        'basic'
+    ]
+
+    if design not in allowed_designs:
+
+        flash(
+            'Diseño no disponible',
+            'error'
+        )
+
+        return redirect(
+            url_for(
+                'cv_design'
+            )
+        )
+
+    # ==========================
+    # GUARDAR DISEÑO
+    # ==========================
+    user_cv.cv_template = design
+
+    # ==========================
+    # GENERAR PDF
+    # ==========================
+    pdf_path = generate_cv_pdf(
+        user_cv
+    )
+
+    user_cv.cv_pdf = pdf_path
+
     db.session.commit()
 
-    flash('CV eliminado correctamente.', 'success')
-    return redirect(url_for('profile', username=current_user.username))
+    flash(
+        'CV creado exitosamente',
+        'success'
+    )
+
+    return redirect(
+        url_for(
+            'profile',
+            username=current_user.username,
+            cv_created='1'
+        )
+    )
+
+@app.route(
+    '/professional-cv/<username>'
+)
+@login_required
+def view_professional_cv(username):
+
+    user = User.query.filter_by(
+        username=username
+    ).first_or_404()
+
+    user_cv = UserCV.query.filter_by(
+        user_id=user.id
+    ).first()
+
+    # No tiene CV
+    if (
+        not user_cv or
+        not user_cv.cv_pdf
+    ):
+
+        flash(
+            'Este usuario aún no ha creado un CV profesional.',
+            'error'
+        )
+
+        return redirect(
+            url_for(
+                'profile',
+                username=username
+            )
+        )
+
+    # Abrir PDF real
+    return redirect(
+        url_for(
+            'static',
+            filename=user_cv.cv_pdf
+        )
+    )
 
 @app.after_request
 def add_security_headers(response):

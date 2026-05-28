@@ -1,0 +1,529 @@
+.cv-editor-page {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+/* HEADER */
+.cv-editor-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.cv-editor-header h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.cv-editor-header p {
+    color: #777;
+    font-size: 16px;
+}
+
+/* ==========================
+   PASOS CV
+========================== */
+
+.cv-steps {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.cv-step {
+    background: #f1f1f1;
+    color: #666;
+    padding: 12px 18px;
+    border-radius: 30px;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.cv-step.active {
+    background: #28a745;
+    color: white;
+}
+
+/* CARD */
+
+.cv-editor-card {
+    background: white;
+    border-radius: 20px;
+    padding: 35px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+/* FOTO PERFIL */
+
+.cv-profile-image {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 25px;
+}
+
+.cv-profile-image img {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #28a745;
+}
+
+/* FORM */
+
+.cv-group {
+    margin-bottom: 25px;
+}
+
+.cv-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #333;
+}
+
+.cv-group input,
+.cv-group textarea,
+.cv-group select {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+.cv-group input:focus,
+.cv-group textarea:focus,
+.cv-group select:focus {
+    outline: none;
+    border-color: #28a745;
+    box-shadow: 0 0 0 3px rgba(40,167,69,0.12);
+}
+
+.cv-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* BOTÓN GUARDAR */
+
+.save-cv-btn {
+    width: 100%;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.save-cv-btn:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+/* NAVEGACIÓN */
+
+.cv-navigation {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e9ecef;
+    color: #333;
+    text-decoration: none;
+    border-radius: 14px;
+    padding: 16px;
+    min-width: 160px;
+    font-weight: 600;
+    transition: .2s;
+}
+
+.back-btn:hover {
+    background: #dfe3e6;
+}
+
+/* MÓVIL */
+
+@media (max-width: 768px) {
+
+    .cv-editor-page {
+        padding: 15px;
+    }
+
+    .cv-editor-card {
+        padding: 22px;
+        border-radius: 18px;
+    }
+
+    .cv-editor-header h1 {
+        font-size: 1.6rem;
+    }
+
+    .cv-navigation {
+        flex-direction: column;
+    }
+
+    .back-btn {
+        width: 100%;
+    }
+
+    .cv-profile-image img {
+        width: 110px;
+        height: 110px;
+    }
+
+    .cv-step {
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+}
+.add-experience-btn {
+    width: 100%;
+    background: #f8f9fa;
+    border: 2px dashed #28a745;
+    color: #28a745;
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 20px;
+    margin-bottom: 25px;
+}
+
+.add-experience-btn:hover {
+    background: #28a745;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Card de cada trabajo */
+
+.experience-card {
+    background: #fdfdfd;
+    border: 1px solid #e8e8e8;
+    border-radius: 18px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+}
+
+.experience-card h3 {
+    margin-bottom: 20px;
+    color: #28a745;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+/* ==========================
+   AÑADIR ESTUDIO
+========================== */
+
+.add-education-btn {
+    width: 100%;
+    background: #f8f9fa;
+    border: 2px dashed #28a745;
+    color: #28a745;
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 20px;
+    margin-bottom: 25px;
+}
+
+.add-education-btn:hover {
+    background: #28a745;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* ==========================
+   CARD EDUCACIÓN
+========================== */
+
+.education-card {
+    background: #fdfdfd;
+    border: 1px solid #e8e8e8;
+    border-radius: 18px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+}
+
+.education-card h3 {
+    margin-bottom: 20px;
+    color: #28a745;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* ==========================
+   CHECKBOX CURSANDO
+========================== */
+
+.cv-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 15px;
+    background: #f8f9fa;
+    padding: 14px 18px;
+    border-radius: 14px;
+    border: 1px solid #e9ecef;
+}
+
+.cv-checkbox input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    accent-color: #28a745;
+}
+
+.cv-checkbox label {
+    margin: 0;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+}
+
+/* ==========================
+   MOBILE
+========================== */
+
+@media (max-width: 768px) {
+
+    .cv-checkbox {
+        padding: 12px 14px;
+        gap: 10px;
+    }
+
+    .cv-checkbox label {
+        font-size: 15px;
+    }
+}
+
+/* ==========================
+   AÑADIR HABILIDAD
+========================== */
+
+.add-skill-btn {
+    width: 100%;
+    background: #f8f9fa;
+    border: 2px dashed #28a745;
+    color: #28a745;
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 20px;
+    margin-bottom: 25px;
+}
+
+.add-skill-btn:hover {
+    background: #28a745;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* ==========================
+   CARD HABILIDAD
+========================== */
+
+.skill-card {
+    background: #fdfdfd;
+    border: 1px solid #e8e8e8;
+    border-radius: 18px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+}
+
+.skill-card h3 {
+    margin-bottom: 20px;
+    color: #28a745;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* ==========================
+   MOBILE
+========================== */
+
+@media (max-width: 768px) {
+
+    .skill-card {
+        padding: 20px;
+    }
+
+    .add-skill-btn {
+        padding: 14px;
+        font-size: 16px;
+    }
+
+}
+
+/* ==========================
+   AÑADIR IDIOMA
+========================== */
+
+.add-language-btn {
+    width: 100%;
+    background: #f8f9fa;
+    border: 2px dashed #28a745;
+    color: #28a745;
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 20px;
+    margin-bottom: 25px;
+}
+
+.add-language-btn:hover {
+    background: #28a745;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* ==========================
+   CARD IDIOMA
+========================== */
+
+.language-card {
+    background: #fdfdfd;
+    border: 1px solid #e8e8e8;
+    border-radius: 18px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+}
+
+.language-card h3 {
+    margin-bottom: 20px;
+    color: #28a745;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* ==========================
+   SELECT NIVEL IDIOMA
+========================== */
+
+.language-card select {
+    background: white;
+    cursor: pointer;
+}
+
+/* ==========================
+   FOTO PROFESIONAL CV
+========================== */
+
+.cv-photo-section {
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+
+}
+
+.cv-photo-label {
+
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+
+}
+
+.cv-photo-preview-wrapper {
+
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid #1FA03D;
+    background: #f5f5f5;
+    box-shadow: 0 6px 20px rgba(
+        0,
+        0,
+        0,
+        0.12
+    );
+    margin-bottom: 15px;
+
+}
+
+.cv-photo-preview {
+
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+
+}
+
+#cv-photo-input {
+
+    background: #f7f7f7;
+    border: 2px dashed #d8d8d8;
+    padding: 12px;
+    border-radius: 14px;
+    cursor: pointer;
+    width: 100%;
+    max-width: 320px;
+    transition: 0.25s ease;
+    color: #444;
+
+}
+
+#cv-photo-input:hover {
+
+    border-color: #1FA03D;
+    background: #f3fff6;
+
+}
+
+
+/* ==========================
+   MOBILE
+========================== */
+
+@media (max-width: 768px) {
+
+    .language-card {
+        padding: 20px;
+    }
+
+    .add-language-btn {
+        padding: 14px;
+        font-size: 16px;
+    }
+     .cv-photo-preview-wrapper {
+
+        width: 110px;
+        height: 110px;
+
+    }
+
+}
+

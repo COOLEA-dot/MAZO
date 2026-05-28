@@ -1,0 +1,267 @@
+/* ==========================
+   PAGE
+========================== */
+
+.cv-design-page {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.cv-design-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.cv-design-header h1 {
+    font-size: 2.4rem;
+    margin-bottom: 10px;
+    font-weight: 800;
+}
+
+.cv-design-header p {
+    color: #777;
+    font-size: 18px;
+}
+
+/* ==========================
+   GRID
+========================== */
+
+.cv-design-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+    gap: 30px;
+}
+
+/* ==========================
+   CARD
+========================== */
+
+.cv-design-card {
+    background: white;
+    border-radius: 28px;
+    padding: 25px;
+    box-shadow: 0 10px 35px rgba(0,0,0,.08);
+    transition: .25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.cv-design-card:hover {
+    transform: translateY(-6px);
+}
+
+.cv-design-card h2 {
+    margin-top: 25px;
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+}
+
+.cv-design-card p {
+    color: #666;
+    line-height: 1.6;
+}
+
+/* ==========================
+   BADGES
+========================== */
+
+.cv-design-badge {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.free-badge {
+    background: #28a745;
+    color: white;
+}
+
+.premium-lock {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    background: #111;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* ==========================
+   CV PREVIEW
+========================== */
+
+.cv-preview {
+    background: #f7f7f7;
+    border-radius: 22px;
+    overflow: hidden;
+    min-height: 360px;
+    margin-top: 20px;
+    border: 1px solid #ececec;
+}
+
+/* ==========================
+   BASIC PREVIEW
+========================== */
+
+.basic-preview {
+    background: white;
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 24px;
+    background: linear-gradient(
+        135deg,
+        #28a745,
+        #1e7e34
+    );
+    color: white;
+}
+
+.preview-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.25);
+    border: 3px solid rgba(255,255,255,.3);
+}
+
+.preview-user h3 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.preview-user span {
+    opacity: .9;
+}
+
+.preview-body {
+    display: flex;
+    min-height: 240px;
+}
+
+.preview-sidebar {
+    width: 34%;
+    background: #f8f9fa;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.preview-main {
+    flex: 1;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.preview-block {
+    border-radius: 14px;
+    background: #e7e7e7;
+}
+
+.preview-block.small {
+    height: 55px;
+}
+
+.preview-block.medium {
+    height: 90px;
+}
+
+.preview-block.large {
+    height: 130px;
+}
+
+/* ==========================
+   PREMIUM MOCKUPS
+========================== */
+
+.premium-preview {
+    background:
+        linear-gradient(
+            135deg,
+            #111,
+            #1f1f1f
+        );
+}
+
+.creator-preview {
+    background:
+        linear-gradient(
+            135deg,
+            #7b2ff7,
+            #f107a3
+        );
+}
+
+/* ==========================
+   LOCKED
+========================== */
+
+.locked {
+    opacity: .85;
+}
+
+.locked:hover {
+    transform: none;
+}
+
+/* ==========================
+   BUTTON
+========================== */
+
+.use-design-btn {
+    width: 100%;
+    margin-top: 20px;
+    border: none;
+    border-radius: 18px;
+    padding: 16px;
+    background: #28a745;
+    color: white;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: .2s ease;
+}
+
+.use-design-btn:hover {
+    transform: translateY(-2px);
+    background: #23923d;
+}
+
+/* ==========================
+   MOBILE
+========================== */
+
+@media (max-width: 768px) {
+
+    .cv-design-header h1 {
+        font-size: 2rem;
+    }
+
+    .preview-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .preview-body {
+        flex-direction: column;
+    }
+
+    .preview-sidebar {
+        width: 100%;
+    }
+
+}

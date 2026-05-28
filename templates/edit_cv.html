@@ -1,0 +1,635 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {{ _('Editar CV') }}
+{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet"
+      href="{{ url_for(
+            'static',
+            filename='css/cv.css'
+      ) }}">
+
+<div class="cv-editor-page">
+
+    <div class="cv-editor-header">
+
+        <h1>
+            📄 {{ _('Editar CV Profesional') }}
+        </h1>
+
+        <p>
+            {{ _('Completa tu perfil profesional para que más personas puedan encontrarte.') }}
+        </p>
+
+    </div>
+
+    <!-- 🔢 Progreso -->
+    <div class="cv-steps">
+
+        <div class="cv-step {% if step == '1' %}active{% endif %}">
+            1. {{ _('Datos personales') }}
+        </div>
+
+        <div class="cv-step {% if step == '2' %}active{% endif %}">
+            2. {{ _('Experiencia laboral') }}
+        </div>
+
+        <div class="cv-step {% if step == '3' %}active{% endif %}">
+            3. {{ _('Educación') }}
+        </div>
+
+        <div class="cv-step {% if step == '4' %}active{% endif %}">
+            4. {{ _('Habilidades') }}
+        </div>
+
+        <div class="cv-step {% if step == '5' %}active{% endif %}">
+            5. {{ _('Idiomas') }}
+        </div>
+
+        <div class="cv-step {% if step == '6' %}active{% endif %}">
+            6. {{ _('Información adicional') }}
+        </div>
+
+    </div>
+
+    <div class="cv-editor-card">
+
+        <form method="POST"
+              enctype="multipart/form-data"
+              action="{{ url_for(
+                    'edit_cv',
+                    step=step
+              ) }}">
+
+            {{ form.hidden_tag() }}
+
+            <!-- STEP 1 -->
+            {% if step == '1' %}
+
+                <h2>
+                    {{ _('Datos personales') }}
+                </h2>
+
+                <!-- FOTO CV -->
+                <div class="cv-photo-section">
+
+                    <label class="cv-photo-label">
+
+                        {{ _('Foto profesional') }}
+
+                    </label>
+
+                    <div class="cv-photo-preview-wrapper">
+
+                        <img
+                            id="cv-photo-preview"
+                            class="cv-photo-preview"
+                            src="{% if user_cv.profile_picture %}
+                                    {{ url_for(
+                                        'static',
+                                        filename='cv_profiles/' ~ user_cv.profile_picture
+                                    ) }}
+                                 {% else %}
+                                    {{ url_for(
+                                        'static',
+                                        filename='profile_pics/default.jpg'
+                                    ) }}
+                                 {% endif %}"
+                            alt="Foto CV">
+
+                    </div>
+
+                    <input type="file"
+                           id="cv-photo-input"
+                           name="cv_profile_picture"
+                           accept="image/*">
+
+                </div>
+
+                <div class="cv-group">
+
+                    <label>
+                        {{ _('Nombre completo') }}
+                    </label>
+
+                    <input type="text"
+                           name="full_name"
+                           value="{{ user_cv.full_name or '' }}">
+
+                </div>
+
+                <div class="cv-group">
+
+                    <label>Email</label>
+
+                    <input type="email"
+                           name="email"
+                           value="{{ user_cv.email or '' }}">
+
+                </div>
+
+                <div class="cv-group">
+
+                    <label>
+                        {{ _('Teléfono') }}
+                    </label>
+
+                    <input type="text"
+                           name="phone"
+                           value="{{ user_cv.phone or '' }}">
+
+                </div>
+
+                <div class="cv-group">
+
+                    <label>
+                        {{ _('Ubicación') }}
+                    </label>
+
+                    <input type="text"
+                           name="location"
+                           value="{{ user_cv.location or '' }}">
+
+                </div>
+
+                <div class="cv-group">
+
+                    <label>
+                        {{ _('Fecha de nacimiento') }}
+                    </label>
+
+                    <input type="date"
+                           name="birth_date"
+                           value="{{ user_cv.birth_date.strftime('%Y-%m-%d') if user_cv.birth_date else '' }}">
+
+                </div>
+
+                <button type="submit"
+                        class="save-cv-btn">
+
+                    {{ _('Siguiente') }} →
+
+                </button>
+
+            {% endif %}
+            
+            <!-- STEP 2 -->
+            {% if step == '2' %}
+
+                <h2>{{ _('Experiencia laboral') }}</h2>
+
+                <div id="experience-container">
+
+                    {% for experience in user_cv.experiences %}
+
+                        <div class="experience-card">
+
+                            <h3>{{ _('Trabajo') }} {{ loop.index }}</h3>
+
+                            <div class="cv-group">
+                                <label>{{ _('Nombre de la empresa') }}</label>
+                                <input type="text"
+                                       name="company_name[]"
+                                       value="{{ experience.company_name or '' }}">
+                            </div>
+
+                            <div class="cv-group">
+                                <label>{{ _('Puesto de trabajo') }}</label>
+                                <input type="text"
+                                       name="job_title[]"
+                                       value="{{ experience.job_title or '' }}">
+                            </div>
+
+                            <div class="cv-group">
+                                <label>{{ _('Fecha inicio') }}</label>
+                                <input type="date"
+                                       name="start_date[]"
+                                       value="{{ experience.start_date.strftime('%Y-%m-%d') if experience.start_date else '' }}">
+                            </div>
+
+                            <div class="cv-group">
+                                <label>{{ _('Fecha fin') }}</label>
+                                <input type="date"
+                                       name="end_date[]"
+                                       value="{{ experience.end_date.strftime('%Y-%m-%d') if experience.end_date else '' }}">
+                            </div>
+
+                            <div class="cv-group">
+                                <label>{{ _('Descripción (opcional)') }}</label>
+                                <textarea name="description[]" rows="4">{{ experience.description or '' }}</textarea>
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+                <button type="button"
+                        id="add-experience-btn"
+                        class="add-experience-btn">
+
+                    + {{ _('Añadir trabajo') }}
+
+                </button>
+
+                <div class="cv-navigation">
+
+                    <a href="{{ url_for('edit_cv', step=1) }}"
+                       class="back-btn">
+
+                        ← {{ _('Atrás') }}
+
+                    </a>
+
+                    <button type="submit"
+                            class="save-cv-btn">
+
+                        {{ _('Siguiente') }} →
+
+                    </button>
+
+                </div>
+
+            {% endif %}
+
+
+            <!-- STEP 3 -->
+            {% if step == '3' %}
+
+                <h2>🎓 {{ _('Educación') }}</h2>
+
+                <div id="education-container">
+
+                    {% for education in user_cv.educations %}
+
+                        <div class="education-card">
+
+                            <h3>{{ _('Estudio') }} {{ loop.index }}</h3>
+
+                            <div class="cv-group">
+                                <label>{{ _('Nombre del centro') }}</label>
+                                <input type="text"
+                                       name="school_name[]"
+                                       value="{{ education.school_name or '' }}">
+                            </div>
+
+                            <div class="cv-group">
+                                <label>{{ _('Nombre del grado') }}</label>
+                                <input type="text"
+                                       name="degree_name[]"
+                                       value="{{ education.degree_name or '' }}">
+                            </div>
+
+                            <div class="cv-group">
+                                <label>{{ _('Fecha inicio') }}</label>
+                                <input type="date"
+                                       name="education_start_date[]"
+                                       value="{{ education.start_date.strftime('%Y-%m-%d') if education.start_date else '' }}">
+                            </div>
+
+                            <div class="cv-group">
+                                <label>{{ _('Fecha final') }}</label>
+                                <input type="date"
+                                       name="education_end_date[]"
+                                       value="{{ education.end_date.strftime('%Y-%m-%d') if education.end_date else '' }}">
+                            </div>
+
+                            <div class="cv-checkbox">
+
+                                <input type="checkbox"
+                                       name="currently_studying_{{ loop.index0 }}"
+                                       {% if education.currently_studying %}checked{% endif %}>
+
+                                <label>
+                                    {{ _('Actualmente cursando') }}
+                                </label>
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+                <button type="button"
+                        id="add-education-btn"
+                        class="add-education-btn">
+
+                    + {{ _('Añadir estudio') }}
+
+                </button>
+
+                <div class="cv-navigation">
+
+                    <a href="{{ url_for('edit_cv', step=2) }}"
+                       class="back-btn">
+
+                        ← {{ _('Atrás') }}
+
+                    </a>
+
+                    <button type="submit"
+                            class="save-cv-btn">
+
+                        {{ _('Siguiente') }} →
+
+                    </button>
+
+                </div>
+
+            {% endif %}
+
+
+           <!-- STEP 4 - HABILIDADES -->
+{% if step == '4' %}
+
+    <h2>⭐ {{ _('Habilidades') }}</h2>
+
+    <div id="skills-container">
+
+        {% if user_cv.skills %}
+
+            {% for skill in user_cv.skills %}
+
+                <div class="skill-card">
+
+                    <h3>
+                        {{ _('Habilidad') }} {{ loop.index }}
+                    </h3>
+
+                    <div class="cv-group">
+                        <label>{{ _('Nombre de habilidad') }}</label>
+
+                        <input type="text"
+                               name="skill_name[]"
+                               value="{{ skill.skill_name or '' }}">
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="skill-card">
+
+                <h3>
+                    {{ _('Habilidad') }} 1
+                </h3>
+
+                <div class="cv-group">
+                    <label>{{ _('Nombre de habilidad') }}</label>
+
+                    <input type="text"
+                           name="skill_name[]">
+                </div>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+    <button type="button"
+            id="add-skill-btn"
+            class="add-skill-btn">
+
+        + {{ _('Añadir habilidad') }}
+
+    </button>
+
+    <div class="cv-navigation">
+
+        <a href="{{ url_for('edit_cv', step=3) }}"
+           class="back-btn">
+
+            ← {{ _('Atrás') }}
+
+        </a>
+
+        <button type="submit"
+                class="save-cv-btn">
+
+            {{ _('Siguiente') }} →
+
+        </button>
+
+    </div>
+
+{% endif %}
+
+
+<!-- STEP 5 - IDIOMAS -->
+{% if step == '5' %}
+
+    <h2>🌍 {{ _('Idiomas') }}</h2>
+
+    <div id="languages-container">
+
+        {% if user_cv.languages %}
+
+            {% for language in user_cv.languages %}
+
+                <div class="language-card">
+
+                    <h3>
+                        {{ _('Idioma') }} {{ loop.index }}
+                    </h3>
+
+                    <div class="cv-group">
+                        <label>{{ _('Idioma') }}</label>
+
+                        <input type="text"
+                               name="language_name[]"
+                               value="{{ language.language_name or '' }}">
+                    </div>
+
+                    <div class="cv-group">
+                        <label>{{ _('Nivel') }}</label>
+
+                        <select name="language_level[]">
+
+                            <option value="">
+                                {{ _('Seleccionar') }}
+                            </option>
+
+                            <option value="Nativo"
+                                {% if language.level == 'Nativo' %}selected{% endif %}>
+                                {{ _('Nativo') }}
+                            </option>
+
+                            <option value="Básico"
+                                {% if language.level == 'Básico' %}selected{% endif %}>
+                                {{ _('Básico') }}
+                            </option>
+
+                            <option value="Intermedio"
+                                {% if language.level == 'Intermedio' %}selected{% endif %}>
+                                {{ _('Intermedio') }}
+                            </option>
+
+                            <option value="Avanzado"
+                                {% if language.level == 'Avanzado' %}selected{% endif %}>
+                                {{ _('Avanzado') }}
+                            </option>
+
+                            <option value="Profesional"
+                                {% if language.level == 'Profesional' %}selected{% endif %}>
+                                {{ _('Profesional') }}
+                            </option>
+
+                            <option value="Bilingüe"
+                                {% if language.level == 'Bilingüe' %}selected{% endif %}>
+                                {{ _('Bilingüe') }}
+                            </option>
+
+                        </select>
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="language-card">
+
+                <h3>
+                    {{ _('Idioma') }} 1
+                </h3>
+
+                <div class="cv-group">
+                    <label>{{ _('Idioma') }}</label>
+
+                    <input type="text"
+                           name="language_name[]">
+                </div>
+
+                <div class="cv-group">
+                    <label>{{ _('Nivel') }}</label>
+
+                    <select name="language_level[]">
+
+                        <option value="">
+                            {{ _('Seleccionar') }}
+                        </option>
+
+                        <option value="Nativo">
+                            {{ _('Nativo') }}
+                        </option>
+
+                        <option value="Básico">
+                            {{ _('Básico') }}
+                        </option>
+
+                        <option value="Intermedio">
+                            {{ _('Intermedio') }}
+                        </option>
+
+                        <option value="Avanzado">
+                            {{ _('Avanzado') }}
+                        </option>
+
+                        <option value="Profesional">
+                            {{ _('Profesional') }}
+                        </option>
+
+                        <option value="Bilingüe">
+                            {{ _('Bilingüe') }}
+                        </option>
+
+                    </select>
+                </div>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+    <button type="button"
+            id="add-language-btn"
+            class="add-language-btn">
+
+        + {{ _('Añadir idioma') }}
+
+    </button>
+
+    <div class="cv-navigation">
+
+        <a href="{{ url_for('edit_cv', step=4) }}"
+           class="back-btn">
+
+            ← {{ _('Atrás') }}
+
+        </a>
+
+        <button type="submit"
+                class="save-cv-btn">
+
+            {{ _('Siguiente') }} →
+
+        </button>
+
+    </div>
+
+{% endif %}
+
+
+<!-- STEP 6 - INFORMACIÓN ADICIONAL -->
+{% if step == '6' %}
+
+    <h2>📝 {{ _('Información adicional') }}</h2>
+
+    <p class="cv-section-description">
+        {{ _('Añade cualquier información profesional extra que quieras compartir.') }}
+    </p>
+
+    <div class="cv-group">
+
+        <label>
+            {{ _('Información adicional') }}
+        </label>
+
+        <textarea
+            name="additional_information"
+            rows="10"
+            placeholder="{{ _('Ej: Carnet de conducir, disponibilidad, posibilidad de viajar, portfolio, herramientas que dominas...') }}"
+        >{{ user_cv.additional_information or '' }}</textarea>
+
+    </div>
+
+    <div class="cv-navigation">
+
+        <a href="{{ url_for('edit_cv', step=5) }}"
+           class="back-btn">
+
+            ← {{ _('Atrás') }}
+
+        </a>
+
+        <button type="submit"
+                class="save-cv-btn">
+
+            {{ _('Elegir diseño') }} →
+
+        </button>
+
+    </div>
+
+{% endif %}
+
+</form>
+
+</div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/cv.js') }}"></script>
+
+{% endblock %}

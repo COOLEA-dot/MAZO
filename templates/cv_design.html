@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {{ _('Elegir diseño de CV') }}
+{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet"
+      href="{{ url_for(
+            'static',
+            filename='css/cv_design.css'
+      ) }}">
+
+<div class="cv-design-page">
+
+    <div class="cv-design-header">
+
+        <h1>
+            🎨 {{ _('Elige el diseño de tu CV') }}
+        </h1>
+
+        <p>
+            {{ _('Selecciona cómo quieres mostrar tu perfil profesional.') }}
+        </p>
+
+    </div>
+
+    <div class="cv-design-grid">
+
+        <!-- ==========================
+             DISEÑO GRATIS
+        =========================== -->
+        <div class="cv-design-card free">
+
+            <div class="cv-design-badge free-badge">
+                {{ _('Gratis') }}
+            </div>
+
+            <div class="cv-preview basic-preview">
+
+                <!-- HEADER -->
+                <div class="preview-header">
+
+                    <div class="preview-photo"></div>
+
+                    <div class="preview-user">
+
+                        <h3>
+                            {{ user_cv.full_name or current_user.name }}
+                        </h3>
+
+                        <span>
+                            {{ user_cv.professional_title or _('Profesional') }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <!-- BODY -->
+                <div class="preview-body">
+
+                    <!-- SIDEBAR -->
+                    <div class="preview-sidebar">
+
+                        <div class="preview-block small"></div>
+                        <div class="preview-block small"></div>
+                        <div class="preview-block small"></div>
+
+                    </div>
+
+                    <!-- MAIN -->
+                    <div class="preview-main">
+
+                        <div class="preview-block large"></div>
+                        <div class="preview-block medium"></div>
+                        <div class="preview-block medium"></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <h2>
+                {{ _('CV Básico MAZO') }}
+            </h2>
+
+            <p>
+                {{ _('Diseño profesional limpio y elegante.') }}
+            </p>
+
+            <!-- BOTÓN FUNCIONAL -->
+            <a href="{{ url_for(
+                    'select_cv_design',
+                    design='basic'
+                ) }}"
+               class="use-design-btn">
+
+                {{ _('Usar diseño') }}
+
+            </a>
+
+        </div>
+
+
+        <!-- ==========================
+             PREMIUM 1
+        =========================== -->
+        <div class="cv-design-card premium locked">
+
+            <div class="premium-lock">
+                🔒 Premium
+            </div>
+
+            <div class="cv-preview premium-preview"></div>
+
+            <h2>
+                {{ _('Executive CV') }}
+            </h2>
+
+            <p>
+                {{ _('Diseño corporativo premium.') }}
+            </p>
+
+        </div>
+
+
+        <!-- ==========================
+             PREMIUM 2
+        =========================== -->
+        <div class="cv-design-card premium locked">
+
+            <div class="premium-lock">
+                🔒 Premium
+            </div>
+
+            <div class="cv-preview creator-preview"></div>
+
+            <h2>
+                {{ _('Creator CV') }}
+            </h2>
+
+            <p>
+                {{ _('Diseño moderno y visual.') }}
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ==========================
+     DATOS DEL CV PARA JS
+========================== -->
+
+<script type="application/json" id="cv-data">
+{
+    "full_name":
+        {{ (user_cv.full_name or '')|tojson }},
+
+    "professional_title":
+        {{ (user_cv.professional_title or '')|tojson }},
+
+    
+    "profile_picture":
+    {{
+        (
+            url_for(
+                'static',
+                filename='cv_profiles/' ~ user_cv.profile_picture
+            )
+            if user_cv.profile_picture
+            else ''
+        )|tojson }},
+   
+    "location":
+        {{ (user_cv.location or '')|tojson }},
+
+    "phone":
+        {{ (user_cv.phone or '')|tojson }},
+
+    "about_me":
+        {{ (user_cv.about_me or '')|tojson }},
+
+    "skills": [
+        {% for skill in user_cv.skills %}
+            {{ skill.skill_name|tojson }}
+            {% if not loop.last %},{% endif %}
+        {% endfor %}
+    ],
+
+    "languages": [
+        {% for language in user_cv.languages %}
+        {
+            "name":
+                {{ language.language_name|tojson }},
+
+            "level":
+                {{ language.level|tojson }}
+        }
+        {% if not loop.last %},{% endif %}
+        {% endfor %}
+    ],
+
+    "experiences": [
+        {% for exp in user_cv.experiences %}
+        {
+            "job_title":
+                {{ exp.job_title|tojson }},
+
+            "company_name":
+                {{ exp.company_name|tojson }}
+        }
+        {% if not loop.last %},{% endif %}
+        {% endfor %}
+    ],
+
+    "educations": [
+        {% for edu in user_cv.educations %}
+        {
+            "degree_name":
+                {{ edu.degree_name|tojson }},
+
+            "school_name":
+                {{ edu.school_name|tojson }}
+        }
+        {% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+}
+</script>
+
+<script src="{{ url_for(
+    'static',
+    filename='js/cv_design.js'
+) }}"></script>
+
+{% endblock %}

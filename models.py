@@ -205,6 +205,352 @@ class UserToken(db.Model):
 
     user = db.relationship('User', backref=db.backref('tokens', lazy=True))
 
+class UserCV(db.Model):
+    __tablename__ = 'user_cvs'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            'users.id',
+            ondelete='CASCADE'
+        ),
+        nullable=False,
+        unique=True
+    )
+
+    # ==========================
+    # DATOS PERSONALES DEL CV
+    # ==========================
+
+    full_name = db.Column(
+        db.String(150),
+        nullable=True
+    )
+
+    email = db.Column(
+        db.String(120),
+        nullable=True
+    )
+
+    phone = db.Column(
+        db.String(50),
+        nullable=True
+    )
+
+    location = db.Column(
+        db.String(200),
+        nullable=True
+    )
+
+    birth_date = db.Column(
+        db.Date,
+        nullable=True
+    )
+
+    profile_picture = db.Column(
+        db.String(255),
+        nullable=True
+    )
+
+    # ==========================
+    # PERFIL PROFESIONAL
+    # ==========================
+
+    professional_title = db.Column(
+        db.String(150),
+        nullable=True
+    )
+
+    about_me = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    years_experience = db.Column(
+        db.Integer,
+        nullable=True
+    )
+
+    availability = db.Column(
+        db.String(100),
+        nullable=True
+    )
+
+    # ==========================
+    # INFORMACIÓN ADICIONAL
+    # ==========================
+
+    additional_information = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    # ==========================
+    # DISEÑO DEL CV
+    # ==========================
+
+    cv_template = db.Column(
+        db.String(50),
+        default='basic'
+    )
+
+    # ==========================
+    # PDF DEL CV
+    # ==========================
+
+    cv_pdf = db.Column(
+        db.String(255),
+        nullable=True
+    )
+
+    # ==========================
+    # FECHAS
+    # ==========================
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # ==========================
+    # RELACIÓN USUARIO
+    # ==========================
+
+    user = db.relationship(
+        'User',
+        backref=db.backref(
+            'cv_profile',
+            uselist=False,
+            cascade='all, delete-orphan'
+        )
+    )
+
+    def __repr__(self):
+
+        username = (
+            self.user.username
+            if self.user
+            else "Unknown"
+        )
+
+        return f'<UserCV {username}>'
+
+class CVExperience(db.Model):
+    __tablename__ = 'cv_experiences'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_cv_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            'user_cvs.id',
+            ondelete='CASCADE'
+        ),
+        nullable=False
+    )
+
+    company_name = db.Column(
+        db.String(150),
+        nullable=False
+    )
+
+    job_title = db.Column(
+        db.String(150),
+        nullable=False
+    )
+
+    start_date = db.Column(
+        db.Date,
+        nullable=True
+    )
+
+    end_date = db.Column(
+        db.Date,
+        nullable=True
+    )
+
+    description = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    current_job = db.Column(
+        db.Boolean,
+        default=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    user_cv = db.relationship(
+        'UserCV',
+        backref=db.backref(
+            'experiences',
+            lazy=True,
+            cascade='all, delete-orphan'
+        )
+    )
+
+    def __repr__(self):
+        return f'<CVExperience {self.company_name}>'
+    
+class CVEducation(db.Model):
+    __tablename__ = 'cv_educations'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    user_cv_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            'user_cvs.id',
+            ondelete='CASCADE'
+        ),
+        nullable=False
+    )
+
+    school_name = db.Column(
+        db.String(200),
+        nullable=False
+    )
+
+    degree_name = db.Column(
+        db.String(200),
+        nullable=False
+    )
+
+    start_date = db.Column(
+        db.Date,
+        nullable=True
+    )
+
+    end_date = db.Column(
+        db.Date,
+        nullable=True
+    )
+
+    currently_studying = db.Column(
+        db.Boolean,
+        default=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    user_cv = db.relationship(
+        'UserCV',
+        backref=db.backref(
+            'educations',
+            lazy=True,
+            cascade='all, delete-orphan'
+        )
+    )
+
+    def __repr__(self):
+        return f'<CVEducation {self.school_name}>'
+       
+class CVSkill(db.Model):
+    __tablename__ = 'cv_skills'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    user_cv_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            'user_cvs.id',
+            ondelete='CASCADE'
+        ),
+        nullable=False
+    )
+
+    skill_name = db.Column(
+        db.String(150),
+        nullable=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    user_cv = db.relationship(
+        'UserCV',
+        backref=db.backref(
+            'skills',
+            lazy=True,
+            cascade='all, delete-orphan'
+        )
+    )
+
+    def __repr__(self):
+        return f'<CVSkill {self.skill_name}>'
+
+class CVLanguage(db.Model):
+    __tablename__ = 'cv_languages'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    user_cv_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            'user_cvs.id',
+            ondelete='CASCADE'
+        ),
+        nullable=False
+    )
+
+    language_name = db.Column(
+        db.String(100),
+        nullable=False
+    )
+
+    level = db.Column(
+        db.String(100),
+        nullable=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    user_cv = db.relationship(
+        'UserCV',
+        backref=db.backref(
+            'languages',
+            lazy=True,
+            cascade='all, delete-orphan'
+        )
+    )
+
+    def __repr__(self):
+        return f'<CVLanguage {self.language_name}>'
+           
+class EmptyForm(FlaskForm):
+    pass 
 
 class RegisterForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
