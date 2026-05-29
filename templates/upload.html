@@ -7,7 +7,7 @@
 
 <h1>{{ _('Sube tu Video') }}</h1>
 
-{# 🔔 BLOQUE DE FLASH MESSAGES #}
+{# 🔔 FLASH MESSAGES #}
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div class="flash-messages">
@@ -21,36 +21,218 @@
 {% endwith %}
 
 {% if current_user.is_authenticated %}
-<form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
-    <!-- CSRF Token -->
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    <label for="title">{{ _('Título del Video:') }}</label>
-    <input type="text" name="title" id="title" required>
+<div class="upload-layout">
 
-    <label for="description">{{ _('Descripción:') }}</label>
-    <textarea name="description" id="description" rows="3"></textarea>
+    <!-- ===================================
+         FORMULARIO IZQUIERDA
+    ==================================== -->
+    <form action="{{ url_for('upload') }}"
+          method="POST"
+          enctype="multipart/form-data"
+          id="uploadForm">
 
-    <label for="hashtags">{{ _('Hashtags (separados por comas):') }}</label>
-    <input type="text" name="hashtags" id="hashtags" placeholder="#ejemplo, #video">
+        <div class="upload-form-column">
 
-    <label for="video_file">{{ _('Selecciona un video:') }}</label>
-    <input type="file" name="video_file" id="video_file" accept="video/*" required>
+            <!-- CSRF -->
+            <input type="hidden"
+                   name="csrf_token"
+                   value="{{ csrf_token() }}">
 
-    <button type="submit">{{ _('Subir Video') }}</button>
-</form>
+            <!-- TÍTULO -->
+            <label for="title">
+                {{ _('Título del Video:') }}
+            </label>
+
+            <input type="text"
+                   name="title"
+                   id="title"
+                   required>
+
+            <!-- DESCRIPCIÓN -->
+            <label for="description">
+                {{ _('Descripción:') }}
+            </label>
+
+            <textarea name="description"
+                      id="description"
+                      rows="3"></textarea>
+
+            <!-- HASHTAGS -->
+            <label for="hashtags">
+                {{ _('Hashtags (separados por comas):') }}
+            </label>
+
+            <input type="text"
+                   name="hashtags"
+                   id="hashtags"
+                   placeholder="#ejemplo, #video">
+
+            <!-- VIDEO -->
+            <label for="video_file">
+                {{ _('Selecciona un video:') }}
+            </label>
+
+            <input type="file"
+                   name="video_file"
+                   id="video_file"
+                   accept="video/*"
+                   required>
+
+            <!-- BOTÓN -->
+            <button type="submit">
+                {{ _('Subir Video') }}
+            </button>
+
+        </div>
+
+    </form>
+
+    <!-- ===================================
+         PREVIEW DERECHA
+    ==================================== -->
+    <div id="video-preview-container"
+         class="video-preview-container hidden">
+
+        <h3>Vista previa en MAZO</h3>
+
+        <div class="video-preview-card">
+
+            <!-- VIDEO -->
+            <video
+                id="videoPreview"
+                class="preview-video"
+                muted
+                loop
+                playsinline
+                webkit-playsinline>
+            </video>
+
+            <!-- OVERLAY -->
+            <div class="preview-overlay">
+
+                <!-- PERFIL -->
+                <div class="preview-user-info">
+
+                    <img
+                        src="{{ url_for(
+                            'static',
+                            filename='profile_pics/' +
+                            (
+                                current_user.profile_picture
+                                if current_user.profile_picture
+                                else 'default.jpg'
+                            )
+                        ) }}"
+                        alt="Perfil"
+                        class="preview-profile-pic">
+
+                    <div>
+
+                        <strong>
+                            {{ current_user.company
+                               if current_user.company
+                               else current_user.name }}
+
+                            {% if current_user.is_premium %}
+                                <span class="premium-badge">
+                                    ✔
+                                </span>
+                            {% endif %}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+                <!-- TÍTULO -->
+                <p id="previewTitle"
+                   class="preview-title">
+                    Título del video
+                </p>
+
+                <!-- DESCRIPCIÓN -->
+                <p id="previewDescription"
+                   class="preview-description">
+                    Descripción del video
+                </p>
+
+                <!-- HASHTAGS -->
+                <div id="previewHashtags"
+                     class="preview-hashtags">
+                </div>
+
+                <!-- BOTONES -->
+                <div class="preview-actions">
+
+                    <button type="button">
+                        ❤️ 0
+                    </button>
+
+                    <button type="button">
+                        💬 0
+                    </button>
+
+                    <button type="button">
+                        📤
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- WARNING -->
+        <div id="videoWarning"
+             class="video-warning hidden">
+
+            ⚠️ Este video es horizontal.
+            En MAZO se verá mejor en vertical.
+
+        </div>
+
+    </div>
+
+</div>
 
 <br>
-<a href="{{ url_for('profile', username=current_user.username) }}">{{ _('Volver al perfil') }}</a>
+
+<a href="{{ url_for(
+    'profile',
+    username=current_user.username
+) }}">
+    {{ _('Volver al perfil') }}
+</a>
 
 {% else %}
+
 <div class="not-authenticated">
-    <p>{{ _('Debes iniciar sesión para subir videos.') }}</p>
-    <a class="btn" href="{{ url_for('login', next=request.path) }}">{{ _('Iniciar sesión') }}</a>
-    <a class="btn secondary" href="{{ url_for('register') }}">{{ _('Crear cuenta') }}</a>
+
+    <p>
+        {{ _('Debes iniciar sesión para subir videos.') }}
+    </p>
+
+    <a class="btn"
+       href="{{ url_for(
+            'login',
+            next=request.path
+       ) }}">
+       {{ _('Iniciar sesión') }}
+    </a>
+
+    <a class="btn secondary"
+       href="{{ url_for('register') }}">
+       {{ _('Crear cuenta') }}
+    </a>
+
 </div>
+
 {% endif %}
 
-<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+<script src="{{ url_for(
+    'static',
+    filename='js/upload.js'
+) }}"></script>
 
 {% endblock %}
