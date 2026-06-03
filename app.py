@@ -3278,6 +3278,38 @@ def upload_cv():
     flash('CV subido correctamente.', 'success')
     return redirect(request.referrer or url_for('profile', username=current_user.username))
 
+@app.route('/delete_cv', methods=['POST'])
+@login_required
+def delete_cv():
+
+    # Si el usuario tiene CV guardado
+    if current_user.cv_file:
+
+        cv_path = os.path.join(
+            app.config['UPLOAD_FOLDER'],
+            current_user.cv_file
+        )
+
+        # Eliminar archivo físico si existe
+        if os.path.exists(cv_path):
+            os.remove(cv_path)
+
+        # Borrar referencia en BD
+        current_user.cv_file = None
+        db.session.commit()
+
+        flash('CV eliminado correctamente', 'success')
+
+    else:
+        flash('No tienes ningún CV subido', 'error')
+
+    return redirect(
+        url_for(
+            'profile',
+            username=current_user.username
+        )
+    )
+
 @app.route('/cv/<username>')
 @login_required
 def view_cv(username):
