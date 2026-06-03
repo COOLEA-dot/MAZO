@@ -223,46 +223,118 @@ function confirmBlock() {
             console.error("❌ ERROR BACKEND:", text);
             throw new Error("Error en servidor");
         }
+
         return res.json();
     })
     .then(() => {
+
         closeBlockModal();
 
-        showFlashMessage("🚫 Usuario bloqueado");
+        showFlashMessage(
+            "🚫 Usuario bloqueado"
+        );
 
         // 🔥 DETECTAR SI ESTÁS EN PERFIL
-        const isProfilePage = window.location.pathname.includes("/profile");
+        const isProfilePage =
+            window.location.pathname
+            .includes("/profile");
 
+        // 💥 SI ESTÁS EN PERFIL
         if (isProfilePage) {
-            // 💥 REDIRIGIR AL HOME (CLAVE PARA APPLE)
+
+            // redirigir al home
             window.location.href = "/";
             return;
         }
 
-        // 🔥 HOME (eliminar video actual correctamente)
-        const activeVideoItem = document.querySelector(".video-item");
+        // ====================================
+        // 🚫 ELIMINAR TODOS LOS VIDEOS
+        // DEL USUARIO BLOQUEADO
+        // INSTANTÁNEAMENTE
+        // ====================================
 
-        if (activeVideoItem) {
-            activeVideoItem.remove(); // 💥 elimina el video actual
-        }
+        const allVideos =
+            document.querySelectorAll(
+                ".video-item"
+            );
 
-        // 🔥 SCROLL al siguiente video (efecto TikTok)
-        window.scrollBy({
-            top: window.innerHeight,
-            behavior: "smooth"
+        let removedSomething =
+            false;
+
+        allVideos.forEach(video => {
+
+            const ownerId =
+                video.dataset.userId;
+
+            if (
+                String(ownerId) ===
+                String(userToBlock)
+            ) {
+
+                removedSomething =
+                    true;
+
+                // fade visual
+                video.style.transition =
+                    "opacity 0.3s ease";
+
+                video.style.opacity =
+                    "0";
+
+                setTimeout(() => {
+                    video.remove();
+                }, 300);
+            }
         });
 
-        // 🔥 FALLBACK por seguridad (Apple-friendly)
+        // ====================================
+        // 🔥 ACTUALIZAR FEED
+        // ====================================
+
         setTimeout(() => {
-            location.reload();
-        }, 800);
+
+            const remainingVideos =
+                document.querySelectorAll(
+                    ".video-item"
+                );
+
+            // si no quedan videos
+            if (
+                remainingVideos.length === 0
+            ) {
+                location.reload();
+                return;
+            }
+
+            // reproducir siguiente
+            const nextVideo =
+                remainingVideos[0]
+                    ?.querySelector(
+                        ".video-element"
+                    );
+
+            if (nextVideo) {
+
+                nextVideo.play()
+                    .catch(err => {
+                        console.warn(
+                            "Autoplay bloqueado:",
+                            err
+                        );
+                    });
+            }
+
+        }, 350);
+
     })
     .catch(err => {
         console.error(err);
-        showFlashMessage("❌ Error al bloquear usuario");
+
+        showFlashMessage(
+            "❌ Error al bloquear usuario"
+        );
     });
 }
-
 
 // ===============================
 // 🧠 GLOBAL MODAL CONTROL

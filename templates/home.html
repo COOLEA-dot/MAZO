@@ -14,7 +14,9 @@
     {% if videos %}
     <div class="video-container">
         {% for video in videos %}
-        <div class="video-item" data-index="{{ loop.index0 }}">
+        <div class="video-item"
+            data-index="{{ loop.index0 }}"
+            data-user-id="{{ video.user_id }}">
 
             <div class="video-content-layout">
                 <div class="video-info video-left">
