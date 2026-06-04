@@ -253,11 +253,16 @@ function confirmBlock() {
         // INSTANTÁNEAMENTE
         // ====================================
 
-        const allVideos =
+       const allVideos =
             document.querySelectorAll(
                 ".video-item"
             );
 
+        console.log(allVideos);
+
+        allVideos.forEach(video => {
+            video.remove();
+       });
         let removedSomething =
             false;
 
