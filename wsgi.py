@@ -26,9 +26,9 @@ from app import app, socketio
 # 5) Ejecutar como script (opcional en local)
 if __name__ == "__main__":
     socketio.run(
-        app,
+        app=app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", 5000)),
         debug=True,
-        use_reloader=False,
+        use_reloader=True,
     )

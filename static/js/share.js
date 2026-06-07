@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     document.body.addEventListener('click', function (event) {
-
+         console.log(
+            "🔥 SHARE.JS NUEVO CARGADO"
+        );
         // 🔗 Abrir modal de compartir
         const shareBtn = event.target.closest('.share-button');
         if (shareBtn) {
@@ -176,57 +178,124 @@ function submitReport() {
 // 🚫 BLOCK SYSTEM
 // ===============================
 
+// ===============================
+// 🚫 BLOCK SYSTEM
+// ===============================
+
 let userToBlock = null;
 
-// Abrir modal
+// Abrir modal bloqueo
 function blockUser(userId) {
-    userToBlock = userId;
 
-    const modal = document.getElementById("blockModal");
+    userToBlock =
+        Number(userId);
+
+    console.log(
+        "🚫 USER TO BLOCK:",
+        userToBlock
+    );
+
+    const modal =
+        document.getElementById(
+            "blockModal"
+        );
+
     if (!modal) {
-        console.error("❌ blockModal no encontrado");
+
+        console.error(
+            "❌ blockModal no encontrado"
+        );
+
         return;
     }
 
-    modal.classList.remove("hidden");
+    modal.classList.remove(
+        "hidden"
+    );
 }
 
 // Cerrar modal
 function closeBlockModal() {
-    const modal = document.getElementById("blockModal");
-    if (modal) modal.classList.add("hidden");
+
+    const modal =
+        document.getElementById(
+            "blockModal"
+        );
+
+    if (modal) {
+
+        modal.classList.add(
+            "hidden"
+        );
+    }
 
     userToBlock = null;
 }
 
 // Confirmar bloqueo
 function confirmBlock() {
+
     if (!userToBlock) return;
 
-    console.log("🔒 Bloqueando usuario:", userToBlock);
+    console.log(
+        "🔒 Bloqueando usuario:",
+        userToBlock
+    );
 
-    const form = document.getElementById("blockForm");
+    const form =
+        document.getElementById(
+            "blockForm"
+        );
+
     if (!form) {
-        console.error("❌ blockForm no encontrado");
+        console.error(
+            "❌ blockForm no encontrado"
+        );
         return;
     }
 
-    const formData = new FormData(form);
+    const formData =
+        new FormData(form);
 
-    fetch(`/block_user/${userToBlock}`, {
-        method: "POST",
-        body: formData
-    })
+    fetch(
+        `/block_user/${userToBlock}`,
+        {
+            method: "POST",
+            body: formData
+        }
+    )
+
     .then(async res => {
+
         if (!res.ok) {
-            const text = await res.text();
-            console.error("❌ ERROR BACKEND:", text);
-            throw new Error("Error en servidor");
+
+            const text =
+                await res.text();
+
+            console.error(
+                "❌ ERROR BACKEND:",
+                text
+            );
+
+            throw new Error(
+                "Error en servidor"
+            );
         }
 
         return res.json();
     })
-    .then(() => {
+
+    .then(data => {
+
+        console.log(
+            "✅ RESPUESTA BACKEND:",
+            data
+        );
+
+        // 🔥 guardar ID antes
+        // de cerrar modal
+        const blockedUserId =
+            Number(userToBlock);
 
         closeBlockModal();
 
@@ -234,50 +303,66 @@ function confirmBlock() {
             "🚫 Usuario bloqueado"
         );
 
-        // 🔥 DETECTAR SI ESTÁS EN PERFIL
+        // =====================
+        // PERFIL
+        // =====================
+
         const isProfilePage =
             window.location.pathname
             .includes("/profile");
 
-        // 💥 SI ESTÁS EN PERFIL
         if (isProfilePage) {
 
-            // redirigir al home
-            window.location.href = "/";
+            window.location.href =
+                "/";
+
             return;
         }
 
-        // ====================================
-        // 🚫 ELIMINAR TODOS LOS VIDEOS
-        // DEL USUARIO BLOQUEADO
-        // INSTANTÁNEAMENTE
-        // ====================================
+        // =====================
+        // HOME
+        // =====================
 
-       const allVideos =
+        const allVideos =
             document.querySelectorAll(
                 ".video-item"
             );
 
-        console.log(allVideos);
+        console.log(
+            "🎬 Videos encontrados:",
+            allVideos.length
+        );
 
-        allVideos.forEach(video => {
-            video.remove();
-       });
-        let removedSomething =
-            false;
+        let removedCount = 0;
 
         allVideos.forEach(video => {
 
             const ownerId =
-                video.dataset.userId;
+                Number(
+                    video.dataset.userId
+                );
 
-            if (
-                String(ownerId) ===
-                String(userToBlock)
-            ) {
+            const blockedId =
+                blockedUserId;
 
-                removedSomething =
-                    true;
+            console.log(
+                "👤 OWNER:",
+                ownerId
+            );
+
+            console.log(
+                "🚫 BLOCKED:",
+                blockedId
+            );
+
+            // match real
+            if (ownerId == blockedId) {
+
+                removedCount++;
+
+                console.log(
+                    "🚫 ELIMINANDO VIDEO"
+                );
 
                 // fade visual
                 video.style.transition =
@@ -292,9 +377,14 @@ function confirmBlock() {
             }
         });
 
-        // ====================================
-        // 🔥 ACTUALIZAR FEED
-        // ====================================
+        console.log(
+            "✅ Videos eliminados:",
+            removedCount
+        );
+
+        // =====================
+        // ACTUALIZAR FEED
+        // =====================
 
         setTimeout(() => {
 
@@ -303,25 +393,55 @@ function confirmBlock() {
                     ".video-item"
                 );
 
-            // si no quedan videos
+            console.log(
+                "🎥 Restantes:",
+                remainingVideos.length
+            );
+
+            // fallback
             if (
-                remainingVideos.length === 0
+                removedCount === 0
             ) {
+
+                console.warn(
+                    "⚠️ No se eliminó nada"
+                );
+
                 location.reload();
                 return;
             }
 
-            // reproducir siguiente
+            // 🔥 si no quedan vídeos
+            // reconstruir feed
+            if (
+                remainingVideos.length === 0
+            ) {
+
+                console.log(
+                    "🔄 Redirigiendo al feed"
+                );
+
+                window.location.href =
+                    "/home";
+
+                return;
+            }
+
+            // reproducir siguiente video
             const nextVideo =
                 remainingVideos[0]
-                    ?.querySelector(
-                        ".video-element"
-                    );
+                ?.querySelector(
+                    ".video-element"
+                );
 
             if (nextVideo) {
 
+                nextVideo.currentTime =
+                    0;
+
                 nextVideo.play()
                     .catch(err => {
+
                         console.warn(
                             "Autoplay bloqueado:",
                             err
@@ -329,10 +449,12 @@ function confirmBlock() {
                     });
             }
 
-        }, 350);
+        }, 700);
 
     })
+
     .catch(err => {
+
         console.error(err);
 
         showFlashMessage(
@@ -340,24 +462,37 @@ function confirmBlock() {
         );
     });
 }
-
 // ===============================
 // 🧠 GLOBAL MODAL CONTROL
 // ===============================
 
-document.addEventListener("click", function (e) {
+document.addEventListener(
+    "click",
+    function (e) {
 
-    const reportModal = document.getElementById("reportModal");
-    if (e.target === reportModal) {
-        closeReportModal();
+        const reportModal =
+            document.getElementById(
+                "reportModal"
+            );
+
+        if (
+            e.target === reportModal
+        ) {
+            closeReportModal();
+        }
+
+        const blockModal =
+            document.getElementById(
+                "blockModal"
+            );
+
+        if (
+            e.target === blockModal
+        ) {
+            closeBlockModal();
+        }
     }
-
-    const blockModal = document.getElementById("blockModal");
-    if (e.target === blockModal) {
-        closeBlockModal();
-    }
-});
-
+);
 
 // ===============================
 // ✅ FLASH MESSAGE
@@ -377,3 +512,11 @@ function showFlashMessage(message) {
         }, 3000);
     }, 100);
 }
+// 🔥 HACER FUNCIONES GLOBALES
+window.blockUser = blockUser;
+window.confirmBlock = confirmBlock;
+window.closeBlockModal = closeBlockModal;
+
+window.reportVideo = reportVideo;
+window.submitReport = submitReport;
+window.closeReportModal = closeReportModal;

@@ -1388,35 +1388,99 @@ def get_replies(comment_id):
 
 @app.route('/home')
 def home():
+
     user = None
     chats = []
+
     block_form = BlockForm()
     report_form = ReportForm()
 
-    user_id = session.get('user_id')
+    # =========================
+    # 👤 USUARIO REAL LOGIN
+    # =========================
 
-    if user_id:
-        user = db.session.get(User, user_id)
-        if user is None:
-            session.pop('user_id', None)
-            session.pop('username', None)
-        else:
-            db.session.refresh(user)  # 🔥 asegurar datos actualizados
-            chats = get_user_chats(user.id)
+    if current_user.is_authenticated:
 
-    # 🎬 Vídeo introductorio
-    intro_video = Video.query.filter_by(is_intro=True).first()
+        user = current_user
 
+        # 🔥 asegurar datos frescos
+        db.session.refresh(
+            user
+        )
+
+        chats = get_user_chats(
+            user.id
+        )
+
+    # =========================
+    # 🎬 VIDEO INTRO
+    # =========================
+
+    intro_video = (
+        Video.query
+        .filter_by(
+            is_intro=True
+        )
+        .first()
+    )
+
+    # =========================
     # 🧠 FEED
-    if user:
-        videos = get_feed_videos(user)
-    else:
-        videos = Video.query.order_by(Video.id.desc()).all()
+    # =========================
 
-    # ❌ Intro solo si hay más vídeos
-    if intro_video and videos:
-        videos = [v for v in videos if v.id != intro_video.id]
-        videos.insert(0, intro_video)
+    if user:
+
+        videos = (
+            get_feed_videos(
+                user
+            )
+        )
+
+    else:
+
+        videos = (
+            Video.query
+            .order_by(
+                Video.id.desc()
+            )
+            .all()
+        )
+
+    # =========================
+    # 🚫 NO MOSTRAR INTRO
+    # SI EL USUARIO ESTÁ
+    # BLOQUEADO
+    # =========================
+
+    if intro_video:
+
+        intro_blocked = False
+
+        if user:
+
+            intro_blocked = (
+                Block.query.filter_by(
+                    blocker_id=user.id,
+                    blocked_id=intro_video.user_id
+                ).first()
+                is not None
+            )
+
+        # 🔥 solo mostrar intro
+        # si NO está bloqueado
+        if not intro_blocked:
+
+            videos = [
+                v
+                for v in videos
+                if v.id
+                != intro_video.id
+            ]
+
+            videos.insert(
+                0,
+                intro_video
+            )
 
     return render_template(
         'home.html',
