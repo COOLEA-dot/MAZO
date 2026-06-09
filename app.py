@@ -300,6 +300,15 @@ def get_csrf_token():
         "csrf_token": generate_csrf()
     })
 
+@app.route('/api/current-user')
+@login_required
+def api_current_user():
+
+    return jsonify({
+        "username":
+        current_user.username
+    })
+
 def _wrap_before_request_funcs():
     """
     Envuelve los before_request, pero saltándose las rutas OAuth
