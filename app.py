@@ -3057,6 +3057,7 @@ def send_message_http(recipient_id):
 
     return redirect(url_for('chat_with_user', recipient_identifier=recipient.username))
 
+
 @app.route('/api/profile/<username>')
 def api_profile(username):
 
@@ -3073,22 +3074,25 @@ def api_profile(username):
     # 🎥 Videos
     videos = []
 
-    for video in user.videos:
+    for video in user.videos_uploaded:
 
         videos.append({
             "id": video.id,
+
             "video_url":
                 url_for(
                     'uploaded_file',
                     filename=video.video_url,
                     _external=True
                 ),
+
             "thumbnail":
                 url_for(
                     'uploaded_file',
                     filename=video.video_url,
                     _external=True
                 ),
+
             "title": video.title
         })
 
@@ -3099,12 +3103,14 @@ def api_profile(username):
 
         liked_videos.append({
             "id": video.id,
+
             "video_url":
                 url_for(
                     'uploaded_file',
                     filename=video.video_url,
                     _external=True
                 ),
+
             "title": video.title
         })
 
@@ -3115,26 +3121,33 @@ def api_profile(username):
 
         image_url = None
 
-        if product.images and len(product.images) > 0:
+        if product.image:
+
             image_url = url_for(
                 'static',
-                filename='product_images/' +
-                product.images[0].image,
+                filename=
+                    'product_images/' +
+                    product.image,
                 _external=True
             )
 
         products.append({
             "id": product.id,
             "title": product.title,
-            "price": product.price,
+            "price": float(product.price),
             "image": image_url
         })
 
     return jsonify({
 
         "id": user.id,
-        "username": user.username,
-        "name": user.name,
+
+        "username":
+            user.username,
+
+        "name":
+            user.name
+            or user.username,
 
         "profile_picture":
             url_for(
@@ -3148,12 +3161,24 @@ def api_profile(username):
                 _external=True
             ),
 
-        "company": user.company,
-        "profession": user.profession,
-        "description": user.description,
-        "location": user.location,
+        "company":
+            user.company,
 
-        "is_premium": user.is_premium,
+        "profession":
+            ", ".join(
+                user.profession_names
+            )
+            if user.profession_names
+            else user.profession,
+
+        "description":
+            user.description,
+
+        "location":
+            user.location,
+
+        "is_premium":
+            user.is_premium,
 
         "followers":
             user.followers.count(),
@@ -3163,18 +3188,21 @@ def api_profile(username):
 
         "is_following":
             current_user.is_authenticated
-            and current_user in user.followers,
+            and current_user.is_following(user),
 
         "is_owner":
-            current_user_id == user.id,
+            current_user_id
+            == user.id,
 
         "has_cv":
-            bool(user.cv_profile),
+            bool(user.cv_file),
 
         "has_cv_pdf":
             bool(user.cv_file),
 
-        "videos": videos,
+        "videos":
+            videos,
+
         "liked_videos":
             liked_videos,
 
