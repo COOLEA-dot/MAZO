@@ -301,13 +301,20 @@ def get_csrf_token():
     })
 
 @app.route('/api/current-user')
-@login_required
 def api_current_user():
 
-    return jsonify({
-        "username":
-        current_user.username
-    })
+    if current_user.is_authenticated:
+
+
+        return jsonify({
+            "username":
+            current_user.username
+        })
+    return jsonify ({
+        "username": None
+    }) 
+     
+    
 
 def _wrap_before_request_funcs():
     """
