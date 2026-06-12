@@ -1210,6 +1210,70 @@ def login():
 
     return render_template('login.html')
 
+@app.route(
+    '/api/mobile-login',
+    methods=['POST']
+)
+def mobile_login():
+
+    data = request.get_json()
+
+    username_or_email = (
+        data.get(
+            'username',
+            ''
+        ).strip()
+    )
+
+    password = data.get(
+        'password',
+        ''
+    )
+
+    user = User.query.filter(
+        or_(
+            User.username
+            == username_or_email,
+
+            User.email
+            == username_or_email
+        )
+    ).first()
+
+    if (
+        user and
+        user.password_hash and
+        check_password_hash(
+            user.password_hash,
+            password
+        )
+    ):
+
+        login_user(
+            user,
+            remember=True
+        )
+
+        return jsonify({
+
+            "success": True,
+
+            "username":
+                user.username,
+
+            "email":
+                user.email
+        })
+
+    return jsonify({
+
+        "success": False,
+
+        "error":
+            "Usuario o contraseña incorrectos"
+
+    }), 401
+
 def send_verification_email(user_email):
     token = serializer.dumps(user_email, salt='email-confirm')
     confirm_url = url_for('confirm_email', token=token, _external=True)
