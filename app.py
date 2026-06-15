@@ -1214,6 +1214,7 @@ def login():
     '/api/mobile-login',
     methods=['POST']
 )
+@csrf.exempt
 def mobile_login():
 
     data = request.get_json()
