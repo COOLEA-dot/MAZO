@@ -4786,6 +4786,157 @@ def get_profile_opinions(
         "opinions":
             opinions_data
     })
+@app.route(
+    '/api/profile/<username>/opinions',
+    methods=['POST']
+)
+@login_required
+def create_opinion(
+    username
+):
+
+    data = request.get_json()
+
+    text = (
+        data.get(
+            'text',
+            ''
+        ).strip()
+    )
+
+    rating = data.get(
+        'rating'
+    )
+
+    if not text:
+
+        return jsonify({
+            "success":
+                False,
+            "message":
+                "La opinión es obligatoria"
+        }), 400
+
+    if rating is None:
+
+        return jsonify({
+            "success":
+                False,
+            "message":
+                "El rating es obligatorio"
+        }), 400
+
+    profile_user = User.query.filter_by(
+            username=username
+        ).first()
+
+    if not profile_user:
+
+        return jsonify({
+            "success":
+                False
+        }), 404
+
+    opinion = Opinion(
+
+            text=text,
+
+            rating=int(
+                rating
+            ),
+
+            user_id=
+                current_user.id,
+
+            profile_user_id=
+                profile_user.id
+        )
+
+    db.session.add(
+        opinion
+    )
+
+    db.session.commit()
+
+    return jsonify({
+
+        "success":
+            True,
+
+        "message":
+            "Opinión creada"
+    })
+
+@app.route(
+    '/api/opinion/<int:opinion_id>/reply',
+    methods=['POST']
+)
+@login_required
+def api_reply_opinion(
+    opinion_id
+):
+
+    data = request.get_json()
+
+    text = (
+        data.get(
+            'text',
+            ''
+        ).strip()
+    )
+
+    if not text:
+
+        return jsonify({
+            "success":
+                False
+        }), 400
+
+    opinion = Opinion.query.get(
+            opinion_id
+        )
+
+    if not opinion:
+
+        return jsonify({
+            "success":
+                False
+        }), 404
+
+    response = Response(
+
+            text=text,
+
+            opinion_id=
+                opinion_id,
+
+            user_id=
+                current_user.id
+        )
+
+    db.session.add(
+        response
+    )
+
+    db.session.commit()
+
+    return jsonify({
+
+        "success":
+            True,
+
+        "response": {
+
+            "id":
+                response.id,
+
+            "text":
+                response.text,
+
+            "username":
+                current_user.name
+        }
+    })
 
 @app.route('/opinion/<int:opinion_id>/respond', methods=['POST'])
 @login_required
