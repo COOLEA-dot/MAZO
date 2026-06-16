@@ -4692,6 +4692,101 @@ def get_videos():
     print("Videos enviados a la API:", video_data)  # Log para depuración
     return {"videos": video_data}
 
+@app.route(
+    '/api/profile/<username>/opinions',
+    methods=['GET']
+)
+def get_profile_opinions(
+    username
+):
+
+    user = User.query.filter_by(
+        username=username
+    ).first()
+
+    if not user:
+
+        return jsonify({
+            "success": False
+        }), 404
+
+    opinions = Opinion.query.filter_by(
+        profile_user_id=user.id
+    ).all()
+
+    opinions_data = []
+
+    for opinion in opinions:
+
+        opinions_data.append({
+
+            "id":
+                opinion.id,
+
+            "text":
+                opinion.text,
+
+            "rating":
+                opinion.rating,
+
+            "username":
+                opinion.user.name
+                if opinion.user
+                else "Usuario",
+
+            "profile_picture":
+                (
+                    url_for(
+                        'static',
+                        filename=
+                        opinion.user.profile_pic,
+                        _external=True
+                    )
+                    if opinion.user
+                    and opinion.user.profile_pic
+                    else url_for(
+                        'static',
+                        filename=
+                        'profile_pics/default.jpg',
+                        _external=True
+                    )
+                ),
+
+            "responses": [
+
+                {
+                    "id":
+                        response.id,
+
+                    "text":
+                        response.text,
+
+                    "username":
+                        response.user.name
+                        if response.user
+                        else "Usuario",
+
+                    "created_at":
+                        response.created_at
+                        .strftime(
+                            '%Y-%m-%d %H:%M'
+                        )
+                }
+
+                for response
+                in opinion.responses
+            ]
+        })
+
+    return jsonify({
+
+        "success":
+            True,
+
+        "opinions":
+            opinions_data
+    })
+
 @app.route('/opinion/<int:opinion_id>/respond', methods=['POST'])
 @login_required
 def reply_opinion(opinion_id):  
