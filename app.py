@@ -4723,6 +4723,11 @@ def get_profile_opinions(
             "id":
                 opinion.id,
 
+            "is_owner":
+                current_user.is_authenticated
+                and opinion.user_id
+                == current_user.id,
+
             "text":
                 opinion.text,
 
