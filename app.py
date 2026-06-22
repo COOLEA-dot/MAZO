@@ -3648,6 +3648,71 @@ def api_edit_profile():
             "Perfil actualizado correctamente"
     })
 
+@app.route(
+    '/api/profile-picture',
+    methods=['POST']
+)
+@login_required
+def api_profile_picture():
+
+    profile_pic = request.files.get(
+        "profile_pic"
+    )
+
+    if not profile_pic:
+
+        return jsonify({
+
+            "success": False,
+
+            "message":
+                "No se recibió ninguna imagen"
+        }), 400
+
+    filename = secure_filename(
+        profile_pic.filename
+    )
+
+    name_part, ext = os.path.splitext(
+        filename
+    )
+
+    unique_name = (
+        f"{name_part}_{int(time.time())}{ext}"
+    )
+
+    os.makedirs(
+        app.config["PROFILE_PICS_FOLDER"],
+        exist_ok=True
+    )
+
+    path = os.path.join(
+        app.config["PROFILE_PICS_FOLDER"],
+        unique_name
+    )
+
+    profile_pic.save(
+        path
+    )
+
+    current_user.profile_pic = (
+        f"profile_pics/{unique_name}"
+    )
+
+    db.session.commit()
+
+    return jsonify({
+
+        "success": True,
+
+        "profile_picture":
+            url_for(
+                'static',
+                filename=current_user.profile_pic,
+                _external=True
+            )
+    })
+    
 @app.route('/upload_cv', methods=['POST'])
 @login_required
 def upload_cv():
