@@ -3712,7 +3712,7 @@ def api_profile_picture():
                 _external=True
             )
     })
-    
+
 @app.route('/upload_cv', methods=['POST'])
 @login_required
 def upload_cv():
@@ -5405,6 +5405,62 @@ def delete_account():
         print("ERROR AL ELIMINAR CUENTA:", e)
         return jsonify({"success": False}), 500
 
+@app.route(
+    '/api/delete-account',
+    methods=['POST']
+)
+@login_required
+def api_delete_account():
+
+    try:
+
+        user = User.query.get(
+            current_user.id
+        )
+
+        if not user:
+
+            return jsonify({
+                "success": False
+            }), 404
+
+        Video.query.filter_by(
+            user_id=user.id
+        ).delete()
+
+        Comment.query.filter_by(
+            user_id=user.id
+        ).delete()
+
+        logout_user()
+
+        db.session.delete(
+            user
+        )
+
+        db.session.commit()
+
+        session.clear()
+
+        return jsonify({
+
+            "success": True
+        })
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print(
+            "DELETE ACCOUNT ERROR:",
+            e
+        )
+
+        return jsonify({
+
+            "success": False
+        }), 500
+    
 @app.route("/jobs", endpoint="jobs")
 def jobs_view():
     tab = request.args.get("tab", "proyectos")
