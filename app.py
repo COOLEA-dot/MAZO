@@ -3582,6 +3582,72 @@ def api_get_edit_profile():
             )
     })
 
+@app.route(
+    '/api/edit-profile',
+    methods=['POST']
+)
+@login_required
+def api_edit_profile():
+
+    data = request.get_json()
+
+    current_user.name = (
+        data.get(
+            "name",
+            ""
+        ).strip()
+    )
+
+    current_user.email = (
+        data.get(
+            "email"
+        ) or None
+    )
+
+    current_user.company = (
+        data.get(
+            "company"
+        ) or None
+    )
+
+    current_user.description = (
+        data.get(
+            "description"
+        ) or None
+    )
+
+    current_user.location = (
+        data.get(
+            "location"
+        ) or None
+    )
+
+    professions = data.get(
+        "professions",
+        []
+    )
+
+    current_user.set_professions_from_list(
+        professions
+    )
+
+    # Compatibilidad con la columna antigua
+    current_user.profession = (
+        professions[0]
+        if professions
+        else None
+    )
+
+    db.session.commit()
+
+    return jsonify({
+
+        "success": True,
+
+        "message":
+            "Perfil actualizado correctamente"
+    })
+
 @app.route('/upload_cv', methods=['POST'])
 @login_required
 def upload_cv():
