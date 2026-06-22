@@ -3541,6 +3541,47 @@ def edit_profile():
         profession_options=profession_options
     )
 
+@app.route(
+    '/api/edit-profile',
+    methods=['GET']
+)
+@login_required
+def api_get_edit_profile():
+
+    return jsonify({
+
+        "success": True,
+
+        "name":
+            current_user.name,
+
+        "email":
+            current_user.email,
+
+        "company":
+            current_user.company,
+
+        "description":
+            current_user.description,
+
+        "location":
+            current_user.location,
+
+        "professions":
+            current_user.profession_names,
+
+        "profile_picture":
+            (
+                url_for(
+                    'static',
+                    filename=current_user.profile_pic,
+                    _external=True
+                )
+                if current_user.profile_pic
+                else None
+            )
+    })
+
 @app.route('/upload_cv', methods=['POST'])
 @login_required
 def upload_cv():
@@ -5674,7 +5715,132 @@ def unblock_user(user_id):
     except Exception as e:
         print("❌ ERROR UNBLOCK:", e)
         return jsonify({"success": False}), 500
-    
+
+@app.route(
+    '/api/blocked-users',
+    methods=['GET']
+)
+@login_required
+def api_blocked_users():
+
+    blocked_users = (
+        db.session.query(User)
+        .join(
+            Block,
+            Block.blocked_id == User.id
+        )
+        .filter(
+            Block.blocker_id == current_user.id
+        )
+        .all()
+    )
+
+    return jsonify({
+
+        "success": True,
+
+        "users": [
+
+            {
+                "id":
+                    user.id,
+
+                "username":
+                    user.username,
+
+                "name":
+                    user.name,
+
+                "profile_picture":
+                    (
+                        url_for(
+                            'static',
+                            filename=user.profile_pic,
+                            _external=True
+                        )
+                        if user.profile_pic
+                        else url_for(
+                            'static',
+                            filename='profile_pics/default.jpg',
+                            _external=True
+                        )
+                    )
+            }
+
+            for user
+            in blocked_users
+        ]
+    })
+
+@app.route(
+    '/api/unblock-user/<int:user_id>',
+    methods=['POST']
+)
+@login_required
+def api_unblock_user(user_id):
+
+    block = Block.query.filter_by(
+        blocker_id=current_user.id,
+        blocked_id=user_id
+    ).first()
+
+    if not block:
+
+        return jsonify({
+            "success": False
+        }), 404
+
+    db.session.delete(block)
+    db.session.commit()
+
+    return jsonify({
+        "success": True
+    })
+@app.route(
+    '/api/change-password',
+    methods=['POST']
+)
+@login_required
+def api_change_password():
+
+    data = request.get_json()
+
+    current_password = data.get(
+        "current_password",
+        ""
+    )
+
+    new_password = data.get(
+        "new_password",
+        ""
+    )
+
+    if not current_user.check_password(
+        current_password
+    ):
+
+        return jsonify({
+
+            "success": False,
+
+            "message":
+                "Contraseña actual incorrecta"
+        }), 400
+
+    current_user.set_password(
+        new_password
+    )
+
+    db.session.commit()
+
+    return jsonify({
+
+        "success": True,
+
+        "message":
+            "Contraseña actualizada"
+    })
+   
 @app.route('/support')
 def support():
     return render_template('support.html')
