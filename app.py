@@ -5421,7 +5421,9 @@ def api_delete_account():
         if not user:
 
             return jsonify({
+
                 "success": False
+
             }), 404
 
         Video.query.filter_by(
@@ -5452,13 +5454,17 @@ def api_delete_account():
         db.session.rollback()
 
         print(
-            "DELETE ACCOUNT ERROR:",
-            e
+            "DELETE ACCOUNT ERROR:"
         )
+
+        print(e)
 
         return jsonify({
 
-            "success": False
+            "success": False,
+
+            "error":
+                str(e)
         }), 500
     
 @app.route("/jobs", endpoint="jobs")
