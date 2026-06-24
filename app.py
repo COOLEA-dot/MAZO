@@ -170,6 +170,8 @@ from models import (
     CVLanguage,
     CVEducation,
     likes_table,
+    OfferUsage,
+    followers,
 )
 
 csrf = CSRFProtect(app)
@@ -5389,62 +5391,15 @@ def delete_account():
         )
 
         if not user:
-
             return jsonify({
                 "success": False
             }), 404
 
-        # 🔥 Obtener vídeos del usuario
-        video_ids = [
-
-            video.id
-
-            for video in Video.query.filter_by(
-                user_id=user.id
-            ).all()
-        ]
-
-        # 🔥 Borrar likes asociados a esos vídeos
-        if video_ids:
-
-            db.session.execute(
-
-                likes_table.delete().where(
-
-                    likes_table.c.video_id.in_(
-                        video_ids
-                    )
-                )
-            )
-
-        # 🔥 Borrar comentarios asociados a esos vídeos
-        if video_ids:
-
-            Comment.query.filter(
-
-                Comment.video_id.in_(
-                    video_ids
-                )
-
-            ).delete(
-                synchronize_session=False
-            )
-
-        # 🔥 Borrar vídeos
-        Video.query.filter_by(
-            user_id=user.id
-        ).delete()
-
-        # 🔥 Borrar comentarios escritos por el usuario
-        Comment.query.filter_by(
-            user_id=user.id
-        ).delete()
-
-        logout_user()
-
-        db.session.delete(
+        delete_user_and_related_data(
             user
         )
+
+        logout_user()
 
         db.session.commit()
 
@@ -5465,13 +5420,249 @@ def delete_account():
         print(e)
 
         return jsonify({
-
             "success": False,
-
-            "error":
-                str(e)
+            "error": str(e)
         }), 500
 
+def delete_user_and_related_data(user):
+
+    # ==========================
+    # FOLLOWERS
+    # ==========================
+
+    db.session.execute(
+        followers.delete().where(
+            followers.c.follower_id == user.id
+        )
+    )
+
+    db.session.execute(
+        followers.delete().where(
+            followers.c.followed_id == user.id
+        )
+    )
+
+    # ==========================
+    # LIKES
+    # ==========================
+
+    db.session.execute(
+        likes_table.delete().where(
+            likes_table.c.user_id == user.id
+        )
+    )
+
+    # ==========================
+    # VIDEOS
+    # ==========================
+
+    video_ids = [
+        video.id
+        for video in Video.query.filter_by(
+            user_id=user.id
+        ).all()
+    ]
+
+    if video_ids:
+
+        db.session.execute(
+            likes_table.delete().where(
+                likes_table.c.video_id.in_(
+                    video_ids
+                )
+            )
+        )
+
+        Comment.query.filter(
+            Comment.video_id.in_(
+                video_ids
+            )
+        ).delete(
+            synchronize_session=False
+        )
+
+    Video.query.filter_by(
+        user_id=user.id
+    ).delete()
+
+    # ==========================
+    # COMMENTS
+    # ==========================
+
+    Comment.query.filter_by(
+        user_id=user.id
+    ).delete()
+
+    # ==========================
+    # OPINIONS
+    # ==========================
+
+    opinion_ids = [
+        opinion.id
+        for opinion in Opinion.query.filter(
+            (Opinion.user_id == user.id) |
+            (Opinion.profile_user_id == user.id)
+        ).all()
+    ]
+
+    if opinion_ids:
+
+        Response.query.filter(
+            Response.opinion_id.in_(
+                opinion_ids
+            )
+        ).delete(
+            synchronize_session=False
+        )
+
+        Opinion.query.filter(
+            Opinion.id.in_(
+                opinion_ids
+            )
+        ).delete(
+            synchronize_session=False
+        )
+
+    Response.query.filter_by(
+        user_id=user.id
+    ).delete()
+
+    # ==========================
+    # BLOCKS
+    # ==========================
+
+    Block.query.filter_by(
+        blocker_id=user.id
+    ).delete()
+
+    Block.query.filter_by(
+        blocked_id=user.id
+    ).delete()
+
+    # ==========================
+    # PRIVATE CHAT
+    # ==========================
+
+    ChatMessage.query.filter_by(
+        sender_id=user.id
+    ).delete()
+
+    Conversation.query.filter(
+        (Conversation.user_id == user.id) |
+        (Conversation.recipient_id == user.id)
+    ).delete(
+        synchronize_session=False
+    )
+
+    # ==========================
+    # GROUPS
+    # ==========================
+
+    GroupMessage.query.filter_by(
+        sender_id=user.id
+    ).delete()
+
+    GroupMember.query.filter_by(
+        user_id=user.id
+    ).delete(
+        synchronize_session=False
+    )
+
+    Group.query.filter_by(
+        owner_id=user.id
+    ).delete(
+        synchronize_session=False
+    )
+
+    # ==========================
+    # PROJECTS
+    # ==========================
+
+    ProjectApplication.query.filter_by(
+        applicant_id=user.id
+    ).delete()
+
+    Project.query.filter_by(
+        user_id=user.id
+    ).delete()
+
+    # ==========================
+    # JOBS
+    # ==========================
+
+    JobApplication.query.filter_by(
+        applicant_id=user.id
+    ).delete()
+
+    Job.query.filter_by(
+        user_id=user.id
+    ).delete()
+
+    # ==========================
+    # PRODUCTS
+    # ==========================
+
+    product_ids = [
+        p.id
+        for p in Product.query.filter_by(
+            user_id=user.id
+        ).all()
+    ]
+
+    if product_ids:
+
+        ProductImage.query.filter(
+            ProductImage.product_id.in_(
+                product_ids
+            )
+        ).delete(
+            synchronize_session=False
+        )
+
+    Product.query.filter_by(
+        user_id=user.id
+    ).delete()
+
+    # ==========================
+    # CV
+    # ==========================
+
+    UserCV.query.filter_by(
+        user_id=user.id
+    ).delete()
+
+    # ==========================
+    # TOKENS
+    # ==========================
+
+    UserToken.query.filter_by(
+        user_id=user.id
+    ).delete()
+
+    # ==========================
+    # REPORTS
+    # ==========================
+
+    Report.query.filter(
+        (Report.reporter_id == user.id) |
+        (Report.reported_user_id == user.id)
+    ).delete(
+        synchronize_session=False
+    )
+
+    # ==========================
+    # OFFERS
+    # ==========================
+
+    OfferUsage.query.filter_by(
+        user_id=user.id
+    ).delete()
+
+    # ==========================
+    # USER
+    # ==========================
+
+    db.session.delete(user)
 
 @app.route(
     '/api/delete-account',
@@ -5487,71 +5678,21 @@ def api_delete_account():
         )
 
         if not user:
-
             return jsonify({
-
                 "success": False
-
             }), 404
 
-        # 🔥 Obtener vídeos del usuario
-        video_ids = [
-
-            video.id
-
-            for video in Video.query.filter_by(
-                user_id=user.id
-            ).all()
-        ]
-
-        # 🔥 Borrar likes asociados a esos vídeos
-        if video_ids:
-
-            db.session.execute(
-
-                likes_table.delete().where(
-
-                    likes_table.c.video_id.in_(
-                        video_ids
-                    )
-                )
-            )
-
-        # 🔥 Borrar comentarios asociados a esos vídeos
-        if video_ids:
-
-            Comment.query.filter(
-
-                Comment.video_id.in_(
-                    video_ids
-                )
-
-            ).delete(
-                synchronize_session=False
-            )
-
-        # 🔥 Borrar vídeos
-        Video.query.filter_by(
-            user_id=user.id
-        ).delete()
-
-        # 🔥 Borrar comentarios escritos por el usuario
-        Comment.query.filter_by(
-            user_id=user.id
-        ).delete()
-
-        logout_user()
-
-        db.session.delete(
+        delete_user_and_related_data(
             user
         )
+
+        logout_user()
 
         db.session.commit()
 
         session.clear()
 
         return jsonify({
-
             "success": True
         })
 
@@ -5566,13 +5707,12 @@ def api_delete_account():
         print(e)
 
         return jsonify({
-
             "success": False,
-
-            "error":
-                str(e)
+            "error": str(e)
         }), 500
-        
+
+
+    
 @app.route("/jobs", endpoint="jobs")
 def jobs_view():
     tab = request.args.get("tab", "proyectos")
