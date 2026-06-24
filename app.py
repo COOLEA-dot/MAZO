@@ -169,6 +169,7 @@ from models import (
     CVSkill,
     CVLanguage,
     CVEducation,
+    likes_table,
 )
 
 csrf = CSRFProtect(app)
@@ -5380,30 +5381,84 @@ def logout():
 @app.route('/delete-account', methods=['POST'])
 @login_required
 def delete_account():
+
     try:
-        # ⚠️ Obtener la instancia REAL del usuario
-        user = User.query.get(current_user.id)
+
+        user = User.query.get(
+            current_user.id
+        )
 
         if not user:
-            return jsonify({"success": False}), 404
 
-        # Eliminar contenido relacionado (solo lo necesario)
-        Video.query.filter_by(user_id=user.id).delete()
-        Comment.query.filter_by(user_id=user.id).delete()
+            return jsonify({
+                "success": False
+            }), 404
+
+        # 🔥 Obtener vídeos del usuario
+        video_ids = [
+
+            video.id
+
+            for video in Video.query.filter_by(
+                user_id=user.id
+            ).all()
+        ]
+
+        # 🔥 Borrar likes asociados a esos vídeos
+        if video_ids:
+
+            db.session.execute(
+
+                likes_table.delete().where(
+
+                    likes_table.c.video_id.in_(
+                        video_ids
+                    )
+                )
+            )
+
+        # 🔥 Borrar vídeos
+        Video.query.filter_by(
+            user_id=user.id
+        ).delete()
+
+        # 🔥 Borrar comentarios
+        Comment.query.filter_by(
+            user_id=user.id
+        ).delete()
 
         logout_user()
 
-        db.session.delete(user)
+        db.session.delete(
+            user
+        )
+
         db.session.commit()
 
         session.clear()
 
-        return jsonify({"success": True})
+        return jsonify({
+            "success": True
+        })
 
     except Exception as e:
+
         db.session.rollback()
-        print("ERROR AL ELIMINAR CUENTA:", e)
-        return jsonify({"success": False}), 500
+
+        print(
+            "ERROR AL ELIMINAR CUENTA:"
+        )
+
+        print(e)
+
+        return jsonify({
+
+            "success": False,
+
+            "error":
+                str(e)
+        }), 500
+
 
 @app.route(
     '/api/delete-account',
@@ -5426,10 +5481,35 @@ def api_delete_account():
 
             }), 404
 
+        # 🔥 Obtener vídeos del usuario
+        video_ids = [
+
+            video.id
+
+            for video in Video.query.filter_by(
+                user_id=user.id
+            ).all()
+        ]
+
+        # 🔥 Borrar likes asociados a esos vídeos
+        if video_ids:
+
+            db.session.execute(
+
+                likes_table.delete().where(
+
+                    likes_table.c.video_id.in_(
+                        video_ids
+                    )
+                )
+            )
+
+        # 🔥 Borrar vídeos
         Video.query.filter_by(
             user_id=user.id
         ).delete()
 
+        # 🔥 Borrar comentarios
         Comment.query.filter_by(
             user_id=user.id
         ).delete()
