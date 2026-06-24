@@ -5417,12 +5417,25 @@ def delete_account():
                 )
             )
 
+        # 🔥 Borrar comentarios asociados a esos vídeos
+        if video_ids:
+
+            Comment.query.filter(
+
+                Comment.video_id.in_(
+                    video_ids
+                )
+
+            ).delete(
+                synchronize_session=False
+            )
+
         # 🔥 Borrar vídeos
         Video.query.filter_by(
             user_id=user.id
         ).delete()
 
-        # 🔥 Borrar comentarios
+        # 🔥 Borrar comentarios escritos por el usuario
         Comment.query.filter_by(
             user_id=user.id
         ).delete()
@@ -5504,12 +5517,25 @@ def api_delete_account():
                 )
             )
 
+        # 🔥 Borrar comentarios asociados a esos vídeos
+        if video_ids:
+
+            Comment.query.filter(
+
+                Comment.video_id.in_(
+                    video_ids
+                )
+
+            ).delete(
+                synchronize_session=False
+            )
+
         # 🔥 Borrar vídeos
         Video.query.filter_by(
             user_id=user.id
         ).delete()
 
-        # 🔥 Borrar comentarios
+        # 🔥 Borrar comentarios escritos por el usuario
         Comment.query.filter_by(
             user_id=user.id
         ).delete()
@@ -5546,7 +5572,7 @@ def api_delete_account():
             "error":
                 str(e)
         }), 500
-    
+        
 @app.route("/jobs", endpoint="jobs")
 def jobs_view():
     tab = request.args.get("tab", "proyectos")
