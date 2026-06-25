@@ -5506,7 +5506,9 @@ def delete_user_and_related_data(user):
     ]
 
     if opinion_ids:
-
+        print("RESPONSE =", Response)
+        print("BASES =", Response.__bases__)
+        print("HAS QUERY =", hasattr(Response, "query"))
         Response.query.filter(
             Response.opinion_id.in_(
                 opinion_ids
