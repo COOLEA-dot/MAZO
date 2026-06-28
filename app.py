@@ -5541,9 +5541,23 @@ def delete_user_and_related_data(user):
     # PRIVATE CHAT
     # ==========================
 
-    ChatMessage.query.filter_by(
-        sender_id=user.id
-    ).delete()
+    conversation_ids = [
+        c.id
+        for c in Conversation.query.filter(
+            (Conversation.user_id == user.id) |
+            (Conversation.recipient_id == user.id)
+        ).all()
+    ]
+
+    if conversation_ids:
+
+        ChatMessage.query.filter(
+            ChatMessage.conversation_id.in_(
+                conversation_ids
+            )
+        ).delete(
+            synchronize_session=False
+        )
 
     Conversation.query.filter(
         (Conversation.user_id == user.id) |
@@ -5551,7 +5565,6 @@ def delete_user_and_related_data(user):
     ).delete(
         synchronize_session=False
     )
-
     # ==========================
     # GROUPS
     # ==========================
