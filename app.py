@@ -139,7 +139,7 @@ from models import (
     ChatMessage,
     Project,
     Offer,
-    Response,
+    Response as OpinionResponse,
     Job,
     RegisterForm,
     OpinionForm,
@@ -1913,10 +1913,6 @@ def probe_duration(src_path):
 def _abs_folder(base_folder):
     # Asegura ruta absoluta basada en app.root_path
     return base_folder if os.path.isabs(base_folder) else os.path.join(app.root_path, base_folder)
-from flask import Response, abort, request
-import os
-import mimetypes
-from datetime import datetime
 
 
 def partial_response(abs_path, content_type=None, cache_seconds=60 * 60 * 24 * 7):
@@ -1939,7 +1935,7 @@ def partial_response(abs_path, content_type=None, cache_seconds=60 * 60 * 24 * 7
     # SIN RANGE → 200
     # =========================
     if not range_header:
-        response = Response(
+        response = OpinionResponse(
             open(abs_path, "rb"),
             200,
             mimetype=content_type,
@@ -1971,7 +1967,7 @@ def partial_response(abs_path, content_type=None, cache_seconds=60 * 60 * 24 * 7
         f.seek(start)
         data = f.read(length)
 
-    response = Response(
+    response = OpinionResponse(
         data,
         206,
         mimetype=content_type,
@@ -5083,7 +5079,7 @@ def api_reply_opinion(
                 False
         }), 404
 
-    response = Response(
+    response = OpinionResponse(
 
             text=text,
 
@@ -5131,7 +5127,7 @@ def reply_opinion(opinion_id):
     if not opinion:
         return jsonify({'success': False, 'message': 'La opinión no existe'}), 404
 
-    response = Response(
+    response = OpinionResponse(
         text=text,
         opinion_id=opinion_id,
         user_id=current_user.id
@@ -5185,7 +5181,7 @@ def get_responses(opinion_id):
         return jsonify({'success': False, 'message': 'La opinión no existe'}), 404
 
     # Obtener las respuestas asociadas a esta opinión
-    responses = Response.query.filter_by(opinion_id=opinion_id).all()
+    responses = OpinionResponse.query.filter_by(opinion_id=opinion_id).all()
     
     # Preparar las respuestas para enviarlas en formato JSON
     responses_data = [
@@ -5226,7 +5222,7 @@ def delete_opinion(opinion_id):
 @app.route('/response/<int:response_id>/delete', methods=['POST'])
 @login_required
 def delete_response(response_id):
-    response = Response.query.get(response_id)
+    response = OpinionResponse.query.get(response_id)
 
     if not response:
         return jsonify({"success": False, "message": "Respuesta no encontrada"}), 404
@@ -5506,11 +5502,11 @@ def delete_user_and_related_data(user):
     ]
 
     if opinion_ids:
-        print("RESPONSE =", Response)
-        print("BASES =", Response.__bases__)
-        print("HAS QUERY =", hasattr(Response, "query"))
-        Response.query.filter(
-            Response.opinion_id.in_(
+        print("RESPONSE =", OpinionResponse)
+        print("BASES =", OpinionResponse.__bases__)
+        print("HAS QUERY =", hasattr(OpinionResponse, "query"))
+        OpinionResponse.query.filter(
+            OpinionResponse.opinion_id.in_(
                 opinion_ids
             )
         ).delete(
@@ -5525,7 +5521,7 @@ def delete_user_and_related_data(user):
             synchronize_session=False
         )
 
-    Response.query.filter_by(
+    OpinionResponse.query.filter_by(
         user_id=user.id
     ).delete()
 
