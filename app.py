@@ -1776,6 +1776,58 @@ def api_chats():
 
     return jsonify(data)
 
+@app.route('/api/chat/<int:conversation_id>')
+@login_required
+def api_chat_messages(conversation_id):
+
+    conversation = Conversation.query.get_or_404(
+        conversation_id
+    )
+
+    messages = ChatMessage.query.filter_by(
+        conversation_id=conversation_id
+    ).order_by(
+        ChatMessage.timestamp.asc()
+    ).all()
+
+    return jsonify([
+        {
+            "id": m.id,
+            "sender_id": m.sender_id,
+            "content": m.content,
+            "file_url": m.file_url,
+            "thumbnail_url": m.thumbnail_url,
+            "timestamp": m.timestamp.isoformat()
+        }
+        for m in messages
+    ])
+
+@app.route('/api/send-message', methods=['POST'])
+@login_required
+def api_send_message():
+
+    data = request.json
+
+    conversation_id = data.get(
+        'conversation_id'
+    )
+
+    content = data.get(
+        'message'
+    )
+
+    message = ChatMessage(
+        conversation_id=conversation_id,
+        sender_id=current_user.id,
+        content=content
+    )
+
+    db.session.add(message)
+    db.session.commit()
+
+    return jsonify({
+        "success": True
+    })
 
 @socketio.on('join')
 def handle_join(data):
