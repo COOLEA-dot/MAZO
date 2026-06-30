@@ -4914,7 +4914,92 @@ def get_videos():
     video_data = [{"video_url": video.video_url, "title": video.title} for video in videos]
     print("Videos enviados a la API:", video_data)  # Log para depuración
     return {"videos": video_data}
+@app.route('/api/upload-video', methods=['POST'])
+@login_required
+def api_upload_video():
 
+    video_file = request.files.get('video_file')
+    title = (request.form.get('title') or '').strip()
+    description = (request.form.get('description') or '').strip()
+    hashtags = (request.form.get('hashtags') or '').strip()
+
+    if not video_file:
+        return jsonify({
+            "success": False,
+            "message": "No se recibió ningún vídeo"
+        }), 400
+
+    if not allowed_file(video_file.filename):
+        return jsonify({
+            "success": False,
+            "message": "Tipo de archivo no permitido"
+        }), 400
+
+    try:
+
+        upload_folder = current_app.config.get(
+            'UPLOAD_FOLDER',
+            'static/uploads/videos'
+        )
+
+        os.makedirs(
+            upload_folder,
+            exist_ok=True
+        )
+
+        filename = secure_filename(
+            video_file.filename
+        )
+
+        ext = filename.rsplit('.', 1)[1].lower()
+
+        unique_filename = (
+            f"{uuid.uuid4().hex}.{ext}"
+        )
+
+        file_path = os.path.join(
+            upload_folder,
+            unique_filename
+        )
+
+        video_file.save(file_path)
+
+        new_video = Video(
+            video_url=unique_filename,
+            title=title,
+            description=description,
+            hashtags=hashtags,
+            user_id=current_user.id
+        )
+
+        db.session.add(new_video)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Vídeo subido correctamente",
+            "video_id": new_video.id,
+            "video_url": unique_filename
+        })
+
+    except Exception as e:
+
+        print(
+            "❌ Error api_upload_video:",
+            e
+        )
+
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except Exception:
+            pass
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+    
 @app.route(
     '/api/profile/<username>/opinions',
     methods=['GET']
