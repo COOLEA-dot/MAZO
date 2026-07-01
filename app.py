@@ -1761,6 +1761,7 @@ def chat_with_user(recipient_identifier):
         conversation_id=conversation.id
     )
 
+@csrf.exempt
 @app.route('/api/chats')
 @login_required
 def api_chats():
@@ -1802,6 +1803,7 @@ def api_chat_messages(conversation_id):
         for m in messages
     ])
 
+@csrf.exempt
 @app.route('/api/send-message', methods=['POST'])
 @login_required
 def api_send_message():
@@ -3637,6 +3639,8 @@ def api_get_edit_profile():
     '/api/edit-profile',
     methods=['POST']
 )
+
+@csrf.exempt
 @login_required
 def api_edit_profile():
 
@@ -5440,6 +5444,7 @@ def product_view(product_id):
     db.session.commit()
     return '', 204
 
+@csrf.exempt
 @app.route('/api/create-product', methods=['POST'])
 @login_required
 def api_create_product():
