@@ -5440,6 +5440,72 @@ def product_view(product_id):
     db.session.commit()
     return '', 204
 
+@app.route('/api/create-product', methods=['POST'])
+@login_required
+def api_create_product():
+
+    try:
+
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        price = request.form.get('price', '0')
+
+        if not title:
+            return jsonify({
+                'success': False,
+                'message': 'El título es obligatorio'
+            }), 400
+
+        product = Product(
+            user_id=current_user.id,
+            title=title,
+            description=description,
+            price=float(price),
+            is_active=True
+        )
+
+        db.session.add(product)
+        db.session.commit()
+
+        files = request.files.getlist('images')
+
+        for image in files:
+
+            if image and image.filename:
+
+                filename = secure_filename(image.filename)
+
+                image.save(
+                    os.path.join(
+                        app.config['PRODUCT_IMAGES_FOLDER'],
+                        filename
+                    )
+                )
+
+                product_image = ProductImage(
+                    product_id=product.id,
+                    image=filename
+                )
+
+                db.session.add(product_image)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'product_id': product.id,
+            'message': 'Producto creado correctamente'
+        })
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+    
 @app.route('/delete_video/<int:video_id>', methods=['POST'])
 @login_required
 def delete_video(video_id):
