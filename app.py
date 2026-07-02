@@ -3253,21 +3253,23 @@ def api_profile(username):
 
     for product in user.products:
 
+        if not product.is_active:
+            continue
+
         image_url = None
 
-        if product.image:
+        if product.images and len(product.images) > 0:
 
             image_url = url_for(
                 'static',
-                filename=
-                    'product_images/' +
-                    product.image,
+                filename=f'product_images/{product.images[0].image}',
                 _external=True
             )
 
         products.append({
             "id": product.id,
             "title": product.title,
+            "description": product.description,
             "price": float(product.price),
             "image": image_url
         })
