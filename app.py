@@ -5445,7 +5445,6 @@ def product_view(product_id):
     product.views += 1
     db.session.commit()
     return '', 204
-
 @csrf.exempt
 @app.route('/api/create-product', methods=['POST'])
 @login_required
@@ -5453,9 +5452,17 @@ def api_create_product():
 
     try:
 
+        print("\n========== CREATE PRODUCT ==========")
+        print("USER:", current_user.id)
+        print("FORM:", request.form)
+        print("FILES:", request.files)
+
         title = request.form.get('title', '').strip()
         description = request.form.get('description', '').strip()
         price = request.form.get('price', '0')
+
+        print("TITLE:", title)
+        print("PRICE:", price)
 
         if not title:
             return jsonify({
@@ -5474,20 +5481,40 @@ def api_create_product():
         db.session.add(product)
         db.session.commit()
 
+        print("PRODUCT CREATED:", product.id)
+
         files = request.files.getlist('images')
+
+        print("TOTAL IMAGES:", len(files))
+        print("PRODUCT_IMAGES_FOLDER:",
+              app.config.get('PRODUCT_IMAGES_FOLDER'))
+        print("FOLDER EXISTS:",
+              os.path.exists(
+                  app.config.get('PRODUCT_IMAGES_FOLDER', '')
+              ))
 
         for image in files:
 
+            print("--------------------------------")
+            print("IMAGE OBJECT:", image)
+            print("FILENAME:", image.filename)
+
             if image and image.filename:
 
-                filename = secure_filename(image.filename)
-
-                image.save(
-                    os.path.join(
-                        app.config['PRODUCT_IMAGES_FOLDER'],
-                        filename
-                    )
+                filename = secure_filename(
+                    image.filename
                 )
+
+                save_path = os.path.join(
+                    app.config['PRODUCT_IMAGES_FOLDER'],
+                    filename
+                )
+
+                print("SAVE PATH:", save_path)
+
+                image.save(save_path)
+
+                print("IMAGE SAVED OK")
 
                 product_image = ProductImage(
                     product_id=product.id,
@@ -5496,7 +5523,12 @@ def api_create_product():
 
                 db.session.add(product_image)
 
+                print("DB IMAGE CREATED")
+
         db.session.commit()
+
+        print("PRODUCT COMMIT OK")
+        print("===================================\n")
 
         return jsonify({
             'success': True,
@@ -5505,6 +5537,9 @@ def api_create_product():
         })
 
     except Exception as e:
+
+        print("\n❌ ERROR CREATE PRODUCT")
+        print(str(e))
 
         db.session.rollback()
 
