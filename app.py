@@ -5445,6 +5445,7 @@ def product_view(product_id):
     product.views += 1
     db.session.commit()
     return '', 204
+
 @csrf.exempt
 @app.route('/api/create-product', methods=['POST'])
 @login_required
