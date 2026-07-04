@@ -3191,7 +3191,6 @@ def send_message_http(recipient_id):
 
     return redirect(url_for('chat_with_user', recipient_identifier=recipient.username))
 
-
 @app.route('/api/profile/<username>')
 def api_profile(username):
 
@@ -3256,14 +3255,30 @@ def api_profile(username):
         if not product.is_active:
             continue
 
+        print(
+            f"PRODUCTO {product.id} | "
+            f"TITULO={product.title} | "
+            f"IMAGES={len(product.images)}"
+        )
+
         image_url = None
 
         if product.images and len(product.images) > 0:
+
+            print(
+                "PRIMERA IMAGEN:",
+                product.images[0].image
+            )
 
             image_url = url_for(
                 'static',
                 filename=f'product_images/{product.images[0].image}',
                 _external=True
+            )
+
+            print(
+                "IMAGE URL:",
+                image_url
             )
 
         products.append({
