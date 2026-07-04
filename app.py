@@ -5502,12 +5502,20 @@ def api_create_product():
         files = request.files.getlist('images')
 
         print("TOTAL IMAGES:", len(files))
-        print("PRODUCT_IMAGES_FOLDER:",
-              app.config.get('PRODUCT_IMAGES_FOLDER'))
-        print("FOLDER EXISTS:",
-              os.path.exists(
-                  app.config.get('PRODUCT_IMAGES_FOLDER', '')
-              ))
+
+        product_folder = app.config['PRODUCT_IMAGES_FOLDER']
+
+        print("PRODUCT_IMAGES_FOLDER:", product_folder)
+
+        os.makedirs(
+            product_folder,
+            exist_ok=True
+        )
+
+        print(
+            "FOLDER EXISTS:",
+            os.path.exists(product_folder)
+        )
 
         for image in files:
 
@@ -5517,12 +5525,13 @@ def api_create_product():
 
             if image and image.filename:
 
-                filename = secure_filename(
-                    image.filename
+                filename = (
+                    f"{uuid.uuid4().hex}_"
+                    f"{secure_filename(image.filename)}"
                 )
 
                 save_path = os.path.join(
-                    app.config['PRODUCT_IMAGES_FOLDER'],
+                    product_folder,
                     filename
                 )
 
@@ -5530,7 +5539,8 @@ def api_create_product():
 
                 image.save(save_path)
 
-                print("IMAGE SAVED OK")
+                print("FILE EXISTS AFTER SAVE:",
+                      os.path.exists(save_path))
 
                 product_image = ProductImage(
                     product_id=product.id,
@@ -5539,7 +5549,8 @@ def api_create_product():
 
                 db.session.add(product_image)
 
-                print("DB IMAGE CREATED")
+                print("DB IMAGE CREATED:",
+                      filename)
 
         db.session.commit()
 
