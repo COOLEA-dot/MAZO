@@ -5574,6 +5574,45 @@ def api_create_product():
             'success': False,
             'message': str(e)
         }), 500
+
+@csrf.exempt
+@app.route('/api/delete-product/<int:product_id>', methods=['POST'])
+@login_required
+def api_delete_product(product_id):
+
+    product = Product.query.get_or_404(product_id)
+
+    if product.user_id != current_user.id:
+        return jsonify({
+            "success": False,
+            "message": "No autorizado"
+        }), 403
+
+    # borrar imágenes
+    for image in product.images:
+
+        try:
+            image_path = os.path.join(
+                app.config['PRODUCT_IMAGES_FOLDER'],
+                image.image
+            )
+
+            if os.path.exists(image_path):
+                os.remove(image_path)
+
+        except Exception as e:
+            print(e)
+
+    ProductImage.query.filter_by(
+        product_id=product.id
+    ).delete()
+
+    db.session.delete(product)
+    db.session.commit()
+
+    return jsonify({
+        "success": True
+    })
     
 @app.route('/delete_video/<int:video_id>', methods=['POST'])
 @login_required
