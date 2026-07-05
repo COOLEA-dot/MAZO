@@ -1760,6 +1760,59 @@ def chat_with_user(recipient_identifier):
         room=room,
         conversation_id=conversation.id
     )
+@csrf.exempt
+@app.route('/api/start-chat/<recipient_identifier>')
+@login_required
+def api_start_chat(recipient_identifier):
+
+    sender = current_user
+
+    recipient = None
+
+    if str(recipient_identifier).isdigit():
+        recipient = db.session.get(
+            User,
+            int(recipient_identifier)
+        )
+
+    if not recipient:
+        recipient = User.query.filter_by(
+            username=recipient_identifier
+        ).first()
+
+    if not recipient:
+        return jsonify({
+            "success": False,
+            "message": "Usuario no encontrado"
+        }), 404
+
+    conversation = Conversation.query.filter(
+        (
+            (Conversation.user_id == sender.id) &
+            (Conversation.recipient_id == recipient.id)
+        ) |
+        (
+            (Conversation.user_id == recipient.id) &
+            (Conversation.recipient_id == sender.id)
+        )
+    ).first()
+
+    if not conversation:
+
+        conversation = Conversation(
+            user_id=sender.id,
+            recipient_id=recipient.id
+        )
+
+        db.session.add(conversation)
+        db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "conversation_id": conversation.id,
+        "recipient_id": recipient.id,
+        "recipient_username": recipient.username
+    })
 
 @csrf.exempt
 @app.route('/api/chats')
