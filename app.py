@@ -3339,7 +3339,9 @@ def api_profile(username):
             "title": product.title,
             "description": product.description,
             "price": float(product.price),
-            "image": image_url
+            "image": image_url,
+            "user_id": product.user_id,
+            "username": product.user.username
         })
 
     return jsonify({
