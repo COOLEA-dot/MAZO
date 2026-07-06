@@ -3088,6 +3088,67 @@ def handle_delete_message(data):
     print(f"Mensaje {message_id} eliminado correctamente.")
     return {'ok': True}@socketio.on('share_video')
 
+@csrf.exempt
+@app.route('/api/message/<int:message_id>', methods=['PUT'])
+@login_required
+def api_edit_message(message_id):
+
+    msg = ChatMessage.query.get(message_id)
+
+    if not msg:
+        return jsonify({
+            'success': False,
+            'error': 'not_found'
+        }), 404
+
+    if msg.sender_id != current_user.id:
+        return jsonify({
+            'success': False,
+            'error': 'forbidden'
+        }), 403
+
+    data = request.get_json() or {}
+
+    new_content = data.get('content', '')
+
+    msg.content = new_content
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message_id': msg.id,
+        'content': msg.content
+    })
+
+@csrf.exempt
+@app.route('/api/message/<int:message_id>', methods=['DELETE'])
+@login_required
+def api_delete_message(message_id):
+
+    msg = ChatMessage.query.get(message_id)
+
+    if not msg:
+        return jsonify({
+            'success': False,
+            'error': 'not_found'
+        }), 404
+
+    if msg.sender_id != current_user.id:
+        return jsonify({
+            'success': False,
+            'error': 'forbidden'
+        }), 403
+
+    db.session.delete(msg)
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message_id': message_id
+    })
+
 def handle_share_video(data):
     sender_id = session.get('user_id')
     recipient_username = data.get('recipient_username')
