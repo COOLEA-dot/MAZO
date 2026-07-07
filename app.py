@@ -1861,7 +1861,7 @@ def api_chat_messages(conversation_id):
 @login_required
 def api_send_message():
 
-    data = request.json
+    data = request.json or {}
 
     conversation_id = data.get(
         'conversation_id'
@@ -1871,10 +1871,20 @@ def api_send_message():
         'message'
     )
 
+    file_url = data.get(
+        'file_url'
+    )
+
+    thumbnail_url = data.get(
+        'thumbnail_url'
+    )
+
     message = ChatMessage(
         conversation_id=conversation_id,
         sender_id=current_user.id,
-        content=content
+        content=content,
+        file_url=file_url,
+        thumbnail_url=thumbnail_url
     )
 
     db.session.add(message)
@@ -1883,29 +1893,6 @@ def api_send_message():
     return jsonify({
         "success": True
     })
-
-@socketio.on('join')
-def handle_join(data):
-    room = data.get('room')
-    payload_user = data.get('username')
-    app.logger.info('JOIN event received: sid=%s payload_user=%s room=%s', request.sid, payload_user, room)
-    app.logger.info('JOIN current_user=%s authenticated=%s', getattr(current_user,'username',None), getattr(current_user,'is_authenticated',None))
-    if not room:
-        emit('join_ack', {'ok': False, 'error': 'no room provided'}, room=request.sid)
-        return
-    join_room(room)
-    app.logger.info('✅ Usuario unido a la sala: %s (sid=%s)', room, request.sid)
-    emit('join_ack', {'ok': True, 'room': room}, room=request.sid)
-    emit('user_joined', {'username': payload_user}, room=room, include_self=False)
-    # Une a la sala (esto asocia request.sid a la room)
-    join_room(room)
-    app.logger.info('✅ Usuario unido a la sala: %s (sid=%s)', room, request.sid)
-
-    # Ack al emisor confirmando unión
-    emit('join_ack', {'ok': True, 'room': room}, room=request.sid)
-
-    # Notify other users in the room (exclude the sender)
-    emit('user_joined', {'username': payload_user}, room=room, include_self=False)
 
 def get_user_chats(user_id):
     conversations = Conversation.query.filter(
