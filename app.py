@@ -1821,29 +1821,26 @@ def api_chats():
 
     data = []
 
-    # =========================
     # Chats privados
-    # =========================
-
     chats = get_user_chats(current_user.id)
 
     for chat in chats:
 
+        profile_pic = chat.get('profile_pic')
+
+        if profile_pic:
+            avatar = f"/static/profile_pics/{profile_pic}"
+        else:
+            avatar = "/static/default_profile.png"
+
         data.append({
-
             'id': chat['conversation_id'],
-
             'name': chat['username'],
-
-            'avatar': f"/static/profile_pics/{chat['profile_pic']}",
-
+            'avatar': avatar,
             'is_group': False
         })
 
-    # =========================
     # Grupos
-    # =========================
-
     memberships = GroupMember.query.filter_by(
         user_id=current_user.id
     ).all()
@@ -1857,17 +1854,15 @@ def api_chats():
         if not group:
             continue
 
+        if group.image:
+            avatar = f"/static/{group.image}"
+        else:
+            avatar = "/static/default_group.png"
+
         data.append({
-
             'id': group.id,
-
             'name': group.name,
-
-            'avatar':
-                f"/static/{group.image}"
-                if group.image
-                else "/static/default_group.png",
-
+            'avatar': avatar,
             'is_group': True
         })
 
