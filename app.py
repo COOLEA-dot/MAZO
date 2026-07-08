@@ -2843,14 +2843,13 @@ def handle_delete_group_message(data):
 @login_required
 def api_create_group():
 
-    data = request.json or {}
-
-    name = data.get('name')
-    description = data.get('description', '')
+    name = request.form.get('name')
+    description = request.form.get('description', '')
 
     if not name:
         return jsonify({
-            "success": False
+            "success": False,
+            "error": "Nombre requerido"
         }), 400
 
     invite_code = secrets.token_urlsafe(16)
@@ -2861,6 +2860,36 @@ def api_create_group():
         owner_id=current_user.id,
         invite_code=invite_code
     )
+
+    image = request.files.get('image')
+
+    if image and image.filename:
+
+        filename = secure_filename(image.filename)
+
+        unique_filename = (
+            f"{uuid.uuid4().hex}_{filename}"
+        )
+
+        os.makedirs(
+            os.path.join(
+                app.static_folder,
+                'group_pics'
+            ),
+            exist_ok=True
+        )
+
+        image_path = os.path.join(
+            app.static_folder,
+            'group_pics',
+            unique_filename
+        )
+
+        image.save(image_path)
+
+        group.image = (
+            f"group_pics/{unique_filename}"
+        )
 
     db.session.add(group)
     db.session.flush()
@@ -2877,7 +2906,8 @@ def api_create_group():
 
     return jsonify({
         "success": True,
-        "group_id": group.id
+        "group_id": group.id,
+        "image": group.image
     })
 
 @csrf.exempt
