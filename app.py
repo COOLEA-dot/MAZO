@@ -2800,6 +2800,102 @@ def handle_delete_group_message(data):
 
     return {'ok': True}
 
+@csrf.exempt
+@app.route('/api/groups/create', methods=['POST'])
+@login_required
+def api_create_group():
+
+    data = request.json or {}
+
+    name = data.get('name')
+    description = data.get('description', '')
+
+    if not name:
+        return jsonify({
+            "success": False
+        }), 400
+
+    invite_code = secrets.token_urlsafe(16)
+
+    group = Group(
+        name=name,
+        description=description,
+        owner_id=current_user.id,
+        invite_code=invite_code
+    )
+
+    db.session.add(group)
+    db.session.flush()
+
+    db.session.add(
+        GroupMember(
+            group_id=group.id,
+            user_id=current_user.id,
+            is_admin=True
+        )
+    )
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "group_id": group.id
+    })
+
+@csrf.exempt
+@app.route('/api/groups/<int:group_id>/add-members', methods=['POST'])
+@login_required
+def api_add_group_members(group_id):
+
+    data = request.json or {}
+
+    user_ids = data.get('user_ids', [])
+
+    for user_id in user_ids:
+
+        exists = GroupMember.query.filter_by(
+            group_id=group_id,
+            user_id=user_id
+        ).first()
+
+        if not exists:
+
+            db.session.add(
+                GroupMember(
+                    group_id=group_id,
+                    user_id=user_id
+                )
+            )
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True
+    })
+@csrf.exempt
+@app.route('/api/groups')
+@login_required
+def api_groups():
+
+    memberships = GroupMember.query.filter_by(
+        user_id=current_user.id
+    ).all()
+
+    result = []
+
+    for membership in memberships:
+
+        group = Group.query.get(
+            membership.group_id
+        )
+
+        result.append({
+            "id": group.id,
+            "name": group.name,
+            "image": group.image
+        })
+
+    return jsonify(result)
 
 def normalize_and_wait_file_url(file_path, wait_attempts=6, wait_delay=0.4, fallback_stream_url=None):
     """
