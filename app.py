@@ -1818,14 +1818,57 @@ def api_start_chat(recipient_identifier):
 @app.route('/api/chats')
 @login_required
 def api_chats():
-    chats = get_user_chats(current_user.id)
 
     data = []
+
+    # =========================
+    # Chats privados
+    # =========================
+
+    chats = get_user_chats(current_user.id)
+
     for chat in chats:
+
         data.append({
-            'id': chat['conversation_id'],        # 👈 ahora sí existe
+
+            'id': chat['conversation_id'],
+
             'name': chat['username'],
-            'avatar': f"/static/profile_pics/{chat['profile_pic']}"
+
+            'avatar': f"/static/profile_pics/{chat['profile_pic']}",
+
+            'is_group': False
+        })
+
+    # =========================
+    # Grupos
+    # =========================
+
+    memberships = GroupMember.query.filter_by(
+        user_id=current_user.id
+    ).all()
+
+    for membership in memberships:
+
+        group = Group.query.get(
+            membership.group_id
+        )
+
+        if not group:
+            continue
+
+        data.append({
+
+            'id': group.id,
+
+            'name': group.name,
+
+            'avatar':
+                f"/static/{group.image}"
+                if group.image
+                else "/static/default_group.png",
+
+            'is_group': True
         })
 
     return jsonify(data)
