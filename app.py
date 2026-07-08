@@ -2965,6 +2965,308 @@ def api_groups():
 
     return jsonify(result)
 
+@csrf.exempt
+@app.route('/api/groups/<int:group_id>/messages')
+@login_required
+def api_group_messages(group_id):
+
+    messages = (
+        GroupMessage.query
+        .filter_by(group_id=group_id)
+        .order_by(GroupMessage.timestamp.asc())
+        .all()
+    )
+
+    return jsonify([
+        {
+            "id": m.id,
+            "content": m.content,
+            "sender_id": m.sender_id,
+            "username": m.sender.username,
+            "profile_pic": m.sender.profile_pic,
+            "timestamp": m.timestamp.isoformat()
+        }
+        for m in messages
+    ])
+@csrf.exempt
+@app.route('/api/groups/<int:group_id>/send', methods=['POST'])
+@login_required
+def api_send_group_message(group_id):
+
+    member = GroupMember.query.filter_by(
+        group_id=group_id,
+        user_id=current_user.id
+    ).first()
+
+    if not member:
+        return jsonify({"success": False}), 403
+
+    data = request.get_json()
+
+    content = (
+        data.get('message', '')
+        .strip()
+    )
+
+    if not content:
+        return jsonify({"success": False}), 400
+
+    message = GroupMessage(
+        group_id=group_id,
+        sender_id=current_user.id,
+        content=content
+    )
+
+    db.session.add(message)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message_id": message.id
+    })
+@csrf.exempt
+@app.route(
+    '/api/groups/message/<int:message_id>/edit',
+    methods=['POST']
+)
+@login_required
+def api_edit_group_message(message_id):
+
+    msg = GroupMessage.query.get_or_404(
+        message_id
+    )
+
+    if msg.sender_id != current_user.id:
+        return jsonify({
+            "success": False
+        }), 403
+
+    data = request.get_json()
+
+    msg.content = data.get(
+        'content',
+        ''
+    )
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True
+    })
+
+@csrf.exempt
+@app.route(
+    '/api/groups/message/<int:message_id>/delete',
+    methods=['POST']
+)
+@login_required
+def api_delete_group_message(message_id):
+
+    msg = GroupMessage.query.get_or_404(
+        message_id
+    )
+
+    if msg.sender_id != current_user.id:
+        return jsonify({
+            "success": False
+        }), 403
+
+    db.session.delete(msg)
+    db.session.commit()
+
+    return jsonify({
+        "success": True
+    })
+
+@csrf.exempt
+@app.route('/api/groups/<int:group_id>/info')
+@login_required
+def api_group_info(group_id):
+
+    group = Group.query.get_or_404(
+        group_id
+    )
+
+    member = GroupMember.query.filter_by(
+        group_id=group.id,
+        user_id=current_user.id
+    ).first()
+
+    if not member:
+        return jsonify({}), 403
+
+    return jsonify({
+
+        "id": group.id,
+
+        "name": group.name,
+
+        "description": group.description,
+
+        "invite_code": group.invite_code,
+
+        "owner_id": group.owner_id,
+
+        "image":
+            f"/static/{group.image}"
+            if group.image else
+            "/static/default_group.png"
+    })
+
+@csrf.exempt
+@app.route('/api/groups/<int:group_id>/members')
+@login_required
+def api_group_members(group_id):
+
+    members = (
+        GroupMember.query
+        .filter_by(group_id=group_id)
+        .all()
+    )
+
+    return jsonify([
+        {
+            "user_id":
+                member.user.id,
+
+            "username":
+                member.user.username,
+
+            "profile_pic":
+                f"/static/profile_pics/{member.user.profile_pic}"
+                if member.user.profile_pic else "",
+
+            "is_admin":
+                member.is_admin
+        }
+        for member in members
+    ])
+@csrf.exempt
+@app.route(
+    '/api/groups/<int:group_id>/make-admin/<int:user_id>',
+    methods=['POST']
+)
+@login_required
+def api_make_group_admin(
+    group_id,
+    user_id
+):
+
+    if not is_group_admin(
+        group_id,
+        current_user.id
+    ):
+        return jsonify({
+            "success": False
+        }), 403
+
+    member = GroupMember.query.filter_by(
+        group_id=group_id,
+        user_id=user_id
+    ).first_or_404()
+
+    member.is_admin = True
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True
+    })
+@csrf.exempt
+@app.route(
+    '/api/groups/<int:group_id>/remove-admin/<int:user_id>',
+    methods=['POST']
+)
+@login_required
+def api_remove_group_admin(
+    group_id,
+    user_id
+):
+
+    group = Group.query.get_or_404(
+        group_id
+    )
+
+    if group.owner_id != current_user.id:
+        return jsonify({
+            "success": False
+        }), 403
+
+    member = GroupMember.query.filter_by(
+        group_id=group_id,
+        user_id=user_id
+    ).first_or_404()
+
+    member.is_admin = False
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True
+    })
+@csrf.exempt
+@app.route(
+    '/api/groups/<int:group_id>/remove-member/<int:user_id>',
+    methods=['POST']
+)
+@login_required
+def api_remove_group_member(
+    group_id,
+    user_id
+):
+
+    if not is_group_admin(
+        group_id,
+        current_user.id
+    ):
+        return jsonify({
+            "success": False
+        }), 403
+
+    member = GroupMember.query.filter_by(
+        group_id=group_id,
+        user_id=user_id
+    ).first_or_404()
+
+    db.session.delete(member)
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True
+    })
+@csrf.exempt
+@app.route(
+    '/api/groups/<int:group_id>/delete',
+    methods=['POST']
+)
+@login_required
+def api_delete_group(group_id):
+
+    group = Group.query.get_or_404(
+        group_id
+    )
+
+    if group.owner_id != current_user.id:
+        return jsonify({
+            "success": False
+        }), 403
+
+    GroupMessage.query.filter_by(
+        group_id=group.id
+    ).delete()
+
+    GroupMember.query.filter_by(
+        group_id=group.id
+    ).delete()
+
+    db.session.delete(group)
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True
+    })
 def normalize_and_wait_file_url(file_path, wait_attempts=6, wait_delay=0.4, fallback_stream_url=None):
     """
     Devuelve URL pública absoluta para frontend.
