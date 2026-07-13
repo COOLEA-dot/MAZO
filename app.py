@@ -2984,10 +2984,13 @@ def api_group_messages(group_id):
             "sender_id": m.sender_id,
             "username": m.sender.username,
             "profile_pic": m.sender.profile_pic,
+            "file_url": m.file_url,
+            "thumbnail_url": m.thumbnail_url,
             "timestamp": m.timestamp.isoformat()
         }
         for m in messages
     ])
+
 @csrf.exempt
 @app.route('/api/groups/<int:group_id>/send', methods=['POST'])
 @login_required
@@ -2999,22 +3002,36 @@ def api_send_group_message(group_id):
     ).first()
 
     if not member:
-        return jsonify({"success": False}), 403
+        return jsonify({
+            "success": False
+        }), 403
 
-    data = request.get_json()
+    data = request.get_json() or {}
 
     content = (
-        data.get('message', '')
+        data.get("message", "")
         .strip()
     )
 
-    if not content:
-        return jsonify({"success": False}), 400
+    file_url = data.get(
+        "file_url"
+    )
+
+    thumbnail_url = data.get(
+        "thumbnail_url"
+    )
+
+    if not content and not file_url:
+        return jsonify({
+            "success": False
+        }), 400
 
     message = GroupMessage(
         group_id=group_id,
         sender_id=current_user.id,
-        content=content
+        content=content if content else None,
+        file_url=file_url,
+        thumbnail_url=thumbnail_url
     )
 
     db.session.add(message)
@@ -3024,6 +3041,7 @@ def api_send_group_message(group_id):
         "success": True,
         "message_id": message.id
     })
+
 @csrf.exempt
 @app.route(
     '/api/groups/message/<int:message_id>/edit',
