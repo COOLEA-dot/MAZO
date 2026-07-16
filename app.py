@@ -2244,6 +2244,8 @@ def upload_file():
 def api_upload_file():
 
     print("🔥 API_UPLOAD_FILE EJECUTADA")
+    print("FILES:", request.files)
+    print("FORM:", request.form)
 
     return upload_file()
 
