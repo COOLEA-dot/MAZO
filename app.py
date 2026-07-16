@@ -2237,6 +2237,7 @@ def upload_file():
     except Exception as e:
         print("[upload_file] EXCEPCION:", e, file=sys.stderr)
         return jsonify({"success": False, "error": "server_exception", "detail": str(e)}), 500
+
 @csrf.exempt
 @app.route('/api/upload_file', methods=['POST'])
 @login_required
@@ -2244,9 +2245,7 @@ def api_upload_file():
 
     print("🔥 API_UPLOAD_FILE EJECUTADA")
 
-    return jsonify({
-        "success": True
-    })
+    return upload_file()
 
 # Función para manejar archivos pequeños en Base64
 def handle_small_file(file, filename=None):
