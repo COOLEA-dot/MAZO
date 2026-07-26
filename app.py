@@ -3136,6 +3136,8 @@ def api_group_info(group_id):
 
         "owner_id": group.owner_id,
 
+        "is_admin": member.is_admin,
+
         "image":
             f"/static/{group.image}"
             if group.image else
