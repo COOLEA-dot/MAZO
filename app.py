@@ -3145,6 +3145,83 @@ def api_group_info(group_id):
     })
 
 @csrf.exempt
+@app.route('/api/groups/<int:group_id>/edit', methods=['POST'])
+@login_required
+def api_edit_group(group_id):
+
+    group = Group.query.get_or_404(group_id)
+
+    # Solo administradores
+    if not is_group_admin(group_id, current_user.id):
+        return jsonify({
+            "success": False,
+            "error": "No autorizado"
+        }), 403
+
+    # Nombre
+    name = request.form.get("name")
+    if name:
+        group.name = name.strip()
+
+    # Descripción
+    description = request.form.get("description")
+    if description is not None:
+        group.description = description.strip()
+
+    # Imagen
+    image = request.files.get("image")
+
+    if image and image.filename:
+
+        filename = secure_filename(image.filename)
+
+        unique_filename = (
+            f"{uuid.uuid4().hex}_{filename}"
+        )
+
+        upload_folder = os.path.join(
+            app.static_folder,
+            "group_pics"
+        )
+
+        os.makedirs(
+            upload_folder,
+            exist_ok=True
+        )
+
+        image.save(
+            os.path.join(
+                upload_folder,
+                unique_filename
+            )
+        )
+
+        group.image = (
+            f"group_pics/{unique_filename}"
+        )
+
+    db.session.commit()
+
+    return jsonify({
+
+        "success": True,
+
+        "group": {
+
+            "id": group.id,
+
+            "name": group.name,
+
+            "description": group.description,
+
+            "image":
+                f"/static/{group.image}"
+                if group.image else
+                "/static/default_group.png"
+        }
+    })
+
+@csrf.exempt
 @app.route('/api/groups/<int:group_id>/members')
 @login_required
 def api_group_members(group_id):
