@@ -3149,6 +3149,9 @@ def api_group_info(group_id):
 @login_required
 def api_edit_group(group_id):
 
+    print("FILES:", request.files)
+    print("FORM:", request.form)
+
     group = Group.query.get_or_404(group_id)
 
     # Solo administradores
