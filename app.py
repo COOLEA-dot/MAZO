@@ -2578,6 +2578,66 @@ def accept_group_invite(group_id):
 
     return redirect(url_for('view_group', group_id=group.id))
 
+@app.route('/api/groups/<int:group_id>/invite', methods=['POST'])
+@login_required
+@csrf.exempt
+def api_send_group_invite(group_id):
+
+    group = Group.query.get_or_404(group_id)
+
+    # Solo administradores del grupo
+    admin = GroupMember.query.filter_by(
+        group_id=group.id,
+        user_id=current_user.id,
+        is_admin=True
+    ).first()
+
+    if not admin:
+        return jsonify({
+            "success": False,
+            "error": "No autorizado"
+        }), 403
+
+    data = request.get_json(silent=True) or {}
+
+    conversation_id = data.get("conversation_id")
+
+    if not conversation_id:
+        return jsonify({
+            "success": False,
+            "error": "conversation_id requerido"
+        }), 400
+
+    conversation = Conversation.query.get(conversation_id)
+
+    if not conversation:
+        return jsonify({
+            "success": False,
+            "error": "Conversación no encontrada"
+        }), 404
+
+    invite_data = {
+        "type": "group_invite",
+        "group_id": group.id,
+        "group_name": group.name,
+        "group_description": group.description,
+        "group_image": group.image,
+        "invite_code": group.invite_code
+    }
+
+    message = ChatMessage(
+        conversation_id=conversation.id,
+        sender_id=current_user.id,
+        content=json.dumps(invite_data)
+    )
+
+    db.session.add(message)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message_id": message.id
+    })
 
 # send_message (reemplaza handle_send_message): usa current_user en vez de 'sender' del cliente
 # Imports necesarios (añádelos si no están ya en tu módulo)
