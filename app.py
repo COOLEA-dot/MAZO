@@ -3036,6 +3036,56 @@ def api_groups():
 
     return jsonify(result)
 
+@app.route('/api/groups/join', methods=['POST'])
+@login_required
+@csrf.exempt
+def api_join_group():
+
+    data = request.get_json(silent=True) or {}
+
+    invite_code = data.get("invite_code")
+
+    if not invite_code:
+        return jsonify({
+            "success": False,
+            "error": "invite_code requerido"
+        }), 400
+
+    group = Group.query.filter_by(
+        invite_code=invite_code
+    ).first()
+
+    if not group:
+        return jsonify({
+            "success": False,
+            "error": "Grupo no encontrado"
+        }), 404
+
+    existing = GroupMember.query.filter_by(
+        group_id=group.id,
+        user_id=current_user.id
+    ).first()
+
+    if existing:
+        return jsonify({
+            "success": False,
+            "error": "Ya perteneces al grupo"
+        }), 400
+
+    member = GroupMember(
+        group_id=group.id,
+        user_id=current_user.id,
+        is_admin=False
+    )
+
+    db.session.add(member)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "group_id": group.id
+    })
+
 @csrf.exempt
 @app.route('/api/groups/<int:group_id>/messages')
 @login_required
