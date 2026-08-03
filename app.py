@@ -1140,6 +1140,186 @@ def register():
     professions = [p.name for p in Profession.query.order_by(Profession.name).all()]
     return render_template("register.html", form=form, user=None, professions=professions)
 
+@app.route("/api/register", methods=["POST"])
+def api_register():
+    try:
+        data = request.form if request.form else request.get_json(force=True)
+
+        referral_code = data.get("referral_code")
+
+        # -----------------------------
+        # Validación de términos
+        # -----------------------------
+        terms = str(data.get("terms", "")).lower()
+        if terms not in ["true", "1", "yes"]:
+            return jsonify({
+                "success": False,
+                "message": "You must accept the Terms and Conditions."
+            }), 400
+
+        # -----------------------------
+        # Obtener datos
+        # -----------------------------
+        name = _safe_strip(data.get("name"))
+        username = _safe_strip(data.get("username"))
+        phone = _safe_strip(data.get("phone"))
+        email = _safe_strip(data.get("email"))
+        password = (data.get("password") or "").strip()
+        confirm_password = (data.get("confirm_password") or "").strip()
+        company = _safe_strip(data.get("company")) or None
+        profession = _safe_strip(data.get("profession")) or None
+        description = _safe_strip(data.get("description")) or None
+        location = _safe_strip(data.get("location")) or None
+
+        # -----------------------------
+        # Validaciones
+        # -----------------------------
+        if not username:
+            return jsonify({
+                "success": False,
+                "message": "Username is required."
+            }), 400
+
+        if not email:
+            return jsonify({
+                "success": False,
+                "message": "Email is required."
+            }), 400
+
+        if not password:
+            return jsonify({
+                "success": False,
+                "message": "Password is required."
+            }), 400
+
+        if password != confirm_password:
+            return jsonify({
+                "success": False,
+                "message": "Passwords do not match."
+            }), 400
+
+        # -----------------------------
+        # Crear profesión si no existe
+        # -----------------------------
+        if profession:
+            existing_prof = Profession.query.filter_by(name=profession).first()
+            if not existing_prof:
+                db.session.add(Profession(name=profession))
+                db.session.commit()
+
+        # -----------------------------
+        # Usuario existente
+        # -----------------------------
+        existing_user = User.query.filter(
+            (User.username == username) |
+            (User.email == email)
+        ).first()
+
+        if existing_user:
+            return jsonify({
+                "success": False,
+                "message": "Username or email already exists."
+            }), 409
+
+        # -----------------------------
+        # Foto de perfil
+        # -----------------------------
+        profile_pic_db_value = "profile_pics/default.jpg"
+
+        profile_picture = request.files.get("profile_pic")
+
+        if profile_picture and profile_picture.filename:
+
+            safe_name = secure_filename(profile_picture.filename)
+
+            ext = safe_name.rsplit(".", 1)[-1] if "." in safe_name else ""
+
+            filename = f"{uuid.uuid4().hex}.{ext}" if ext else uuid.uuid4().hex
+
+            picture_folder = app.config.get(
+                "PROFILE_PICS_FOLDER",
+                os.path.join("static", "profile_pics")
+            )
+
+            os.makedirs(picture_folder, exist_ok=True)
+
+            picture_path = os.path.join(
+                picture_folder,
+                filename
+            )
+
+            profile_picture.save(picture_path)
+
+            profile_pic_db_value = f"profile_pics/{filename}"
+
+        # -----------------------------
+        # Crear usuario
+        # -----------------------------
+        new_user = User(
+            name=name or None,
+            username=username,
+            phone=phone or None,
+            email=email,
+            company=company,
+            profession=profession,
+            description=description,
+            location=location,
+            profile_pic=profile_pic_db_value
+        )
+
+        new_user.set_password(password)
+
+        # -----------------------------
+        # Sistema de referidos
+        # -----------------------------
+        if referral_code:
+
+            referrer = User.query.filter_by(
+                referral_code=referral_code
+            ).first()
+
+            if referrer:
+
+                referrer.referred_count = (
+                    referrer.referred_count or 0
+                ) + 1
+
+                db.session.add(referrer)
+                db.session.commit()
+
+                if referrer.referred_count == 3:
+                    send_referral_reward_email(referrer.email)
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        # -----------------------------
+        # Email verificación
+        # -----------------------------
+        try:
+            send_verification_email(new_user.email)
+        except Exception as e:
+            print("Verification email error:", e)
+
+        return jsonify({
+            "success": True,
+            "message": "Registration successful. Please verify your email.",
+            "user": {
+                "id": new_user.id,
+                "username": new_user.username,
+                "email": new_user.email
+            }
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print("API REGISTER ERROR:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred."
+        }), 500
+    
 @app.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
