@@ -1343,30 +1343,104 @@ def profession_suggestions():
     items = base.order_by(Profession.name.asc()).limit(10).all()
     return jsonify([p.name for p in items])
 
-@app.route("/api/professions", methods=["GET"])
+@csrf.exempt
+@app.route("/api/professions", methods=["GET", "POST"])
 def api_profession_suggestions():
-    q = request.args.get("q", "").strip()
 
-    base = Profession.query
+    # ==========================================
+    # GET → BUSCAR PROFESIONES
+    # ==========================================
 
-    if q:
-        base = base.filter(
-            func.lower(Profession.name).like(
-                func.lower(f"%{q}%")
+    if request.method == "GET":
+
+        q = request.args.get("q", "").strip()
+
+        base = Profession.query
+
+        if q:
+            base = base.filter(
+                func.lower(Profession.name).like(
+                    func.lower(f"%{q}%")
+                )
             )
+
+        items = (
+            base
+            .order_by(Profession.name.asc())
+            .limit(10)
+            .all()
         )
 
-    items = (
-        base
-        .order_by(Profession.name.asc())
-        .limit(10)
-        .all()
-    )
+        return jsonify([
+            p.name
+            for p in items
+        ])
 
-    return jsonify([
-        p.name
-        for p in items
-    ])
+
+    # ==========================================
+    # POST → CREAR PROFESIÓN
+    # ==========================================
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    name = (
+        data.get("name") or ""
+    ).strip()
+
+    if not name:
+
+        return jsonify({
+            "success": False,
+            "message": "Profession name is required"
+        }), 400
+
+    try:
+
+        profession = Profession.get_or_create(
+            name
+        )
+
+        if profession is None:
+
+            return jsonify({
+                "success": False,
+                "message": "Invalid profession"
+            }), 400
+
+        db.session.commit()
+
+        return jsonify({
+
+            "success": True,
+
+            "profession": {
+
+                "id": profession.id,
+                "name": profession.name,
+                "slug": profession.slug,
+                "popularity": profession.popularity
+
+            }
+
+        }), 200
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print(
+            "❌ Error creating profession:",
+            e
+        )
+
+        return jsonify({
+
+            "success": False,
+            "message": "Error creating profession"
+
+        }), 500
 
 def _is_safe_next(next_url: str) -> bool:
     if not next_url:
