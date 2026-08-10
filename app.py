@@ -1343,6 +1343,30 @@ def profession_suggestions():
     items = base.order_by(Profession.name.asc()).limit(10).all()
     return jsonify([p.name for p in items])
 
+@app.route("/api/professions", methods=["GET"])
+def api_profession_suggestions():
+    q = request.args.get("q", "").strip()
+
+    base = Profession.query
+
+    if q:
+        base = base.filter(
+            func.lower(Profession.name).like(
+                func.lower(f"%{q}%")
+            )
+        )
+
+    items = (
+        base
+        .order_by(Profession.name.asc())
+        .limit(10)
+        .all()
+    )
+
+    return jsonify([
+        p.name
+        for p in items
+    ])
 
 def _is_safe_next(next_url: str) -> bool:
     if not next_url:
