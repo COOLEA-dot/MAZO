@@ -7368,6 +7368,129 @@ def cancel_project_application(project_id):
 
     return redirect(url_for("project_detail", project_id=project.id))
 
+@app.route("/api/projects", methods=["GET"])
+def api_projects():
+
+    q = (request.args.get("q") or "").strip()
+    location = (request.args.get("location") or "").strip()
+    modality = (request.args.get("modality") or "").strip()
+
+    query = Project.query
+
+    if q:
+        like = f"%{q}%"
+
+        query = query.filter(
+            or_(
+                Project.title.ilike(like),
+                Project.description.ilike(like)
+            )
+        )
+
+    if location:
+        query = query.filter(
+            Project.location.ilike(
+                f"%{location}%"
+            )
+        )
+
+    if modality:
+        query = query.filter(
+            Project.modality == modality
+        )
+
+    projects = (
+        query
+        .order_by(
+            Project.created_at.desc()
+        )
+        .limit(50)
+        .all()
+    )
+
+    return jsonify([
+        {
+            "id": project.id,
+            "title": project.title,
+            "short_description": project.short_description,
+            "description": project.description,
+            "location": project.location,
+            "modality": project.modality,
+            "price_min": project.price_min,
+            "price_max": project.price_max,
+            "price_currency": project.price_currency,
+            "user_id": project.user_id,
+            "created_at": (
+                project.created_at.isoformat()
+                if project.created_at
+                else None
+            )
+        }
+        for project in projects
+    ])
+
+@app.route("/api/jobs", methods=["GET"])
+def api_jobs():
+
+    q = (request.args.get("q") or "").strip()
+    location = (request.args.get("location") or "").strip()
+    modality = (request.args.get("modality") or "").strip()
+
+    query = Job.query
+
+    if q:
+        like = f"%{q}%"
+
+        query = query.filter(
+            or_(
+                Job.title.ilike(like),
+                Job.description.ilike(like)
+            )
+        )
+
+    if location:
+        query = query.filter(
+            Job.location.ilike(
+                f"%{location}%"
+            )
+        )
+
+    if modality:
+        query = query.filter(
+            Job.modality == modality
+        )
+
+    jobs = (
+        query
+        .order_by(
+            Job.created_at.desc()
+        )
+        .limit(50)
+        .all()
+    )
+
+    return jsonify([
+        {
+            "id": job.id,
+            "title": job.title,
+            "short_description": job.short_description,
+            "description": job.description,
+            "location": job.location,
+            "modality": job.modality,
+            "salary_min": job.salary_min,
+            "salary_max": job.salary_max,
+            "salary_currency": job.salary_currency,
+            "salary_period": job.salary_period,
+            "user_id": job.user_id,
+            "created_at": (
+                job.created_at.isoformat()
+                if job.created_at
+                else None
+            )
+        }
+        for job in jobs
+    ])
+
 @app.route('/report_video/<int:video_id>', methods=['POST'])
 @login_required
 def report_video(video_id):
