@@ -7490,6 +7490,175 @@ def api_jobs():
         }
         for job in jobs
     ])
+# =========================================================
+# API - CREAR EMPLEO
+# =========================================================
+
+@app.route("/api/jobs", methods=["POST"])
+@login_required
+def api_create_job():
+
+    data = request.get_json(silent=True) or {}
+
+    title = (data.get("title") or "").strip()
+    short_description = (
+        data.get("short_description") or ""
+    ).strip()
+    description = (
+        data.get("description") or ""
+    ).strip()
+
+    location = (
+        data.get("location") or ""
+    ).strip()
+
+    modality = (
+        data.get("modality") or ""
+    ).strip()
+
+    # -----------------------------------------
+    # VALIDACIONES
+    # -----------------------------------------
+
+    if not title:
+        return jsonify({
+            "success": False,
+            "message": "El título es obligatorio."
+        }), 400
+
+    if not short_description:
+        return jsonify({
+            "success": False,
+            "message": "La descripción corta es obligatoria."
+        }), 400
+
+    if not description:
+        return jsonify({
+            "success": False,
+            "message": "La descripción es obligatoria."
+        }), 400
+
+    # -----------------------------------------
+    # SALARIO
+    # -----------------------------------------
+
+    salary_min = data.get("salary_min")
+    salary_max = data.get("salary_max")
+
+    try:
+
+        if salary_min is not None:
+            salary_min = float(salary_min)
+
+        if salary_max is not None:
+            salary_max = float(salary_max)
+
+    except (TypeError, ValueError):
+
+        return jsonify({
+            "success": False,
+            "message": "El salario no es válido."
+        }), 400
+
+    if (
+        salary_min is not None
+        and salary_max is not None
+        and salary_max < salary_min
+    ):
+
+        return jsonify({
+            "success": False,
+            "message": "El salario máximo no puede ser menor que el mínimo."
+        }), 400
+
+    salary_currency = (
+        data.get("salary_currency") or ""
+    ).strip() or None
+
+    salary_period = (
+        data.get("salary_period") or ""
+    ).strip() or None
+
+    # -----------------------------------------
+    # CREAR EMPLEO
+    # -----------------------------------------
+
+    try:
+
+        job = Job(
+            title=title,
+            short_description=short_description,
+            description=description,
+            location=location or None,
+            modality=modality or None,
+            user_id=current_user.id
+        )
+
+        # -------------------------------------
+        # SALARIO OPCIONAL
+        # -------------------------------------
+
+        if (
+            salary_min is not None
+            or salary_max is not None
+        ):
+
+            job.salary_min = salary_min
+            job.salary_max = salary_max
+            job.salary_currency = salary_currency
+            job.salary_period = salary_period
+
+        db.session.add(job)
+
+        db.session.commit()
+
+        return jsonify({
+
+            "success": True,
+
+            "message": "Oferta de empleo publicada.",
+
+            "job": {
+
+                "id": job.id,
+                "title": job.title,
+                "short_description": job.short_description,
+                "description": job.description,
+                "location": job.location,
+                "modality": job.modality,
+
+                "salary_min": job.salary_min,
+                "salary_max": job.salary_max,
+                "salary_currency": job.salary_currency,
+                "salary_period": job.salary_period,
+
+                "user_id": job.user_id,
+
+                "created_at": (
+                    job.created_at.isoformat()
+                    if job.created_at
+                    else None
+                )
+
+            }
+
+        }), 201
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print(
+            "❌ Error creating job:",
+            e
+        )
+
+        return jsonify({
+
+            "success": False,
+            "message": "No se pudo publicar la oferta."
+
+        }), 500
 
 @app.route('/report_video/<int:video_id>', methods=['POST'])
 @login_required
