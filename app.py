@@ -7660,6 +7660,205 @@ def api_create_job():
 
         }), 500
 
+@app.route("/api/jobs/<int:job_id>", methods=["GET"])
+def api_job_detail(job_id):
+
+    job = Job.query.get_or_404(job_id)
+
+    current_application = None
+
+    if current_user.is_authenticated:
+
+        current_application = (
+            JobApplication.query
+            .filter_by(
+                job_id=job.id,
+                applicant_id=current_user.id
+            )
+            .first()
+        )
+
+    return jsonify({
+
+        "success": True,
+
+        "job": {
+
+            "id": job.id,
+            "title": job.title,
+            "short_description": job.short_description,
+            "description": job.description,
+
+            "location": job.location,
+            "modality": job.modality,
+
+            "salary_min": job.salary_min,
+            "salary_max": job.salary_max,
+            "salary_currency": job.salary_currency,
+            "salary_period": job.salary_period,
+
+            "user_id": job.user_id,
+
+            "created_at": (
+                job.created_at.isoformat()
+                if job.created_at
+                else None
+            ),
+
+            "is_owner": (
+                current_user.is_authenticated
+                and job.user_id == current_user.id
+            ),
+
+            "has_applied": (
+                current_application is not None
+                and current_application.status == "active"
+            )
+
+        }
+
+    })
+
+@csrf.exempt
+@app.route(
+    "/api/jobs/<int:job_id>/apply",
+    methods=["POST"]
+)
+@login_required
+def api_apply_job(job_id):
+
+    job = Job.query.get_or_404(job_id)
+
+    # No puedes solicitar tu propio empleo
+    if job.user_id == current_user.id:
+
+        return jsonify({
+            "success": False,
+            "message": "No puedes solicitar tu propio empleo."
+        }), 400
+
+    app_row = (
+        JobApplication.query
+        .filter_by(
+            job_id=job.id,
+            applicant_id=current_user.id
+        )
+        .first()
+    )
+
+    try:
+
+        # Ya tiene una solicitud activa
+        if app_row and app_row.status == "active":
+
+            return jsonify({
+                "success": False,
+                "message": "Ya has solicitado este empleo.",
+                "has_applied": True
+            }), 400
+
+        # Primera solicitud
+        if not app_row:
+
+            app_row = JobApplication(
+                job_id=job.id,
+                applicant_id=current_user.id,
+                status="active"
+            )
+
+            db.session.add(app_row)
+
+        # Solicitud anterior cancelada
+        else:
+
+            app_row.status = "active"
+
+        db.session.commit()
+
+        return jsonify({
+
+            "success": True,
+            "message": "Solicitud enviada.",
+            "has_applied": True
+
+        }), 200
+
+    except SQLAlchemyError as e:
+
+        db.session.rollback()
+
+        print(
+            "❌ Error applying to job:",
+            e
+        )
+
+        return jsonify({
+
+            "success": False,
+            "message": "No se pudo enviar la solicitud."
+
+        }), 500
+
+@csrf.exempt
+@app.route(
+    "/api/jobs/<int:job_id>/cancel",
+    methods=["POST"]
+)
+@login_required
+def api_cancel_job_application(job_id):
+
+    job = Job.query.get_or_404(job_id)
+
+    app_row = (
+        JobApplication.query
+        .filter_by(
+            job_id=job.id,
+            applicant_id=current_user.id,
+            status="active"
+        )
+        .first()
+    )
+
+    try:
+
+        if not app_row:
+
+            return jsonify({
+
+                "success": False,
+                "message": "No tienes una solicitud activa para este empleo.",
+                "has_applied": False
+
+            }), 400
+
+        app_row.status = "cancelled"
+
+        db.session.commit()
+
+        return jsonify({
+
+            "success": True,
+            "message": "Solicitud cancelada.",
+            "has_applied": False
+
+        }), 200
+
+    except SQLAlchemyError as e:
+
+        db.session.rollback()
+
+        print(
+            "❌ Error cancelling job application:",
+            e
+        )
+
+        return jsonify({
+
+            "success": False,
+            "message": "No se pudo cancelar la solicitud."
+
+        }), 500
+    
 @app.route('/report_video/<int:video_id>', methods=['POST'])
 @login_required
 def report_video(video_id):
