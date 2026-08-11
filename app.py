@@ -7493,7 +7493,7 @@ def api_jobs():
 # =========================================================
 # API - CREAR EMPLEO
 # =========================================================
-
+@csrf.exempt
 @app.route("/api/jobs", methods=["POST"])
 @login_required
 def api_create_job():
