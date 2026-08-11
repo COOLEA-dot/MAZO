@@ -1334,15 +1334,6 @@ def change_password():
             flash('La contraseña actual no es correcta.', 'danger')
     return render_template('change_password.html', form=form)
 
-@app.route("/api/professions")
-def profession_suggestions():
-    q = request.args.get("q", "").strip()
-    base = Profession.query
-    if q:
-        base = base.filter(func.lower(Profession.name).like(func.lower(f"%{q}%")))
-    items = base.order_by(Profession.name.asc()).limit(10).all()
-    return jsonify([p.name for p in items])
-
 @csrf.exempt
 @app.route("/api/professions", methods=["GET", "POST"])
 def api_profession_suggestions():
@@ -1359,14 +1350,18 @@ def api_profession_suggestions():
 
         if q:
             base = base.filter(
-                func.lower(Profession.name).like(
+                func.lower(
+                    Profession.name
+                ).like(
                     func.lower(f"%{q}%")
                 )
             )
 
         items = (
             base
-            .order_by(Profession.name.asc())
+            .order_by(
+                Profession.name.asc()
+            )
             .limit(10)
             .all()
         )
@@ -1375,7 +1370,6 @@ def api_profession_suggestions():
             p.name
             for p in items
         ])
-
 
     # ==========================================
     # POST → CREAR PROFESIÓN
@@ -1398,16 +1392,67 @@ def api_profession_suggestions():
 
     try:
 
-        profession = Profession.get_or_create(
-            name
-        )
+        # Buscar si ya existe
+        existing_prof = Profession.query.filter(
+            func.lower(
+                Profession.name
+            ) == name.lower()
+        ).first()
 
-        if profession is None:
+        # Si ya existe, simplemente devolverla
+        if existing_prof:
 
             return jsonify({
-                "success": False,
-                "message": "Invalid profession"
-            }), 400
+
+                "success": True,
+
+                "profession": {
+
+                    "id": existing_prof.id,
+                    "name": existing_prof.name,
+                    "slug": existing_prof.slug,
+                    "popularity": existing_prof.popularity
+
+                }
+
+            }), 200
+
+        # ==========================================
+        # CREAR SLUG
+        # ==========================================
+
+        import re
+        import unicodedata
+
+        slug = unicodedata.normalize(
+            "NFKD",
+            name
+        ).encode(
+            "ascii",
+            "ignore"
+        ).decode(
+            "ascii"
+        )
+
+        slug = re.sub(
+            r"[^a-zA-Z0-9]+",
+            "-",
+            slug
+        ).strip("-").lower()
+
+        # ==========================================
+        # CREAR PROFESIÓN
+        # ==========================================
+
+        new_prof = Profession(
+            name=name,
+            slug=slug,
+            popularity=0
+        )
+
+        db.session.add(
+            new_prof
+        )
 
         db.session.commit()
 
@@ -1417,14 +1462,14 @@ def api_profession_suggestions():
 
             "profession": {
 
-                "id": profession.id,
-                "name": profession.name,
-                "slug": profession.slug,
-                "popularity": profession.popularity
+                "id": new_prof.id,
+                "name": new_prof.name,
+                "slug": new_prof.slug,
+                "popularity": new_prof.popularity
 
             }
 
-        }), 200
+        }), 201
 
     except Exception as e:
 
@@ -1438,7 +1483,7 @@ def api_profession_suggestions():
         return jsonify({
 
             "success": False,
-            "message": "Error creating profession"
+            "message": str(e)
 
         }), 500
 
