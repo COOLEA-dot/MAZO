@@ -7699,6 +7699,13 @@ def api_job_detail(job_id):
 
             "user_id": job.user_id,
 
+            # Username del propietario del empleo
+            "username": (
+                job.user.username
+                if job.user
+                else None
+            ),
+
             "created_at": (
                 job.created_at.isoformat()
                 if job.created_at
