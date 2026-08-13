@@ -8084,6 +8084,272 @@ def api_create_project():
                 "No se pudo publicar el proyecto."
 
         }), 500
+
+@app.route(
+    "/api/projects/<int:project_id>",
+    methods=["GET"]
+)
+def api_project_detail(project_id):
+
+    project = Project.query.get_or_404(
+        project_id
+    )
+
+    current_application = None
+
+    if current_user.is_authenticated:
+
+        current_application = (
+            ProjectApplication.query
+            .filter_by(
+                project_id=project.id,
+                applicant_id=current_user.id
+            )
+            .first()
+        )
+
+    return jsonify({
+
+        "success": True,
+
+        "project": {
+
+            "id": project.id,
+
+            "title": project.title,
+
+            "short_description":
+                project.short_description,
+
+            "description":
+                project.description,
+
+            "location":
+                project.location,
+
+            "modality":
+                project.modality,
+
+            "price_min":
+                project.price_min,
+
+            "price_max":
+                project.price_max,
+
+            "price_currency":
+                project.price_currency,
+
+            "user_id":
+                project.user_id,
+
+            "username":
+                (
+                    project.user.username
+                    if project.user
+                    else None
+                ),
+
+            "created_at":
+                (
+                    project.created_at.isoformat()
+                    if project.created_at
+                    else None
+                ),
+
+            "is_owner":
+                (
+                    current_user.is_authenticated
+                    and
+                    project.user_id ==
+                    current_user.id
+                ),
+
+            "has_applied":
+                (
+                    current_application is not None
+                    and
+                    current_application.status ==
+                    "active"
+                )
+        }
+
+    })
+
+@csrf.exempt
+@app.route(
+    "/api/projects/<int:project_id>/apply",
+    methods=["POST"]
+)
+@login_required
+def api_apply_project(project_id):
+
+    project = Project.query.get_or_404(
+        project_id
+    )
+
+    if project.user_id == current_user.id:
+
+        return jsonify({
+
+            "success": False,
+
+            "message":
+                "No puedes solicitar tu propio proyecto.",
+
+            "has_applied": False
+
+        }), 400
+
+    app_row = (
+        ProjectApplication.query
+        .filter_by(
+            project_id=project.id,
+            applicant_id=current_user.id
+        )
+        .first()
+    )
+
+    try:
+
+        if app_row and app_row.status == "active":
+
+            return jsonify({
+
+                "success": False,
+
+                "message":
+                    "Ya has solicitado este proyecto.",
+
+                "has_applied": True
+
+            }), 400
+
+        if not app_row:
+
+            app_row = ProjectApplication(
+
+                project_id=project.id,
+
+                applicant_id=current_user.id,
+
+                status="active"
+
+            )
+
+            db.session.add(
+                app_row
+            )
+
+        else:
+
+            app_row.status = "active"
+
+        db.session.commit()
+
+        return jsonify({
+
+            "success": True,
+
+            "message":
+                "Solicitud enviada.",
+
+            "has_applied": True
+
+        }), 200
+
+    except SQLAlchemyError as e:
+
+        db.session.rollback()
+
+        print(
+            "❌ Error applying to project:",
+            e
+        )
+
+        return jsonify({
+
+            "success": False,
+
+            "message":
+                "No se pudo enviar la solicitud.",
+
+            "has_applied": False
+
+        }), 500
+
+@csrf.exempt
+@app.route(
+    "/api/projects/<int:project_id>/cancel",
+    methods=["POST"]
+)
+@login_required
+def api_cancel_project_application(
+    project_id
+):
+
+    project = Project.query.get_or_404(
+        project_id
+    )
+
+    app_row = (
+        ProjectApplication.query
+        .filter_by(
+            project_id=project.id,
+            applicant_id=current_user.id,
+            status="active"
+        )
+        .first()
+    )
+
+    try:
+
+        if not app_row:
+
+            return jsonify({
+
+                "success": False,
+
+                "message":
+                    "No tienes una solicitud activa para este proyecto.",
+
+                "has_applied": False
+
+            }), 400
+
+        app_row.status = "cancelled"
+
+        db.session.commit()
+
+        return jsonify({
+
+            "success": True,
+
+            "message":
+                "Solicitud cancelada.",
+
+            "has_applied": False
+
+        }), 200
+
+    except SQLAlchemyError as e:
+
+        db.session.rollback()
+
+        print(
+            "❌ Error cancelling project application:",
+            e
+        )
+
+        return jsonify({
+
+            "success": False,
+
+            "message":
+                "No se pudo cancelar la solicitud.",
+
+            "has_applied": False
+
+        }), 500
     
 @app.route('/report_video/<int:video_id>', methods=['POST'])
 @login_required
