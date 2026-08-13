@@ -7865,6 +7865,225 @@ def api_cancel_job_application(job_id):
             "message": "No se pudo cancelar la solicitud."
 
         }), 500
+
+@csrf.exempt
+@app.route(
+    "/api/projects/new",
+    methods=["POST"]
+)
+@login_required
+def api_create_project():
+
+    data = request.get_json(silent=True) or {}
+
+    # -----------------------------
+    # DATOS
+    # -----------------------------
+
+    title = (data.get("title") or "").strip()
+    short_description = (
+        data.get("short_description") or ""
+    ).strip()
+    description = (
+        data.get("description") or ""
+    ).strip()
+
+    location = (
+        data.get("location") or ""
+    ).strip()
+
+    modality = (
+        data.get("modality") or ""
+    ).strip()
+
+    # -----------------------------
+    # VALIDACIONES
+    # -----------------------------
+
+    if not title:
+
+        return jsonify({
+            "success": False,
+            "message": "El título es obligatorio."
+        }), 400
+
+    if not description:
+
+        return jsonify({
+            "success": False,
+            "message": "La descripción es obligatoria."
+        }), 400
+
+    # -----------------------------
+    # PRECIOS
+    # -----------------------------
+
+    price_min = data.get("price_min")
+    price_max = data.get("price_max")
+
+    try:
+
+        if price_min is not None and price_min != "":
+            price_min = float(price_min)
+        else:
+            price_min = None
+
+        if price_max is not None and price_max != "":
+            price_max = float(price_max)
+        else:
+            price_max = None
+
+    except (TypeError, ValueError):
+
+        return jsonify({
+            "success": False,
+            "message": "El precio no es válido."
+        }), 400
+
+    # -----------------------------
+    # VALIDAR RANGO
+    # -----------------------------
+
+    if (
+        price_min is not None
+        and price_max is not None
+        and price_max < price_min
+    ):
+
+        return jsonify({
+            "success": False,
+            "message":
+                "El precio máximo no puede ser menor que el mínimo."
+        }), 400
+
+    price_currency = (
+        data.get("price_currency") or "EUR"
+    ).strip()
+
+    # -----------------------------
+    # CREAR PROJECT
+    # -----------------------------
+
+    try:
+
+        project = Project(
+
+            title=title,
+
+            short_description=(
+                short_description
+                if short_description
+                else None
+            ),
+
+            description=description,
+
+            location=(
+                location
+                if location
+                else None
+            ),
+
+            modality=(
+                modality
+                if modality
+                else None
+            ),
+
+            user_id=current_user.id,
+
+            price_min=price_min,
+
+            price_max=price_max,
+
+            price_currency=(
+                price_currency
+                if price_min is not None
+                or price_max is not None
+                else None
+            )
+
+        )
+
+        db.session.add(project)
+
+        db.session.commit()
+
+        # -----------------------------
+        # RESPUESTA
+        # -----------------------------
+
+        return jsonify({
+
+            "success": True,
+
+            "message":
+                "Proyecto publicado correctamente.",
+
+            "project": {
+
+                "id": project.id,
+
+                "title": project.title,
+
+                "short_description":
+                    project.short_description,
+
+                "description":
+                    project.description,
+
+                "location":
+                    project.location,
+
+                "modality":
+                    project.modality,
+
+                "price_min":
+                    project.price_min,
+
+                "price_max":
+                    project.price_max,
+
+                "price_currency":
+                    project.price_currency,
+
+                "user_id":
+                    project.user_id,
+
+                "username":
+                    current_user.username,
+
+                "created_at": (
+                    project.created_at.isoformat()
+                    if project.created_at
+                    else None
+                ),
+
+                "is_owner": True,
+
+                "has_applied": False
+
+            }
+
+        }), 201
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print(
+            "❌ Error creating project:",
+            e
+        )
+
+        return jsonify({
+
+            "success": False,
+
+            "message":
+                "No se pudo publicar el proyecto."
+
+        }), 500
     
 @app.route('/report_video/<int:video_id>', methods=['POST'])
 @login_required
