@@ -8469,7 +8469,7 @@ def report_user(user_id):
         print("❌ ERROR REPORT USER:", e)
         return jsonify({"success": False}), 500
     
-    
+  
 @app.route('/block_user/<int:user_id>', methods=['POST'])
 @login_required
 def block_user(user_id):
@@ -8573,6 +8573,68 @@ def unblock_user(user_id):
         print("❌ ERROR UNBLOCK:", e)
         return jsonify({"success": False}), 500
 
+@app.route('/api/block-user/<int:user_id>', methods=['POST'])
+@login_required
+def api_block_user(user_id):
+
+    try:
+
+        # 🚫 No permitir bloquearse a sí mismo
+        if user_id == current_user.id:
+            return jsonify({
+                "success": False,
+                "error": "No puedes bloquearte a ti mismo"
+            }), 400
+
+        # 🔍 Comprobar que el usuario existe
+        user_to_block = User.query.get(user_id)
+
+        if not user_to_block:
+            return jsonify({
+                "success": False,
+                "error": "Usuario no encontrado"
+            }), 404
+
+        # 🔍 Comprobar si ya está bloqueado
+        existing_block = Block.query.filter_by(
+            blocker_id=current_user.id,
+            blocked_id=user_id
+        ).first()
+
+        if existing_block:
+            return jsonify({
+                "success": True,
+                "message": "Usuario ya bloqueado"
+            }), 200
+
+        # 🔒 Crear bloqueo
+        new_block = Block(
+            blocker_id=current_user.id,
+            blocked_id=user_id
+        )
+
+        db.session.add(new_block)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Usuario bloqueado"
+        }), 200
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print(
+            "❌ ERROR EN API BLOCK USER:",
+            e
+        )
+
+        return jsonify({
+            "success": False,
+            "error": "Error interno al bloquear al usuario"
+        }), 500
+    
 @app.route(
     '/api/blocked-users',
     methods=['GET']
