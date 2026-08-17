@@ -8469,7 +8469,7 @@ def report_user(user_id):
         print("❌ ERROR REPORT USER:", e)
         return jsonify({"success": False}), 500
     
-  
+@csrf.exempt
 @app.route('/block_user/<int:user_id>', methods=['POST'])
 @login_required
 def block_user(user_id):
