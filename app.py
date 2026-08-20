@@ -1972,7 +1972,178 @@ def search():
         jobs=jobs,
         query=query
     )
-    
+
+@app.route('/api/search', methods=['GET'])
+@login_required
+def api_search():
+
+    query = request.args.get('q', '').strip()
+
+    videos = []
+    users = []
+    projects = []
+    jobs = []
+
+    if query:
+
+        pattern = f"%{query}%"
+
+        # 🎥 VIDEOS
+        videos = Video.query.join(User).filter(
+            or_(
+                Video.title.ilike(pattern),
+                Video.description.ilike(pattern),
+                User.name.ilike(pattern),
+                User.company.ilike(pattern),
+                User.profession.ilike(pattern),
+                User.description.ilike(pattern),
+                User.location.ilike(pattern)
+            )
+        ).order_by(
+            Video.id.desc()
+        ).limit(20).all()
+
+        # 👤 USUARIOS
+        users = User.query.filter(
+            or_(
+                User.name.ilike(pattern),
+                User.company.ilike(pattern),
+                User.profession.ilike(pattern),
+                User.description.ilike(pattern),
+                User.location.ilike(pattern)
+            )
+        ).limit(20).all()
+
+        # 📁 PROYECTOS
+        projects = Project.query.join(User).filter(
+            or_(
+                Project.title.ilike(pattern),
+                Project.short_description.ilike(pattern),
+                Project.description.ilike(pattern),
+                Project.location.ilike(pattern),
+                User.company.ilike(pattern),
+                User.name.ilike(pattern),
+                User.profession.ilike(pattern)
+            )
+        ).order_by(
+            Project.created_at.desc()
+        ).limit(20).all()
+
+        # 💼 JOBS
+        jobs = Job.query.join(User).filter(
+            or_(
+                Job.title.ilike(pattern),
+                Job.short_description.ilike(pattern),
+                Job.description.ilike(pattern),
+                Job.location.ilike(pattern),
+                User.company.ilike(pattern),
+                User.name.ilike(pattern),
+                User.profession.ilike(pattern)
+            )
+        ).order_by(
+            Job.created_at.desc()
+        ).limit(20).all()
+
+    return jsonify({
+
+        "query": query,
+
+        "users": [
+            {
+                "id": user.id,
+                "username": user.username,
+                "name": user.name or "",
+                "company": user.company or "",
+                "profession": user.profession or "",
+                "location": user.location or "",
+                "profile_picture": (
+                    url_for(
+                        "static",
+                        filename=user.profile_pic
+                    )
+                    if user.profile_pic
+                    else ""
+                )
+            }
+            for user in users
+        ],
+
+        "videos": [
+            {
+                "id": video.id,
+                "title": video.title or "",
+                "description": video.description or "",
+                "video_url": video.video_url or "",
+                "user": {
+                    "id": video.user.id,
+                    "username": video.user.username,
+                    "name": video.user.name or "",
+                    "profile_picture": (
+                        url_for(
+                            "static",
+                            filename=video.user.profile_pic
+                        )
+                        if video.user.profile_pic
+                        else ""
+                    )
+                }
+            }
+            for video in videos
+        ],
+
+        "projects": [
+            {
+                "id": project.id,
+                "title": project.title or "",
+                "short_description": (
+                    project.short_description or ""
+                ),
+                "description": project.description or "",
+                "location": project.location or "",
+                "user": {
+                    "id": project.user.id,
+                    "username": project.user.username,
+                    "name": project.user.name or "",
+                    "profile_picture": (
+                        url_for(
+                            "static",
+                            filename=project.user.profile_pic
+                        )
+                        if project.user.profile_pic
+                        else ""
+                    )
+                }
+            }
+            for project in projects
+        ],
+
+        "jobs": [
+            {
+                "id": job.id,
+                "title": job.title or "",
+                "short_description": (
+                    job.short_description or ""
+                ),
+                "description": job.description or "",
+                "location": job.location or "",
+                "user": {
+                    "id": job.user.id,
+                    "username": job.user.username,
+                    "name": job.user.name or "",
+                    "profile_picture": (
+                        url_for(
+                            "static",
+                            filename=job.user.profile_pic
+                        )
+                        if job.user.profile_pic
+                        else ""
+                    )
+                }
+            }
+            for job in jobs
+        ]
+    })
+
 @app.route('/test-video')
 def test_video():
     return render_template('test_video.html')
