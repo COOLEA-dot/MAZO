@@ -1598,6 +1598,20 @@ def mobile_login():
         )
     ):
 
+        # 🔒 No permitir login si el email no está verificado
+        if not user.is_verified:
+            return jsonify({
+
+                "success": False,
+
+                "error":
+                    "Debes verificar tu correo electrónico antes de iniciar sesión.",
+
+                "email_verified":
+                    False
+
+            }), 403
+
         login_user(
             user,
             remember=True
@@ -1611,7 +1625,10 @@ def mobile_login():
                 user.username,
 
             "email":
-                user.email
+                user.email,
+
+            "email_verified":
+                True
         })
 
     return jsonify({
