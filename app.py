@@ -1140,6 +1140,7 @@ def register():
     professions = [p.name for p in Profession.query.order_by(Profession.name).all()]
     return render_template("register.html", form=form, user=None, professions=professions)
 
+@csrf.exempt
 @app.route("/api/register", methods=["POST"])
 def api_register():
     try:
