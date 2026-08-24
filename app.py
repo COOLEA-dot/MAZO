@@ -1640,6 +1640,58 @@ def mobile_login():
 
     }), 401
 
+@app.route('/api/resend-verification', methods=['POST'])
+@csrf.exempt
+def resend_verification():
+    data = request.get_json(silent=True) or {}
+
+    username_or_email = data.get('username', '').strip()
+
+    if not username_or_email:
+        return jsonify({
+            "success": False,
+            "error": "Introduce tu usuario o email."
+        }), 400
+
+    user = User.query.filter(
+        or_(
+            User.username == username_or_email,
+            User.email == username_or_email
+        )
+    ).first()
+
+    if not user:
+        return jsonify({
+            "success": False,
+            "error": "No se ha podido enviar el correo de verificación."
+        }), 404
+
+    if user.is_verified:
+        return jsonify({
+            "success": False,
+            "error": "Este correo ya está verificado.",
+            "email_verified": True
+        }), 400
+
+    try:
+        send_verification_email(user.email)
+
+        return jsonify({
+            "success": True,
+            "message": "Correo de verificación enviado.",
+            "email_verified": False
+        }), 200
+
+    except Exception as e:
+        app.logger.exception(
+            f"[resend_verification] Error enviando verificación a {user.email}"
+        )
+
+        return jsonify({
+            "success": False,
+            "error": "No se ha podido enviar el correo de verificación."
+        }), 500
+    
 def send_verification_email(user_email):
     token = serializer.dumps(user_email, salt='email-confirm')
     confirm_url = url_for('confirm_email', token=token, _external=True)
