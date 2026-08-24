@@ -1524,16 +1524,37 @@ def login():
             )
         ).first()
 
-        if user and user.password_hash and check_password_hash(user.password_hash, password):
+        if user and user.password_hash and check_password_hash(
+            user.password_hash,
+            password
+        ):
+
+            # 🔒 No permitir login sin verificar el email
+            if not user.is_verified:
+                flash(
+                    'Debes verificar tu correo electrónico antes de iniciar sesión.',
+                    'warning'
+                )
+                return render_template('login.html')
+
             login_user(user, remember=remember)
-            flash(f"¡Bienvenido, {user.username}!", "success")
+
+            flash(
+                f"¡Bienvenido, {user.username}!",
+                "success"
+            )
 
             next_url = request.args.get('next')
+
             if next_url and urlparse(next_url).netloc == '':
                 return redirect(next_url)
+
             return redirect(url_for('home'))
 
-        flash("Usuario, email o contraseña incorrectos", "error")
+        flash(
+            "Usuario, email o contraseña incorrectos",
+            "error"
+        )
 
     return render_template('login.html')
 
