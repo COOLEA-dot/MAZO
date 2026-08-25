@@ -1691,7 +1691,7 @@ def resend_verification():
             "success": False,
             "error": "No se ha podido enviar el correo de verificación."
         }), 500
-    
+        
 def send_verification_email(user_email):
     token = serializer.dumps(user_email, salt='email-confirm')
     confirm_url = url_for('confirm_email', token=token, _external=True)
@@ -8616,27 +8616,71 @@ def api_cancel_project_application(
 @app.route('/report_video/<int:video_id>', methods=['POST'])
 @login_required
 def report_video(video_id):
+
     form = ReportForm()
 
     if not form.validate_on_submit():
-        return jsonify({"success": False, "error": "CSRF inválido"}), 400
+        return jsonify({
+            "success": False,
+            "error": "CSRF inválido"
+        }), 400
 
     try:
+
         video = Video.query.get(video_id)
 
-        # 🔗 URL del video
-        video_url = url_for('view_video', video_id=video_id, _external=True)
+        if not video:
+            return jsonify({
+                "success": False,
+                "error": "Vídeo no encontrado"
+            }), 404
 
-        # 🔥 guardar en DB
+        # 🔗 URL del video
+        video_url = url_for(
+            'view_video',
+            video_id=video_id,
+            _external=True
+        )
+
+        # 🔥 GUARDAR REPORTE
         new_report = Report(
             reporter_id=current_user.id,
-            reported_user_id=video.user_id if video else None,
+            reported_user_id=video.user_id,
             video_id=video_id,
             reason=request.form.get("reason")
         )
 
         db.session.add(new_report)
         db.session.commit()
+
+        # 🔥 CONTAR DENUNCIAS DE USUARIOS DIFERENTES
+        report_count = db.session.query(
+            db.func.count(
+                db.distinct(
+                    Report.reporter_id
+                )
+            )
+        ).filter(
+            Report.video_id == video_id
+        ).scalar()
+
+        print(
+            f"🚨 VIDEO {video_id} TIENE "
+            f"{report_count} DENUNCIAS DIFERENTES"
+        )
+
+        # 🔥 AL LLEGAR A 5 DENUNCIAS,
+        # EL VIDEO PASA A REVISIÓN
+        if report_count >= 5:
+
+            video.moderation_status = "under_review"
+
+            db.session.commit()
+
+            print(
+                f"⚠️ VIDEO {video_id} "
+                f"HA PASADO A REVISIÓN"
+            )
 
         # 🔥 EMAIL
         message = f"""
@@ -8645,33 +8689,60 @@ def report_video(video_id):
 👤 Usuario que reporta: {current_user.username}
 🎥 Video ID: {video_id}
 📍 URL: {video_url}
-👤 Usuario reportado: {video.user.username if video else "Desconocido"}
+👤 Usuario reportado: {video.user.username}
 
 📝 Motivo:
 {request.form.get("reason")}
+
+📊 Denuncias de usuarios diferentes:
+{report_count}
+
+🚨 Estado del vídeo:
+{"EN REVISIÓN" if report_count >= 5 else "ACTIVO"}
 """
 
         msg = MIMEText(message)
+
         msg["Subject"] = "🚩 Nuevo reporte en MAZO"
         msg["From"] = "mazo.app.es@gmail.com"
         msg["To"] = "mazo.app.es@gmail.com"
 
-        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server = smtplib.SMTP(
+            "smtp.gmail.com",
+            587
+        )
+
         server.ehlo()
         server.starttls()
         server.ehlo()
 
-        # 🔥 AQUÍ VA TU APP PASSWORD
-        server.login("mazo.app.es@gmail.com", "wuuvsqlospvdtuzw")
+        # 🔥 AQUÍ MANTÉN TU CREDENCIAL ACTUAL
+        server.login(
+            "mazo.app.es@gmail.com",
+            "wuuvsqlospvdtuzw"
+        )
 
         server.send_message(msg)
         server.quit()
 
-        return jsonify({"success": True})
+        return jsonify({
+            "success": True,
+            "report_count": report_count,
+            "under_review": report_count >= 5
+        })
 
     except Exception as e:
-        print("❌ ERROR REPORT:", e)
-        return jsonify({"success": False}), 500
+
+        db.session.rollback()
+
+        print(
+            "❌ ERROR REPORT:",
+            e
+        )
+
+        return jsonify({
+            "success": False
+        }), 500
 
 @app.route('/report_user/<int:user_id>', methods=['POST'])
 @login_required

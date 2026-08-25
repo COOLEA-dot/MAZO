@@ -70,6 +70,13 @@ class Video(db.Model):
         backref='liked_videos', 
         lazy='subquery'
     )
+
+    moderation_status = db.Column(
+        db.String(20),
+        default='active',
+        nullable=False
+    )
+
     @property
     def like_count(self):
             print(type(Video.liked_by))
@@ -79,6 +86,7 @@ class Video(db.Model):
     
     def __repr__(self):
         return f'<Video {self.title}>'
+    
 
 
 followers = db.Table('followers',
@@ -927,12 +935,43 @@ class CreateProductForm(FlaskForm):
     submit = SubmitField('Publicar producto')
 
 class Report(db.Model):
+    __tablename__ = 'reports'
+
     id = db.Column(db.Integer, primary_key=True)
-    reporter_id = db.Column(db.Integer)
-    reported_user_id = db.Column(db.Integer)
-    video_id = db.Column(db.Integer, nullable=True)
-    reason = db.Column(db.String(255))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    reporter_id = db.Column(
+        db.Integer,
+        nullable=False
+    )
+
+    reported_user_id = db.Column(
+        db.Integer,
+        nullable=False
+    )
+
+    video_id = db.Column(
+        db.Integer,
+        nullable=True
+    )
+
+    reason = db.Column(
+        db.String(255),
+        nullable=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            'reporter_id',
+            'video_id',
+            name='uq_reporter_video_report'
+        ),
+    )
 
 class ReportForm(FlaskForm):
     video_id = HiddenField()

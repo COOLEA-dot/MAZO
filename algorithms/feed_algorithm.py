@@ -100,8 +100,8 @@ def get_feed_videos(user):
         Video.query
         .join(User)
         .filter(
-            Video.user_id
-            != user.id
+            Video.user_id != user.id,
+            Video.moderation_status == "active"
         )
     )
 
